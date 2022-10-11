@@ -31,4 +31,7 @@ dotenv.config({ override: true });
   }
 
   await bucketClient().send(new UpdateBucketCommand(enableBucketNotificationsArgs));
+
+  console.log(`\nDone.`);
+  console.log(`Enabled bucket notifications for ${sftpBucketName} to invoke ${functionName} function`);
 })();

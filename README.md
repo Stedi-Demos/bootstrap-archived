@@ -93,13 +93,14 @@ Each subdirectory within the [resources](./src/resources) directory contains tem
    npm run configure-buckets
    ```
 
-   For each bucket, an environment variable entry will automatically be added to the `.env` file. The output of the script will include a list of the environment variables that have been added:
+   For each bucket, an environment variable entry will automatically be added to the `.env` file. By default, additional progress tracking is also enabled to improve observability of the function executions. For more details on the progress tracking, [see below](#additional-progress-tracking). The output of the script will include a list of the environment variables that have been added:
 
    ```bash
-   Updated .env file with 2 bucket entries:
+   Updated .env file with 3 bucket entries:
 
    SFTP_BUCKET_NAME=4c22f54a-9ecf-41c8-b404-6a1f20674953-sftp
    EXECUTIONS_BUCKET_NAME=4c22f54a-9ecf-41c8-b404-6a1f20674953-executions
+   PROGRESS_TRACKING_WEBHOOK_URL=4c22f54a-9ecf-41c8-b404-6a1f20674953-executions
    ```
 
 ## Setup & Deployment
@@ -245,10 +246,10 @@ The `read-outbound-edi` function uses the bucket referenced by the `EXECUTIONS_B
 
 ## Additional progress tracking
 
-If you would like to record additional details about the execution of the `read-inbound-edi` function as it processes documents, you can add another environment variable to your `.env` file:
+Additional progress tracking is also enabled by default to provide more visibility into the process of translating the input X12 EDI document into the custom JSON output shape. The `read-inbound-edi` function records additional details as it processes documents, and it sends this output to the destination webhook URL. You can change the destination for the additional progress tracking by changing the corresponding environment variable (or remove the environment variable completely to disable this additional tracking):
 
   ```
   PROGRESS_TRACKING_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
   ```
 
-It is perfectly acceptable to use the same webhook URL for progress tracking that you are using as the destination webhook URL. The `read-inbound-edi` function will send additional JSON-formatted details about the processing being performed to this endpoint.
+Note: after updating (or removing) this environment variable, you will need to also remove the environment variable from the deployed `read-inbound-edi` function. You can do this via the [Functions UI](https://www.stedi.com/terminal/functions/read-inbound-edi), or by re-running `npm run deploy`.

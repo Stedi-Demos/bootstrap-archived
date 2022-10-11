@@ -16,7 +16,7 @@ import {
 import { Convert, Record as BucketNotificationRecord } from "../../../lib/types/BucketNotificationEvent.js";
 import { bucketClient } from "../../../lib/buckets.js";
 import { FilteredKey, GroupedEventKeys, KeyToProcess, ReadInboundEdiResults } from "./types.js";
-import { getEnvVarNameForResource, requiredEnvVar } from "../../../lib/environment.js";
+import { getResourceIdsForTransactionSets, requiredEnvVar } from "../../../lib/environment.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { ediSplitter } from "../../../lib/ediSplitter.js";
 
@@ -154,18 +154,6 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
     filteredKeys,
     keysToProcess,
   }
-};
-
-const getResourceIdsForTransactionSets = (transactionSets: string[]): Map<string, { guideId: string, mappingId: string }> => {
-  return transactionSets.reduce(
-    (resourceIdsMap, transactionSet) => {
-      const guideEnvVarName = getEnvVarNameForResource("guide", `X12-${transactionSet}`);
-      const mappingEnvVarName = getEnvVarNameForResource("mapping", `X12-${transactionSet}`);
-      const guideId = requiredEnvVar(guideEnvVarName);
-      const mappingId = requiredEnvVar(mappingEnvVarName);
-
-      return resourceIdsMap.set(transactionSet, { guideId, mappingId });
-    }, new Map<string, { guideId: string, mappingId: string}>());
 };
 
 const requiredString = (key: string, value?: string): string => {

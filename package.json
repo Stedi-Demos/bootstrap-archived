@@ -1,0 +1,41 @@
+{
+  "name": "stedi-read-edi-demo",
+  "version": "1.0.0",
+  "description": "End-to-end demo for reading X12 EDI on Stedi",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "deploy": "ts-node-esm ./src/setup/deploy.ts",
+    "create-guides": "ts-node-esm ./src/setup/createGuides.ts",
+    "create-mappings": "ts-node-esm ./src/setup/createMappings.ts",
+    "create-keyspace": "ts-node-esm ./src/setup/createKeyspace.ts",
+    "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
+    "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@stedi/sdk-client-buckets": "^0.0.18",
+    "@stedi/sdk-client-edi-translate": "^0.0.22",
+    "@stedi/sdk-client-functions": "^0.0.18",
+    "@stedi/sdk-client-guides": "^0.0.22",
+    "@stedi/sdk-client-mappings": "^0.0.22",
+    "@stedi/sdk-client-sftp": "^0.0.22",
+    "@stedi/sdk-client-stash": "^0.0.22",
+    "@types/node": "^18.7.23",
+    "@types/node-fetch": "^2.6.2",
+    "@types/object-hash": "^2.2.1",
+    "date-fns": "^2.29.3",
+    "dotenv": "^16.0.2",
+    "esbuild": "^0.15.9",
+    "jszip": "^3.10.1",
+    "node-fetch": "^3.2.10",
+    "object-hash": "^3.0.0",
+    "serialize-error": "^11.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  },
+  "prettier": {
+    "useTabs": false
+  }
+}

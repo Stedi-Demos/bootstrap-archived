@@ -57,6 +57,7 @@ dotenv.config({ override: true });
   const bucketEnvVarEntries: dotenv.DotenvParseOutput = {
     ["SFTP_BUCKET_NAME"]: user.bucketName,
     ["EXECUTIONS_BUCKET_NAME"]: executionsBucketName,
+    ["PROGRESS_TRACKING_WEBHOOK_URL"]: executionsBucketName,
   };
 
   const existingEnvVars = dotenv.config().parsed ?? {};

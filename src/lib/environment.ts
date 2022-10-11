@@ -10,6 +10,21 @@ export const requiredEnvVar = (key: string): string => {
   return value;
 }
 
+export const getResourceIdsForTransactionSets = (transactionSets: string[]): Map<string, { guideId: string, mappingId: string }> => {
+  return transactionSets.reduce(
+    (resourceIdsMap, transactionSet) => {
+      // Transaction set ids from EDI input files do not include the `X12-` resource prefix.
+      // When this function is called by the handler to process input files, the prefix gets added.
+      const transactionSetId = transactionSet.toUpperCase().startsWith("X12") ? transactionSet : `X12-${transactionSet}`;
+      const guideEnvVarName = getEnvVarNameForResource("guide", transactionSetId);
+      const mappingEnvVarName = getEnvVarNameForResource("mapping", transactionSetId);
+      const guideId = requiredEnvVar(guideEnvVarName);
+      const mappingId = requiredEnvVar(mappingEnvVarName);
+
+      return resourceIdsMap.set(transactionSet, { guideId, mappingId });
+    }, new Map<string, { guideId: string, mappingId: string}>());
+};
+
 export const getEnvVarNameForResource = (resourceType: ResourceType, resourceName: string): string =>
   getEnvVarPrefixForResource(resourceName).concat(getEnvVarSuffixForResourceType(resourceType));
 

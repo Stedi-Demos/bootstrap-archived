@@ -2,7 +2,6 @@
   "name": "stedi-read-edi-demo",
   "version": "1.0.0",
   "description": "End-to-end demo for reading X12 EDI on Stedi",
-  "main": "index.js",
   "type": "module",
   "scripts": {
     "deploy": "ts-node-esm ./src/setup/deploy.ts",
@@ -10,11 +9,13 @@
     "create-mappings": "ts-node-esm ./src/setup/createMappings.ts",
     "create-keyspace": "ts-node-esm ./src/setup/createKeyspace.ts",
     "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
-    "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts"
+    "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
+    "test": "ava"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@ava/typescript": "^3.0.1",
     "@stedi/sdk-client-buckets": "^0.0.18",
     "@stedi/sdk-client-edi-translate": "^0.0.22",
     "@stedi/sdk-client-functions": "^0.0.18",
@@ -25,6 +26,7 @@
     "@types/node": "^18.7.23",
     "@types/node-fetch": "^2.6.2",
     "@types/object-hash": "^2.2.1",
+    "ava": "^4.3.3",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.2",
     "esbuild": "^0.15.9",
@@ -37,5 +39,13 @@
   },
   "prettier": {
     "useTabs": false
+  },
+  "ava": {
+    "typescript": {
+      "rewritePaths": {
+        "src/": "dist/"
+      },
+      "compile": "tsc"
+    }
   }
 }

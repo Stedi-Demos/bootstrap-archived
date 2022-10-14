@@ -48,12 +48,13 @@ Each subdirectory within the [resources](./src/resources) directory contains tem
    * `DESTINATION_WEBHOOK_URL`: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step
    * `ENABLED_TRANSACTION_SETS`: a comma separated list of transaction sets for which you would like to be able to read inbound EDI documents. The values in the list MUST match available subdirectory names under the [resources](./src/resources) directory. The names are case-sensitive. Note: you can always come back and add or remove entries from this list. After doing so, you'll just need to re-run the `create-guides`, `create-mappings`, and `deploy` steps described below in order to apply the changes.
 
-  example `.env` file:
-  ```
-  STEDI_API_KEY=<REPLACE_ME>
-  DESTINATION_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
-  ENABLED_TRANSACTION_SETS=X12-850,X12-855
-  ```
+   Example `.env` file:
+
+    ```
+    STEDI_API_KEY=<REPLACE_ME>
+    DESTINATION_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
+    ENABLED_TRANSACTION_SETS=X12-850,X12-855
+    ```
    
   The subsequent setup scripts will use the `ENABLED_TRANSACTION_SETS` environment variable to determine which resources to deploy to your account.
 

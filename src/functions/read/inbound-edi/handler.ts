@@ -55,11 +55,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       try {
         // Split EDI input into multiple documents if there are multiple functional groups
         // within an interchange, or multiple interchanges in the same file
-        const splitEdiDocuments = splitEdi(fileContents);
-        await trackProgress("split edi documents", splitEdiDocuments);
+        const ediDocuments = splitEdi(fileContents);
+        await trackProgress("split edi documents", ediDocuments);
 
         // Grab all guide and mapping ids for the transaction sets found in the input (fail early if any are missing)
-        const transactionSets = splitEdiDocuments.map(getTransactionSetIdentifierForSplitEdi);
+        const transactionSets = ediDocuments.map(getTransactionSetIdentifierForEdiDocument);
         const resourceIdsByTransactionSetMap = getResourceIdsForTransactionSets(transactionSets);
 
         // For each EDI document:
@@ -67,8 +67,10 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         // - call processEdiDocument, which translates X12 to JSON, and then invokes the mapping
         // - send the result to the webhook
         // - delete the input file once processed successfully
-        for await (const ediDocument of splitEdiDocuments) {
-          const transactionSetIdentifier = getTransactionSetIdentifierForSplitEdi(ediDocument);
+        for await (const ediDocument of ediDocuments) {
+          const transactionSetIdentifier = getTransactionSetIdentifierForEdiDocument(ediDocument);
+
+          // selection of guideId and mappingId could also take the senderId/receiverId from the edi document metadata if needed
           const guideId = requiredString("guideId", resourceIdsByTransactionSetMap.get(transactionSetIdentifier)?.guideId);
           const mappingId = requiredString("mappingId", resourceIdsByTransactionSetMap.get(transactionSetIdentifier)?.mappingId);
 
@@ -157,8 +159,9 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
   }
 };
 
-const getTransactionSetIdentifierForSplitEdi = (splitEdiDocument: EdiDocument): string =>
-  `X12-${splitEdiDocument.metadata.release}-${splitEdiDocument.metadata.code}`;
+// Use EdiDocument metadata to construct the transaction set identifier using the convention used in this demo
+const getTransactionSetIdentifierForEdiDocument = (ediDocument: EdiDocument): string =>
+  `X12-${ediDocument.metadata.release}-${ediDocument.metadata.code}`;
 
 const requiredString = (key: string, value?: string): string => {
   if (!value) {

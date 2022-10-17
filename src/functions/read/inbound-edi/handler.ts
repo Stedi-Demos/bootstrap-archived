@@ -18,7 +18,7 @@ import { bucketClient } from "../../../lib/buckets.js";
 import { FilteredKey, GroupedEventKeys, KeyToProcess, ReadInboundEdiResults } from "./types.js";
 import { getResourceIdsForTransactionSets, requiredEnvVar } from "../../../lib/environment.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
-import { splitEdi } from "../../../lib/ediSplitter.js";
+import { EdiDocument, splitEdi } from "../../../lib/ediSplitter.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -59,7 +59,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         await trackProgress("split edi documents", splitEdiDocuments);
 
         // Grab all guide and mapping ids for the transaction sets found in the input (fail early if any are missing)
-        const transactionSets = splitEdiDocuments.map(document => document.metadata.code);
+        const transactionSets = splitEdiDocuments.map(getTransactionSetIdentifierForSplitEdi);
         const resourceIdsByTransactionSetMap = getResourceIdsForTransactionSets(transactionSets);
 
         // For each EDI document:
@@ -68,8 +68,9 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         // - send the result to the webhook
         // - delete the input file once processed successfully
         for await (const ediDocument of splitEdiDocuments) {
-          const guideId = requiredString("guideId", resourceIdsByTransactionSetMap.get(ediDocument.metadata.code)?.guideId);
-          const mappingId = requiredString("mappingId", resourceIdsByTransactionSetMap.get(ediDocument.metadata.code)?.mappingId);
+          const transactionSetIdentifier = getTransactionSetIdentifierForSplitEdi(ediDocument);
+          const guideId = requiredString("guideId", resourceIdsByTransactionSetMap.get(transactionSetIdentifier)?.guideId);
+          const mappingId = requiredString("mappingId", resourceIdsByTransactionSetMap.get(transactionSetIdentifier)?.mappingId);
 
           const ediProcessingResult = await processEdiDocument(guideId, mappingId, ediDocument.edi);
 
@@ -155,6 +156,9 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
     keysToProcess,
   }
 };
+
+const getTransactionSetIdentifierForSplitEdi = (splitEdiDocument: EdiDocument): string =>
+  `X12-${splitEdiDocument.metadata.release}-${splitEdiDocument.metadata.code}`;
 
 const requiredString = (key: string, value?: string): string => {
   if (!value) {

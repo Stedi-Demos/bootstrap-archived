@@ -22,6 +22,21 @@ type FunctionalGroup = {
   contents: string[];
 };
 
+// split input into multiple EDI documents, along with metadata:
+// [
+//   {
+//     metadata: {
+//       release: "5010",
+//       code: "855",
+//       senderId: "AMERCHANT",
+//       receiverId: "ANOTHERMERCH",
+//     },
+//     edi: ${ediDocument},
+//   },
+// ]
+//
+// - input EDI documents may only contain one functional group within an interchange
+// - input EDI documents may only contain multiple transaction sets within a functional group if they are the same type
 export const splitEdi = (ediDocument: string): SplitEdi[] => {
   const { segmentDelimiter, elementDelimiter } = extractDelimiters(ediDocument);
 
@@ -70,6 +85,7 @@ export const splitEdi = (ediDocument: string): SplitEdi[] => {
       case "IEA":
         splitEdis.push(finalizeEdiDocument(currentSegment, segmentDelimiter, functionalGroup, isa));
         functionalGroup = undefined;
+        isa = undefined;
         break;
       default:
         if (!functionalGroup) {
@@ -94,11 +110,13 @@ const extractDelimiters = (
 
   // The ISA itself should have at 17 elements
   const ediElements = ediDocument.split(elementDelimiter);
-  if (ediElements.length < 17) {
+  if (ediElements.length < 18) {
     throw new Error("too few elements detected in document");
   }
 
   const delimitersElement = ediElements[16];
+  // In practice, this should check should never fail -- if the delimiters element is too
+  // short, the following segment identifier gets pulled into the delimiters element
   if (delimitersElement.length < 2) {
     throw new Error("invalid ISA segment: unable to extract delimiters");
   }

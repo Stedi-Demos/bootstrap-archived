@@ -34,6 +34,52 @@ test("should throw error if isa envelope is too short", (t) => {
   t.is(error?.message, "invalid ISA segment");
 });
 
+test("should throw error if isa is encountered within scope of another isa", (t) => {
+  const edi = isa + gs + st855 + body + se + isa;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "interchange start encountered without previous interchange termination");
+});
+
+test("should throw error if there are not enough elements in the document", (t) => {
+  const edi = "ISA*00*          *00*          *12*7147085121     *01*040132628      *220921*1002*U*00501*000028538*0*P*>~";
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "too few elements detected in document");
+});
+
+test("should throw error if gs segment does not contain enough elements", (t) => {
+  const invalidGs = "GS*PR*7147085121*040132628*20220921*1002*28538*X~";
+  const edi = isa + invalidGs + st855 + body + se + isa;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "invalid GS segment: not enough elements detected");
+});
+
+test("should throw error if st segment does not contain enough elements", (t) => {
+  const invalidSt = "ST*855~";
+  const edi = isa + gs + invalidSt + body + se + isa;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "invalid ST segment: not enough elements detected");
+});
+
 // EDI Translate only supports one GS per document
 test("should throw error if interchange contains multiple functional groups", (t) => {
   const edi =
@@ -45,6 +91,73 @@ test("should throw error if interchange contains multiple functional groups", (t
     { instanceOf: Error }
   );
   t.is(error?.message, "only one functional group is allowed per interchange");
+});
+
+test("should throw error if st encountered outside the scope of a functional group", (t) => {
+  const edi = isa + st855 + body + se + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "transaction set encountered outside the scope of a functional group");
+});
+
+test("should throw error if non-envelope segment encountered outside the scope of a functional group", (t) => {
+  const edi = isa + body + se + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "segment encountered outside the scope of a functional group");
+});
+
+test("should throw error if ge encountered outside the scope of a functional group", (t) => {
+  const edi = isa + ge + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "functional group terminator encountered outside the scope of a functional group");
+});
+
+test("should throw error if functional group transaction set code not found", (t) => {
+  const invalidSt = "ST**0001~";
+  const edi = isa + gs + invalidSt + body + se + ge + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "functional group transaction set code was not found");
+});
+
+test("should throw error if iea encountered outside the scope of an interchange", (t) => {
+  const edi = isa + gs + st855 + body + se + ge + iea + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "interchange terminator encountered outside the scope of an interchange");
+});
+
+test("should throw error if interchange does not include a functional group", (t) => {
+  const edi = isa + iea;
+  const error = t.throws(
+    () => {
+      splitEdi(edi);
+    },
+    { instanceOf: Error }
+  );
+  t.is(error?.message, "no functional group found in interchange");
 });
 
 // EDI Translate requires all transaction sets within a functional group to be the same type
@@ -64,16 +177,21 @@ test("should generate a single split when edi file has a single transaction code
   const splitEdis = splitEdi(edi);
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "855");
+  t.is(splitEdis[0].metadata.release, "5010");
+  t.is(splitEdis[0].metadata.senderId, "7147085121");
+  t.is(splitEdis[0].metadata.receiverId, "040132628");
   t.is(splitEdis[0].edi, edi);
 });
 
 test("st element should not be parsed as header", (t) => {
   const edi =
-    "ISA*00*          *00*          *ZZ*FEDEX          *ZZ*REALTRUCK      *220929*0431*U*00401*000032559*0*P*^~GS*QM*FEDEX*REALTRUCK*20220929*0431*32559*X*004010~ST*214*325590001~B10*770012873772*4310055*FDEG**33*O~L11*CM 941665*PO~K1*137~N1*SF*John Doe*25*673731465~N2*John Doe~N3*175 Kirkland Road~N4*MIAMI*FL*33142*US~G62*11*20220926~N1*ST*Luverne Truck Equipment~N2*ATTN  Returns Department~N3*1200 E BIRCH ST~N4*BRANDON*SD*57005*US~LX*1~AT7*AG*NS***20220929*0000~LX*2~AT7*X6*NS***20220929*0355*20~MS1*ADRIAN*MN*US~L11*4310055*CR~L11*LUV-481032*DP~K1*IT~AT8*G*L*27*1~SE*23*325590001~GE*237*32559~IEA*1*000032559~";
-
+    "ISA*00*          *00*          *ZZ*FEDEX          *ZZ*STEDI          *220929*0431*U*00401*000032559*0*P*^~GS*QM*FEDEX*STEDI    *20220929*0431*32559*X*004010~ST*214*325590001~B10*770012873772*4310055*FDEG**33*O~L11*CM 941665*PO~K1*137~N1*SF*John Doe*25*673731465~N2*John Doe~N3*175 Kirkland Road~N4*MIAMI*FL*33142*US~G62*11*20220926~N1*ST*Luverne Truck Equipment~N2*ATTN  Returns Department~N3*1200 E BIRCH ST~N4*BRANDON*SD*57005*US~LX*1~AT7*AG*NS***20220929*0000~LX*2~AT7*X6*NS***20220929*0355*20~MS1*ADRIAN*MN*US~L11*4310055*CR~L11*LUV-481032*DP~K1*IT~AT8*G*L*27*1~SE*23*325590001~GE*237*32559~IEA*1*000032559~";
   const splitEdis = splitEdi(edi);
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "214");
+  t.is(splitEdis[0].metadata.release, "4010");
+  t.is(splitEdis[0].metadata.senderId, "FEDEX");
+  t.is(splitEdis[0].metadata.receiverId, "STEDI");
   t.is(edi, splitEdis[0].edi);
 });
 
@@ -84,5 +202,8 @@ test("ensure all segments are present after split", (t) => {
 
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "850");
+  t.is(splitEdis[0].metadata.release, "5010");
+  t.is(splitEdis[0].metadata.senderId, "040132628");
+  t.is(splitEdis[0].metadata.receiverId, "9702636910");
   t.is(edi, splitEdis[0].edi);
 });

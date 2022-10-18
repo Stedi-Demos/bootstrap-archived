@@ -5,7 +5,7 @@ export type EdiDocumentMetadata = {
   receiverId: string;
 };
 
-export type SplitEdi = {
+export type EdiDocument = {
   metadata: EdiDocumentMetadata;
   edi: string;
 };
@@ -37,7 +37,7 @@ type FunctionalGroup = {
 //
 // - input EDI documents may only contain one functional group within an interchange
 // - input EDI documents may only contain multiple transaction sets within a functional group if they are the same type
-export const splitEdi = (ediDocument: string): SplitEdi[] => {
+export const splitEdi = (ediDocument: string): EdiDocument[] => {
   const { segmentDelimiter, elementDelimiter } = extractDelimiters(ediDocument);
 
   // If segmentDelimiter is not a newline, remove trailing newlines
@@ -51,7 +51,7 @@ export const splitEdi = (ediDocument: string): SplitEdi[] => {
   let isa: ISA | undefined;
   let functionalGroup: FunctionalGroup | undefined;
 
-  return segments.reduce((splitEdis: SplitEdi[], currentSegment) => {
+  return segments.reduce((splitEdis: EdiDocument[], currentSegment) => {
     const elements = currentSegment.trim().split(elementDelimiter);
     switch (elements[0]) {
       case "ISA":
@@ -188,7 +188,7 @@ const finalizeEdiDocument = (
   segmentDelimiter: string,
   functionalGroup?: FunctionalGroup,
   isa?: ISA,
-): SplitEdi => {
+): EdiDocument => {
   if (!isa) {
     throw new Error("interchange terminator encountered outside the scope of an interchange");
   }

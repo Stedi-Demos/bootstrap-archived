@@ -30,9 +30,9 @@ export const functionNameFromPath = (fnPath: string): string => {
 };
 
 export const resourceNamespaceFromPath = (path: string): string => {
-  // path-a/path-b/path-never-ends/nice/resources/X12-850/map.json
-  // => read
-  return path.split('/').slice(-2, -1)[0];
+  // path-a/path-b/path-never-ends/nice/resources/X12/5010/850/map.json
+  // => X12-5010-850
+  return path.split('/').slice(-4, -1).join("-");
 }
 
 export const getFunctionPaths = (pathMatch?: string) => {
@@ -52,7 +52,7 @@ export const getFunctionPaths = (pathMatch?: string) => {
 export const getEnabledTransactionSets = (): string[] => {
   const enabledTransactionSetsList = requiredEnvVar("ENABLED_TRANSACTION_SETS");
   return enabledTransactionSetsList.split(",");
-}
+};
 
 // gets a set of resource paths for each transaction set in the list
 // for example, all map.json or guide.json files across each transaction set
@@ -60,9 +60,20 @@ export const getResourcePathsForTransactionSets = (
   transactionSets: string[],
   fileName: string,
   basePath = DEFAULT_RESOURCE_ID_BASE_PATH)  => {
-  const allResourcePaths = getAssetPaths({ basePath, fileName });
-  return transactionSets.flatMap((txnSet) => filterPaths(allResourcePaths, txnSet));
-}
+  return transactionSets.flatMap((transactionSet) => {
+    const parsedTransactionSet = transactionSet.toUpperCase().split("-");
+    if (parsedTransactionSet.length !== 3) {
+      console.error(`invalid format transaction set name: ${transactionSet}`);
+      process.exit(-1);
+    }
+
+    const standard = parsedTransactionSet[0];
+    const release = parsedTransactionSet[1];
+    const set = parsedTransactionSet[2];
+    const pathsForTransactionSet = getAssetPaths({ basePath: `${basePath}/${standard}/${release}`, fileName });
+    return filterPaths(pathsForTransactionSet, set);
+  });
+};
 
 // generic asset path retrieval (internal helper used for getting function
 // paths as well as resource paths for transaction sets
@@ -77,7 +88,7 @@ const getAssetPaths = (resourceFile: Required<ResourceFile>): string[] => {
 
       return collectedAssets.concat(`${resourceFile.basePath}/${assetName}/${resourceFile.fileName}`);
   }, []);
-}
+};
 
 // helper function to filter out paths that don't include the `pathMatch` string, and to check for `no match`
 const filterPaths = (paths: string[], pathMatch?: string): string[] => {
@@ -89,7 +100,7 @@ const filterPaths = (paths: string[], pathMatch?: string): string[] => {
   }
 
   return paths;
-}
+};
 
 // helper function to generate resource id env var entries for a set of resources
 export const generateResourceIdEnvVars = (

@@ -10,7 +10,7 @@ As the illustration below shows, the `read-inbound-edi` function performs severa
 
 2. Retrieves the contents of the uploaded file from the bucket
 
-3. Calls the EDI Translate API, along with the guideId
+3. Calls the EDI Translate API, along with the `guideId`
 
 4. The EDI Translate API retrieves the guide, validates that the EDI contents conform to the guide spec, and converts the data to JSON that is formatted in the schema associated with the guide
 

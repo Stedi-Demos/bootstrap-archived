@@ -6,14 +6,15 @@ import {
 } from "@stedi/sdk-client-mappings";
 import { serializeError } from "serialize-error";
 
+import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+
 let _mappingsClient: MappingsClient;
 
 export const mappingsClient = (): MappingsClient => {
   if (_mappingsClient == undefined) {
     _mappingsClient = new MappingsClient({
-      region: "us-east-1",
+      ...DEFAULT_SDK_CLIENT_PROPS,
       endpoint: "https://mappings.us.stedi.com/2021-06-01",
-      apiKey: process.env.STEDI_API_KEY,
     });
 
   }

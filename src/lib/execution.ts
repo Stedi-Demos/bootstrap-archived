@@ -11,7 +11,7 @@ import {
 
 import { bucketClient } from "./buckets.js";
 import { requiredEnvVar } from "./environment.js";
-import { trackProgress } from "./progressTracking";
+import { trackProgress } from "./progressTracking.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 

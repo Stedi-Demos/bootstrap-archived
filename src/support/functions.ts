@@ -13,23 +13,20 @@ import {
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
 
+import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+
 let _functionsClient: FunctionsClient;
 
 export const functionClient = (): FunctionsClient => {
   if (_functionsClient === undefined) {
     const config: FunctionsClientConfig = {
+      ...DEFAULT_SDK_CLIENT_PROPS,
       maxAttempts: 5,
-      region: "us-east-1",
       requestHandler: new NodeHttpHandler({
         connectionTimeout: 1_000,
       }),
     };
 
-    // additional config needed when running function code locally.
-    if (!process.env.LAMBDA_TASK_ROOT) {
-      config.endpoint = `https://functions.cloud.us.stedi.com/2021-11-16`;
-      config.apiKey = process.env.STEDI_API_KEY ?? "";
-    }
     _functionsClient = new FunctionsClient(config);
   }
 

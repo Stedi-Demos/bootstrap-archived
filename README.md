@@ -25,7 +25,7 @@ As the illustration below shows, the `read-inbound-edi` function performs severa
 ## Resource directories
 
 The [resources](./src/resources) directory contains templates that can be used to read an EDI document for specific transaction sets. The resource templates are organized in a hierarchical structure of subdirectories in the following pattern: `./src/releases/${ediStandard}/${release}/${transactionType}` (for example: `./src/releases/X12/5010/850`). Each template directory includes:
-* `guide.json`: a [guide](https://www.stedi.com/docs/guides) used to read and validate the EDI document and translate it to the JSON Schema of the guide
+* `guide.json`: a [guide](https://www.stedi.com/docs/guides) used to translate the EDI document into a JSON that conforms to the JSON Schema of the guide
 * `map.json`: a [mapping](https://www.stedi.com/docs/mappings) that converts the data from the JSON schema of the guide to a custom JSON shape
 * `input.edi`: the sample EDI input to the workflow  
 

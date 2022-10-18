@@ -2,13 +2,14 @@ import dotenv from "dotenv";
 
 import { CreateKeyspaceCommand, StashClient } from "@stedi/sdk-client-stash";
 
+import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+
 dotenv.config({ override: true });
 
 (async () => {
   const stashClient = new StashClient({
-    region: "us-east-1",
+    ...DEFAULT_SDK_CLIENT_PROPS,
     endpoint: "https://stash.us.stedi.com/2022-04-20",
-    apiKey: process.env.STEDI_API_KEY,
   });
 
   const result = await stashClient.send(

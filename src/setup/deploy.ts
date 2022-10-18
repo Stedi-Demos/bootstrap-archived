@@ -28,12 +28,8 @@ const createOrUpdateFunction = async (
 (async () => {
   const functionPaths = getFunctionPaths(process.argv[2]);
 
-  // Ensure that required guides and mappings resources exist for all enabled transactions
-  const enabledTransactionSets = getEnabledTransactionSets();
-  // getResourcePathsForTransactionSets(enabledTransactionSets, "guide.json");
-  // getResourcePathsForTransactionSets(enabledTransactionSets, "map.json");
-
   // Ensure that required guides and mappings env vars are defined for all enabled transactions
+  const enabledTransactionSets = getEnabledTransactionSets();
   getResourceIdsForTransactionSets(enabledTransactionSets);
 
   const promises = functionPaths.map(async (fnPath) => {

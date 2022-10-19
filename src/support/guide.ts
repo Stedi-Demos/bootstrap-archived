@@ -1,4 +1,6 @@
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
+import { serializeError } from "serialize-error";
+
 import {
   CreateGuideCommand,
   CreateGuideInput,
@@ -6,10 +8,11 @@ import {
   GuidesClientConfig,
   GuideVisibility,
   ListGuidesCommand,
-  PublishGuideCommand, ResourceConflictException
+  PublishGuideCommand,
+  ResourceConflictException
 } from "@stedi/sdk-client-guides";
-import { serializeError } from "serialize-error";
-import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants";
+
+import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 
 let _guidesClient: GuidesClient;
 

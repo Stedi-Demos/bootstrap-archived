@@ -1,10 +1,11 @@
+import { serializeError } from "serialize-error";
+
 import {
   CreateMappingCommand,
   CreateMappingCommandInput,
   ListMappingsCommand,
   MappingsClient
 } from "@stedi/sdk-client-mappings";
-import { serializeError } from "serialize-error";
 
 import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 

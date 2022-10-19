@@ -3,7 +3,7 @@ import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { translateEdiToJson } from "./translateV3.js";
-import { trackProgress } from "./progressTracking";
+import { trackProgress } from "./progressTracking.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 

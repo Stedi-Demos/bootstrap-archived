@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+
 import { requiredEnvVar } from "./environment.js";
 
 dotenv.config({ override: true });

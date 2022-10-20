@@ -5,6 +5,5 @@
     "release": "005010",
     "standard": "x12",
     "transactionSet": "855"
-  },
-  "visibility": "internal"
+  }
 }

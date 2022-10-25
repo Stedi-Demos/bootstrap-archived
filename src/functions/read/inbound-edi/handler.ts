@@ -149,7 +149,7 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
 
     return collectedKeys.concat({
       bucketName: record.s3.bucket.name,
-      key: eventKey,
+      key: decodeObjectKey(eventKey),
     });
   }, []);
 
@@ -157,6 +157,16 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
     filteredKeys,
     keysToProcess,
   }
+};
+
+// Object key components are URI-encoded (with `+` used for encoding spaces)
+const decodeObjectKey = (objectKey: string): string => {
+  const objectKeyComponents = objectKey.split("/");
+
+  const decodedObjectKeyComponents = objectKeyComponents.map((keyComponent) =>
+    decodeURIComponent(keyComponent.replace(/\+/g, " "))
+  );
+  return decodedObjectKeyComponents.join("/");
 };
 
 // Use EdiDocument metadata to construct the transaction set identifier using the convention used in this demo

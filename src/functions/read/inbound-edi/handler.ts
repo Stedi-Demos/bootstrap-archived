@@ -159,7 +159,7 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
   }
 };
 
-// Object keys components are URI-encoded (with `+` used for encoding spaces)
+// Object key components are URI-encoded (with `+` used for encoding spaces)
 const decodeObjectKey = (objectKey: string): string => {
   const objectKeyComponents = objectKey.split("/");
 

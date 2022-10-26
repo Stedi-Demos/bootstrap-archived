@@ -160,14 +160,8 @@ const groupEventKeys = (records: BucketNotificationRecord[]): GroupedEventKeys =
 };
 
 // Object key components are URI-encoded (with `+` used for encoding spaces)
-const decodeObjectKey = (objectKey: string): string => {
-  const objectKeyComponents = objectKey.split("/");
-
-  const decodedObjectKeyComponents = objectKeyComponents.map((keyComponent) =>
-    decodeURIComponent(keyComponent.replace(/\+/g, " "))
-  );
-  return decodedObjectKeyComponents.join("/");
-};
+const decodeObjectKey = (objectKey: string): string =>
+  decodeURIComponent(objectKey.replace(/\+/, " "));
 
 // Use EdiDocument metadata to construct the transaction set identifier using the convention used in this demo
 const getTransactionSetIdentifierForEdiDocument = (ediDocument: EdiDocument): string =>

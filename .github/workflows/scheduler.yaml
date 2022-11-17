@@ -8,7 +8,7 @@ on:
     - cron:  '3/5 * * * *'
 
 jobs:
-  run_sftp_poller:
+  run_upload_files:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,3 +20,4 @@ jobs:
       - run: npm run batch-upload-files
         env:
           STEDI_API_KEY: ${{secrets.STEDI_API_KEY}}
+          SFTP_BUCKET_NAME: "6902ae69-4db2-4374-97d1-dc3372354961-sftp"

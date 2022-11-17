@@ -15,7 +15,7 @@ import {
 } from "../../../lib/execution.js";
 import { Convert, Record as BucketNotificationRecord } from "../../../lib/types/BucketNotificationEvent.js";
 import { bucketClient } from "../../../lib/buckets.js";
-import { FilteredKey, GroupedEventKeys, KeyToProcess, ReadInboundEdiResults } from "./types.js";
+import { FilteredKey, GroupedEventKeys, KeyToProcess, ProcessingResults } from "./types.js";
 import { getResourceIdsForTransactionSets, requiredEnvVar } from "../../../lib/environment.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { EdiDocument, splitEdi } from "../../../lib/ediSplitter.js";
@@ -41,7 +41,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     await trackProgress("grouped event keys", groupedEventKeys);
 
     // empty structure to hold the results of each key that is processed
-    const results: ReadInboundEdiResults = {
+    const results: ProcessingResults = {
       filteredKeys: groupedEventKeys.filteredKeys,
       processingErrors: [],
       processedKeys: [],

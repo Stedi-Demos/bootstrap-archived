@@ -18,7 +18,7 @@ type ProcessingError = {
   error: Error;
 };
 
-export type ReadInboundEdiResults = {
+export type ProcessingResults = {
   filteredKeys: FilteredKey[];
   processingErrors: ProcessingError[];
   processedKeys: string[];

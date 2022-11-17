@@ -41,7 +41,7 @@ dotenv.config({ override: true });
     await bucketClient().send(new PutObjectCommand({
       bucketName: user.bucketName,
       key,
-      body: undefined,
+      body: new Uint8Array(),
     }));
   }
 

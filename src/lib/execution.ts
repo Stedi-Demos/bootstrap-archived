@@ -19,6 +19,7 @@ let _executionsBucketClient: BucketsClient;
 let _infiniteLoopCheckPassed: boolean = false;
 
 export type FailureRecord = { bucketName?: string, key: string };
+export type FailureResponse = { message: string, failureRecord: FailureRecord, error: ErrorObject }
 
 export const recordNewExecution = async (executionId: string, input: any) => {
   const client = await executionsBucketClient();
@@ -52,23 +53,23 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
   // async invokes automatically retries on failure, so
   // we should attempt to cleanup any leftover failure results
   // as this might be a later retry invoke
-  const failureResult = await client.send(
+  const previousFailure = await client.send(
     new DeleteObjectCommand({
       bucketName,
       key: `functions/${functionName()}/${executionId}/failure.json`,
     })
   );
 
-  if (failureResult)
+  if (previousFailure)
     console.log({
       action: "markExecutionAsSuccessful",
       executionId,
-      failureResult,
+      previousFailure,
     });
-  return { inputResult, failureResult };
+  return { inputResult, previousFailure };
 };
 
-export const failedExecution = async (executionId: string, error: Error): Promise<{ message: string, failureRecord: FailureRecord, error: ErrorObject }> => {
+export const failedExecution = async (executionId: string, error: Error): Promise<FailureResponse> => {
   const rawError = serializeError(error)
   const failureRecord = await markExecutionAsFailed(executionId, rawError);
   const message = "execution failed";

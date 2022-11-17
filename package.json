@@ -9,6 +9,7 @@
     "create-mappings": "ts-node-esm ./src/setup/createMappings.ts",
     "create-keyspace": "ts-node-esm ./src/setup/createKeyspace.ts",
     "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
+    "batch-upload-files": "ts-node-esm ./src/scripts/batchUploadFiles.ts",
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
     "test": "ava"
   },

@@ -17,7 +17,7 @@ jobs:
           node-version: "18.7"
       - run: npm ci
         # run batch-upload-files with loopCount=1 (will write one document for each txn set to bucket)
-      - run: npm run batch-upload-files
+      - run: npm run batch-upload-files 1
         env:
           STEDI_API_KEY: ${{secrets.STEDI_API_KEY}}
           SFTP_BUCKET_NAME: "6902ae69-4db2-4374-97d1-dc3372354961-sftp"

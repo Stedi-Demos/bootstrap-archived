@@ -19,37 +19,18 @@ export const processEdiDocument = async (guideId: string, mappingId: string, edi
     throw new Error(`no transaction sets found in input`);
   }
 
-  // parse out only the desired content from the interchange/group headers to include in mapping input alongside guide-based JSON
-  const { interchangeHeader, groupHeader } = translation.envelope as any;
-  const { receiverId, senderId, controlNumber: interchangeControlNumber } = interchangeHeader;
-  const { applicationSenderCode, applicationReceiverCode, controlNumber: groupControlNumber } = groupHeader;
-
-  const mappingContent = {
-    envelopeData: {
-      interchangeHeader: {
-        senderId,
-        receiverId,
-        interchangeControlNumber,
-      },
-      groupHeader: {
-        applicationSenderCode,
-        applicationReceiverCode,
-        groupControlNumber,
-      }
-    },
-    transactionSets: translation.transactionSets,
-  }
-
   const mapResult = await mappingsClient.send(
     new MapDocumentCommand({
       id: mappingId,
-      content: mappingContent,
+      content: {
+        envelope: translation.envelope,
+        transactionSets: translation.transactionSets,
+      }
     })
   );
 
   if (!mapResult.content) {
-    const transactionSetControlNumbers = { interchangeControlNumber, groupControlNumber };
-    throw new Error(`Failed to map transaction set. No content returned: ${JSON.stringify(transactionSetControlNumbers)}`);
+    throw new Error(`Failed to map transaction set. No content returned: ${JSON.stringify(translation.envelope)}`);
   }
 
   return mapResult.content;

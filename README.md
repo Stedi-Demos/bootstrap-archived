@@ -153,32 +153,28 @@ Once deployed, the function will be invoked when files are written to the SFTP b
    1. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/input.edi) document to the `/inbound` directory via SFTP
    1. view the results at your webhook destination!
 
-## Function execution tracking
+## Adding support for new Transaction Sets
 
-The `read-outbound-edi` function uses the bucket referenced by the `EXECUTIONS_BUCKET_NAME` environment variable to track details about each invocation of the function.
+You can easily add support for additional inbound transaction sets by following these steps:
 
-1. At the beginning of each invocation, an `executionId` is generated. The `executionId` is a hash of the function name and the input payload. This allows subsequent invocations of the function with the same payload to be processed as retries.
+1. Create a new Guide for the correct X12 release and transaction set, noting the ID for later.
 
-1. The Bucket Notification event input to the function is written to the executions bucket in the following location:
+2. Create a new mapping using the "To JSON" schema from the Guide, noting the ID for later.
 
-   ```bash
-   functions/read-outbound-edi/${executionId}/input.json
-   ```
+3. Add a new configuration record to the [routing-configuration](https://www.stedi.com/app/stash/keyspace/routing-configuration) Stash keyspace what was provisioned with you first deployed this repo.
 
-1. If any failures are encountered during the execution of the function, the details of the failure are written to the following location:
+The **Key** must use the following structure: `inbound/X12/{{X12-RELEASE}}/{{TRANSACTION-SET}}` for example to support 5010 Invoice (810s) you'd use this key: `inbound/X12/5010/850`
 
-   ```bash
-   functions/read-outbound-edi/${executionId}/failure.json
-   ```
+The **Value** must be a JSON object:
 
-1. Upon successful invocation of the function (either on the initial invocation, or on a subsequent retry), the `input.json` as well as the `failure.json` from previous failed invocations (if present) are deleted. Therefore, any items present in the `executions` bucket represent in-progress executions, or previously failed invocations (with details about the failure).
-
-## Additional progress tracking
-
-Additional progress tracking can be enabled by including the `PROGRESS_TRACKING_WEBHOOK_URL` environment variable in your `.env` file. The additional progress tracking provides more visibility into the process of translating the input X12 EDI document into the custom JSON output shape. The `read-inbound-edi` function records additional details as it processes documents, and it sends this output to the destination webhook URL. You can change the destination for the additional progress tracking by changing the corresponding environment variable (or remove the environment variable completely to disable this additional tracking):
-
+```json
+[
+  {
+    "destination": {
+      "url": "{{ URL WHERE YOU WANT TO SEND THE MAPPED JSON}}"
+    },
+    "guideId": "{{ Guide ID from step 1 above }}",
+    "mappingId": "{{ Mapping ID from step 2 above }}"
+  }
+]
 ```
-PROGRESS_TRACKING_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
-```
-
-Note: after updating (or removing) this environment variable, you will need to also update (or remove) the environment variable from the deployed `read-inbound-edi` function. You can do this via the [Functions UI](https://www.stedi.com/terminal/functions/read-inbound-edi), or by re-running `npm run deploy`.

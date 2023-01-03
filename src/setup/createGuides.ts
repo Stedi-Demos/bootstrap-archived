@@ -5,11 +5,8 @@ import dotenv from "dotenv";
 import { CreateGuideInput } from "@stedi/sdk-client-guides";
 
 import {
-  generateResourceIdEnvVars,
   getEnabledTransactionSets,
   getResourcePathsForTransactionSets,
-  printResourceEnvVarSummary,
-  removeExistingResourceIdEnvVars,
   resourceNamespaceFromPath,
   updateDotEnvFile,
 } from "../support/utils.js";
@@ -17,8 +14,11 @@ import { ensureGuideExists } from "../support/guide.js";
 
 dotenv.config({ override: true });
 
-(async () => {
-  const guidePaths = getResourcePathsForTransactionSets(getEnabledTransactionSets(), "guide.json");
+export const createGuides = async () => {
+  const guidePaths = getResourcePathsForTransactionSets(
+    getEnabledTransactionSets(),
+    "guide.json"
+  );
 
   const promises = guidePaths.map(async (guidePath) => {
     const namespace = resourceNamespaceFromPath(guidePath);
@@ -35,13 +35,7 @@ dotenv.config({ override: true });
     return { name: namespace, id: guideId };
   });
 
-  const guidesDetails = await Promise.all(promises);
-  const guideIdEnvVars = generateResourceIdEnvVars("guide", guidesDetails);
-  const existingEnvVars = removeExistingResourceIdEnvVars("guide", dotenv.config().parsed);
-  updateDotEnvFile({
-    ...existingEnvVars,
-    ...guideIdEnvVars,
-  });
-  console.log(`\nDone.`);
-  printResourceEnvVarSummary("guide", guideIdEnvVars);
-})();
+  const result = await Promise.all(promises);
+
+  return result;
+};

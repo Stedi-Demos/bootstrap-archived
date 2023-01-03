@@ -13,7 +13,7 @@ import {
 } from "@stedi/sdk-client-buckets";
 
 import { bucketClient } from "../lib/buckets.js";
-import { printResourceEnvVarSummary, updateDotEnvFile } from "../support/utils.js";
+import { updateDotEnvFile } from "../support/utils.js";
 
 dotenv.config({ override: true });
 
@@ -36,13 +36,18 @@ dotenv.config({ override: true });
 
   // Pre-create trading partner inbound/outbound directories for convenience
   const tradingPartnerPrefix = "trading_partners/ANOTHERMERCH";
-  const tradingPartnerDirectories = [`${tradingPartnerPrefix}/inbound/`, `${tradingPartnerPrefix}/outbound/`];
-  for await(const key of tradingPartnerDirectories) {
-    await bucketClient().send(new PutObjectCommand({
-      bucketName: user.bucketName,
-      key,
-      body: new Uint8Array(),
-    }));
+  const tradingPartnerDirectories = [
+    `${tradingPartnerPrefix}/inbound/`,
+    `${tradingPartnerPrefix}/outbound/`,
+  ];
+  for await (const key of tradingPartnerDirectories) {
+    await bucketClient().send(
+      new PutObjectCommand({
+        bucketName: user.bucketName,
+        key,
+        body: new Uint8Array(),
+      })
+    );
   }
 
   // Use a separate bucket for tracking function executions
@@ -50,10 +55,16 @@ dotenv.config({ override: true });
   const executionsBucketName = `${stediAccountId}-executions`;
 
   const bucketsList = await bucketClient().send(new ListBucketsCommand({}));
-  if (!bucketsList.items?.some((bucket) => bucket.bucketName === executionsBucketName)) {
-    bucketClient().send(new CreateBucketCommand({
-      bucketName: executionsBucketName,
-    }));
+  if (
+    !bucketsList.items?.some(
+      (bucket) => bucket.bucketName === executionsBucketName
+    )
+  ) {
+    bucketClient().send(
+      new CreateBucketCommand({
+        bucketName: executionsBucketName,
+      })
+    );
   }
 
   const bucketEnvVarEntries: dotenv.DotenvParseOutput = {
@@ -68,12 +79,13 @@ dotenv.config({ override: true });
   });
 
   console.log(`\nDone.`);
-  printResourceEnvVarSummary("bucket", bucketEnvVarEntries);
 
   // Clean up temporary user and corresponding home directory
-  await sftpClient.send(new DeleteUserCommand({username: user.username}));
-  await bucketClient().send(new DeleteObjectCommand({
-    bucketName: user.bucketName,
-    key: user.homeDirectory,
-  }));
+  await sftpClient.send(new DeleteUserCommand({ username: user.username }));
+  await bucketClient().send(
+    new DeleteObjectCommand({
+      bucketName: user.bucketName,
+      key: user.homeDirectory,
+    })
+  );
 })();

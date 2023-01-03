@@ -2,12 +2,7 @@ import dotenv from "dotenv";
 
 import { compile, packForDeployment } from "../support/compile.js";
 import { createFunction, updateFunction } from "../support/functions.js";
-import {
-  functionNameFromPath,
-  getEnabledTransactionSets,
-  getFunctionPaths,
-} from "../support/utils.js";
-import { getResourceIdsForTransactionSets } from "../lib/environment.js";
+import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 
 dotenv.config({ override: true });
 
@@ -29,8 +24,6 @@ const createOrUpdateFunction = async (
   const functionPaths = getFunctionPaths(process.argv[2]);
 
   // Ensure that required guides and mappings env vars are defined for all enabled transactions
-  const enabledTransactionSets = getEnabledTransactionSets();
-  getResourceIdsForTransactionSets(enabledTransactionSets);
 
   const promises = functionPaths.map(async (fnPath) => {
     const functionName = functionNameFromPath(fnPath);

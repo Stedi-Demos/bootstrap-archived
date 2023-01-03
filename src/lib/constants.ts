@@ -8,3 +8,5 @@ export const DEFAULT_SDK_CLIENT_PROPS = {
   apiKey: requiredEnvVar("STEDI_API_KEY"),
   region: "us",
 };
+
+export const ROUTING_KEYSPACE_NAME = "routing-configuration";

@@ -5,20 +5,19 @@ import dotenv from "dotenv";
 import { CreateMappingCommandInput } from "@stedi/sdk-client-mappings";
 
 import {
-  generateResourceIdEnvVars,
   getEnabledTransactionSets,
   getResourcePathsForTransactionSets,
-  printResourceEnvVarSummary,
-  removeExistingResourceIdEnvVars,
   resourceNamespaceFromPath,
-  updateDotEnvFile,
 } from "../support/utils.js";
 import { ensureMappingExists } from "../support/mapping.js";
 
 dotenv.config({ override: true });
 
-(async () => {
-  const mappingPaths = getResourcePathsForTransactionSets(getEnabledTransactionSets(), "map.json");
+export const createMappings = async () => {
+  const mappingPaths = getResourcePathsForTransactionSets(
+    getEnabledTransactionSets(),
+    "map.json"
+  );
 
   const promises = mappingPaths.map(async (mappingPath) => {
     const namespace = resourceNamespaceFromPath(mappingPath);
@@ -35,14 +34,7 @@ dotenv.config({ override: true });
     return { name: namespace, id: mappingId };
   }, []);
 
-  const mappingsDetails = await Promise.all(promises);
-  const mappingIdEnvVars = generateResourceIdEnvVars("mapping", mappingsDetails);
-  const existingEnvVars = removeExistingResourceIdEnvVars("mapping", dotenv.config().parsed);
-  updateDotEnvFile({
-    ...existingEnvVars,
-    ...mappingIdEnvVars,
-  });
+  const result = await Promise.all(promises);
 
-  console.log(`\nDone.`);
-  printResourceEnvVarSummary("mapping", mappingIdEnvVars);
-})();
+  return result;
+};

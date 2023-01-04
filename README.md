@@ -2,7 +2,7 @@
 
 This repo contains an end-to-end configuration for reading X12 EDI documents. This implementation demonstrates one possible way to interact with Stedi's APIs to achieve a typical EDI read workload; your implementation may include some or all of these products depending on your particular systems and requirements.
 
-The main orchestration point of this demo is a Stedi function called `main-process-edi`, which is written in [TypeScript](src/functions/read/inbound-edi/handler.ts). For this workload, the function is invoked when new items are uploaded to the [SFTP](https://www.stedi.com/docs/sftp)-enabled [bucket](https://www.stedi.com/docs/bucket). The function processes X12 EDI documents that are uploaded to any directory named `inbound` within the bucket, converting it to a JSON payload that is then sent to an external webhook.
+The main orchestration point of this demo is a Stedi function called `main-process-edi`, which is written in [TypeScript](src/functions/main/process-edi/handler.ts). For this workload, the function is invoked when new items are uploaded to the [SFTP](https://www.stedi.com/docs/sftp)-enabled [bucket](https://www.stedi.com/docs/bucket). The function processes X12 EDI documents that are uploaded to any directory named `inbound` within the bucket, converting it to a JSON payload that is then sent to an external webhook.
 
 As the illustration below shows, the `main-process-edi` function performs several steps:
 
@@ -37,8 +37,8 @@ The [resources](./src/resources) directory contains templates that can be used t
 1. Clone this repo and install the necessary dependencies:
 
    ```bash
-   git clone https://github.com/Stedi-Demos/read-edi-demo.git
-   cd read-edi-demo
+   git clone https://github.com/Stedi-Demos/bootstrap.git
+   cd bootsrap
    npm ci
    ```
 
@@ -48,7 +48,7 @@ The [resources](./src/resources) directory contains templates that can be used t
 
    - `STEDI_API_KEY`: Your Stedi API Key - used to deploy the function and internally to interact with product APIs. If you don't already have one, you can generate an [API Key here](https://www.stedi.com/app/settings/api-keys).
    - `DESTINATION_WEBHOOK_URL`: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step.
-   - `PROGRESS_TRACKING_WEBHOOK_URL` [_optional but recommended_]: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step -- including this environment variable enables additional progress tracking and improves observability of the function executions. For more details on the progress tracking, [see below](#additional-progress-tracking).
+   - `PROGRESS_TRACKING_WEBHOOK_URL` [_optional but recommended_]: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step -- including this environment variable enables additional progress tracking and improves observability of the function executions.
 
    Example `.env` file:
 

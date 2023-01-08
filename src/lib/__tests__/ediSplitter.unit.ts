@@ -42,11 +42,15 @@ test("should throw error if isa is encountered within scope of another isa", (t)
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "interchange start encountered without previous interchange termination");
+  t.is(
+    error?.message,
+    "interchange start encountered without previous interchange termination"
+  );
 });
 
 test("should throw error if there are not enough elements in the document", (t) => {
-  const edi = "ISA*00*          *00*          *12*7147085121     *01*040132628      *220921*1002*U*00501*000028538*0*P*>~";
+  const edi =
+    "ISA*00*          *00*          *12*7147085121     *01*040132628      *220921*1002*U*00501*000028538*0*P*>~";
   const error = t.throws(
     () => {
       splitEdi(edi);
@@ -101,7 +105,10 @@ test("should throw error if st encountered outside the scope of a functional gro
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "transaction set encountered outside the scope of a functional group");
+  t.is(
+    error?.message,
+    "transaction set encountered outside the scope of a functional group"
+  );
 });
 
 test("should throw error if non-envelope segment encountered outside the scope of a functional group", (t) => {
@@ -112,7 +119,10 @@ test("should throw error if non-envelope segment encountered outside the scope o
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "segment encountered outside the scope of a functional group");
+  t.is(
+    error?.message,
+    "segment encountered outside the scope of a functional group"
+  );
 });
 
 test("should throw error if ge encountered outside the scope of a functional group", (t) => {
@@ -123,7 +133,10 @@ test("should throw error if ge encountered outside the scope of a functional gro
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "functional group terminator encountered outside the scope of a functional group");
+  t.is(
+    error?.message,
+    "functional group terminator encountered outside the scope of a functional group"
+  );
 });
 
 test("should throw error if functional group transaction set code not found", (t) => {
@@ -146,7 +159,10 @@ test("should throw error if iea encountered outside the scope of an interchange"
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "interchange terminator encountered outside the scope of an interchange");
+  t.is(
+    error?.message,
+    "interchange terminator encountered outside the scope of an interchange"
+  );
 });
 
 test("should throw error if interchange does not include a functional group", (t) => {
@@ -169,7 +185,10 @@ test("should throw error when functional group has multiple transactions of diff
     },
     { instanceOf: Error }
   );
-  t.is(error?.message, "all transaction sets within a functional group must be the same type");
+  t.is(
+    error?.message,
+    "all transaction sets within a functional group must be the same type"
+  );
 });
 
 test("should generate a single split when edi file has a single transaction code", (t) => {
@@ -177,9 +196,9 @@ test("should generate a single split when edi file has a single transaction code
   const splitEdis = splitEdi(edi);
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "855");
-  t.is(splitEdis[0].metadata.release, "5010");
-  t.is(splitEdis[0].metadata.senderId, "7147085121");
-  t.is(splitEdis[0].metadata.receiverId, "040132628");
+  t.is(splitEdis[0].metadata.release, "005010");
+  t.is(splitEdis[0].metadata.senderId, "12/7147085121");
+  t.is(splitEdis[0].metadata.receiverId, "01/040132628");
   t.is(splitEdis[0].edi, edi);
 });
 
@@ -189,9 +208,9 @@ test("st element should not be parsed as header", (t) => {
   const splitEdis = splitEdi(edi);
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "214");
-  t.is(splitEdis[0].metadata.release, "4010");
-  t.is(splitEdis[0].metadata.senderId, "FEDEX");
-  t.is(splitEdis[0].metadata.receiverId, "STEDI");
+  t.is(splitEdis[0].metadata.release, "004010");
+  t.is(splitEdis[0].metadata.senderId, "ZZ/FEDEX");
+  t.is(splitEdis[0].metadata.receiverId, "ZZ/STEDI");
   t.is(edi, splitEdis[0].edi);
 });
 
@@ -202,8 +221,8 @@ test("ensure all segments are present after split", (t) => {
 
   t.is(splitEdis.length, 1);
   t.is(splitEdis[0].metadata.code, "850");
-  t.is(splitEdis[0].metadata.release, "5010");
-  t.is(splitEdis[0].metadata.senderId, "040132628");
-  t.is(splitEdis[0].metadata.receiverId, "9702636910");
+  t.is(splitEdis[0].metadata.release, "005010");
+  t.is(splitEdis[0].metadata.senderId, "01/040132628");
+  t.is(splitEdis[0].metadata.receiverId, "12/9702636910");
   t.is(edi, splitEdis[0].edi);
 });

@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "sendingPartnerId": "THISISME",
+    "receivingPartnerId": "ANOTHERMERCH",
+    "transactionSet": "850"
+  },
+  "payload": {
+    "orderDetails": {
+      "internalOrderNumber": "ACME-4567",
+      "orderNumber": "365465413",
+      "orderType": "drop-ship",
+      "orderDate": "2022-08-30T14:22:22Z",
+      "orderMemo": "Thank you for your business",
+      "orderAdminContact": {
+        "name": "Marvin Acme",
+        "address": {
+          "street1": "123 Main Street",
+          "city": "Fairfield",
+          "state": "NJ",
+          "zip": "07004",
+          "country": "US"
+        },
+        "phone": "973-555-1212",
+        "email": "marvin@acme.com"
+      }
+    },
+    "shippingDetails": {
+      "carrier": "FedEx Home Delivery"
+    },
+    "shipTo": {
+      "customerId": "123",
+      "name": "Wile E Coyote",
+      "address": {
+        "street1": "111 Canyon Court",
+        "city": "Phoenix",
+        "state": "AZ",
+        "zip": "85001",
+        "country": "US"
+      }
+    },
+    "items": [
+      {
+        "id": "item-1",
+        "quantity": 8,
+        "unitCode": "EA",
+        "price": 400,
+        "vendorPartNumber": "VND1234567",
+        "sku": "ACM/8900-400",
+        "description": "400 pound anvil"
+      },
+      {
+        "id": "item-2",
+        "quantity": 4,
+        "unitCode": "EA",
+        "price": 125,
+        "vendorPartNumber": "VND000111222",
+        "sku": "ACM/1100-001",
+        "description": "Detonator"
+      }
+    ]
+  }
+}

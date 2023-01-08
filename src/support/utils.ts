@@ -101,11 +101,6 @@ const getAssetPaths = (resourceFile: Required<ResourceFile>): string[] => {
 const filterPaths = (paths: string[], pathMatch?: string): string[] => {
   if (pathMatch) paths = paths.filter((path) => path.includes(`/${pathMatch}`));
 
-  if (paths.length === 0) {
-    console.error(`No matching assets found. (path filter: ${pathMatch})`);
-    process.exit(1);
-  }
-
   return paths;
 };
 

@@ -9,4 +9,4 @@ export const DEFAULT_SDK_CLIENT_PROPS = {
   region: "us",
 };
 
-export const ROUTING_KEYSPACE_NAME = "routing-configuration";
+export const PARTNERS_KEYSPACE_NAME = "partners-configuration";

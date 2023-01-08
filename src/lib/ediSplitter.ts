@@ -11,8 +11,8 @@ export type EdiDocument = {
 };
 
 type ISA = {
-  senderId: string,
-  receiverId: string,
+  senderId: string;
+  receiverId: string;
   contents: string;
 };
 
@@ -46,7 +46,9 @@ export const splitEdi = (ediDocument: string): EdiDocument[] => {
   }
 
   // split input on segment delimiter (and filter out any empty segments, such as after the final segment terminator)
-  const segments = ediDocument.split(segmentDelimiter).filter((segment) => segment);
+  const segments = ediDocument
+    .split(segmentDelimiter)
+    .filter((segment) => segment);
 
   let isa: ISA | undefined;
   let functionalGroup: FunctionalGroup | undefined;
@@ -57,14 +59,18 @@ export const splitEdi = (ediDocument: string): EdiDocument[] => {
       case "ISA":
         // this use case could be accommodated in the future by auto-generating an IEA
         if (functionalGroup) {
-          throw new Error("interchange start encountered without previous interchange termination");
+          throw new Error(
+            "interchange start encountered without previous interchange termination"
+          );
         }
 
         isa = { ...extractIsaIds(elements), contents: currentSegment };
         break;
       case "GS":
         if (functionalGroup) {
-          throw new Error("only one functional group is allowed per interchange");
+          throw new Error(
+            "only one functional group is allowed per interchange"
+          );
         }
 
         const release = extractRelease(elements);
@@ -72,7 +78,9 @@ export const splitEdi = (ediDocument: string): EdiDocument[] => {
         break;
       case "ST":
         if (!functionalGroup) {
-          throw new Error("transaction set encountered outside the scope of a functional group");
+          throw new Error(
+            "transaction set encountered outside the scope of a functional group"
+          );
         }
 
         const code = extractTransactionSetCode(elements);
@@ -83,13 +91,22 @@ export const splitEdi = (ediDocument: string): EdiDocument[] => {
         finalizeFunctionalGroup(currentSegment, functionalGroup);
         break;
       case "IEA":
-        splitEdis.push(finalizeEdiDocument(currentSegment, segmentDelimiter, functionalGroup, isa));
+        splitEdis.push(
+          finalizeEdiDocument(
+            currentSegment,
+            segmentDelimiter,
+            functionalGroup,
+            isa
+          )
+        );
         functionalGroup = undefined;
         isa = undefined;
         break;
       default:
         if (!functionalGroup) {
-          throw new Error("segment encountered outside the scope of a functional group");
+          throw new Error(
+            "segment encountered outside the scope of a functional group"
+          );
         }
         functionalGroup.contents.push(currentSegment);
     }
@@ -100,7 +117,7 @@ export const splitEdi = (ediDocument: string): EdiDocument[] => {
 
 const extractDelimiters = (
   ediDocument: string
-): { segmentDelimiter: string, elementDelimiter: string } => {
+): { segmentDelimiter: string; elementDelimiter: string } => {
   // The ISA segment should be 106 characters, so the entire document should be bigger than that
   if (ediDocument.length < 106 || !ediDocument.trimStart().startsWith("ISA")) {
     throw new Error("invalid ISA segment");
@@ -125,15 +142,17 @@ const extractDelimiters = (
   return { segmentDelimiter, elementDelimiter };
 };
 
-const extractIsaIds = (elements: string[]): { senderId: string, receiverId: string } => {
+const extractIsaIds = (
+  elements: string[]
+): { senderId: string; receiverId: string } => {
   if (elements.length !== 17) {
     throw new Error("invalid ISA segment: not enough elements detected");
   }
 
   return {
-    senderId: elements[6].trim(),
-    receiverId: elements[8].trim(),
-  }
+    senderId: `${elements[5].trim()}/${elements[6].trim()}`,
+    receiverId: `${elements[7].trim()}/${elements[8].trim()}`,
+  };
 };
 
 const extractRelease = (elements: string[]): string => {
@@ -141,8 +160,7 @@ const extractRelease = (elements: string[]): string => {
     throw new Error("invalid GS segment: not enough elements detected");
   }
 
-  // remove left padding `0`s from release
-  return elements[8].replace(/^0+/, "");
+  return elements[8];
 };
 
 const extractTransactionSetCode = (elements: string[]): string => {
@@ -153,9 +171,14 @@ const extractTransactionSetCode = (elements: string[]): string => {
   return elements[1];
 };
 
-const ensureFunctionalGroupCodeIsPopulated = (functionalGroup: FunctionalGroup, code: string): void => {
+const ensureFunctionalGroupCodeIsPopulated = (
+  functionalGroup: FunctionalGroup,
+  code: string
+): void => {
   if (functionalGroup.code && functionalGroup.code !== code) {
-    throw new Error("all transaction sets within a functional group must be the same type");
+    throw new Error(
+      "all transaction sets within a functional group must be the same type"
+    );
   }
 
   if (!functionalGroup.code) {
@@ -168,7 +191,9 @@ const finalizeFunctionalGroup = (
   functionalGroup?: FunctionalGroup
 ): Required<FunctionalGroup> => {
   if (!functionalGroup) {
-    throw new Error("functional group terminator encountered outside the scope of a functional group");
+    throw new Error(
+      "functional group terminator encountered outside the scope of a functional group"
+    );
   }
   if (!functionalGroup?.code) {
     throw new Error("functional group transaction set code was not found");
@@ -187,10 +212,12 @@ const finalizeEdiDocument = (
   segment: string,
   segmentDelimiter: string,
   functionalGroup?: FunctionalGroup,
-  isa?: ISA,
+  isa?: ISA
 ): EdiDocument => {
   if (!isa) {
-    throw new Error("interchange terminator encountered outside the scope of an interchange");
+    throw new Error(
+      "interchange terminator encountered outside the scope of an interchange"
+    );
   }
 
   const isaSegment = isa.contents.concat(segmentDelimiter);
@@ -204,7 +231,9 @@ const finalizeEdiDocument = (
     throw new Error("functional group transaction set code was not found");
   }
 
-  const interchangeContents = functionalGroup.contents.join(segmentDelimiter).concat(segmentDelimiter);
+  const interchangeContents = functionalGroup.contents
+    .join(segmentDelimiter)
+    .concat(segmentDelimiter);
 
   return {
     metadata: {
@@ -214,5 +243,5 @@ const finalizeEdiDocument = (
       release: functionalGroup.release,
     },
     edi: [isaSegment, interchangeContents, ieaSegment].join(""),
-  }
+  };
 };

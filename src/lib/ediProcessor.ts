@@ -7,7 +7,11 @@ import { trackProgress } from "./progressTracking.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 
-export const processEdiDocument = async (guideId: string, mappingId: string, ediDocument: string): Promise<DocumentType> => {
+export const processEdiDocument = async (
+  guideId: string,
+  ediDocument: string,
+  mappingId?: string
+): Promise<any> => {
   const translation = await translateEdiToJson(ediDocument, guideId);
   await trackProgress("translated edi document", translation);
 
@@ -15,23 +19,34 @@ export const processEdiDocument = async (guideId: string, mappingId: string, edi
     throw new Error(`no envelope found in input`);
   }
 
-  if (!translation.transactionSets || translation.transactionSets.length === 0) {
+  if (
+    !translation.transactionSets ||
+    translation.transactionSets.length === 0
+  ) {
     throw new Error(`no transaction sets found in input`);
   }
 
-  const mapResult = await mappingsClient.send(
-    new MapDocumentCommand({
-      id: mappingId,
-      content: {
-        envelope: translation.envelope,
-        transactionSets: translation.transactionSets,
-      }
-    })
-  );
+  if (mappingId !== undefined) {
+    const mapResult = await mappingsClient.send(
+      new MapDocumentCommand({
+        id: mappingId,
+        content: {
+          envelope: translation.envelope,
+          transactionSets: translation.transactionSets,
+        },
+      })
+    );
 
-  if (!mapResult.content) {
-    throw new Error(`Failed to map transaction set. No content returned: ${JSON.stringify(translation.envelope)}`);
+    if (!mapResult.content) {
+      throw new Error(
+        `Failed to map transaction set. No content returned: ${JSON.stringify(
+          translation.envelope
+        )}`
+      );
+    }
+
+    return mapResult.content;
   }
 
-  return mapResult.content;
+  return translation;
 };

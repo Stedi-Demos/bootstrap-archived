@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import consumers from "stream/consumers";
 import { Readable } from "stream";
 import { serializeError } from "serialize-error";
@@ -29,7 +28,11 @@ import {
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { splitEdi } from "../../../lib/ediSplitter.js";
-import { loadRouting } from "../../../lib/loadRouting.js";
+import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import { loadPartnership } from "../../../lib/loadPartnership.js";
+import { resolveGuide } from "../../../lib/resolveGuide.js";
+import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
+import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -75,36 +78,65 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         const ediDocuments = splitEdi(fileContents);
         await trackProgress("split edi documents", ediDocuments);
 
+        const sendingPartnerId = await resolvePartnerIdFromISAId(
+          ediDocuments[0].metadata.senderId
+        );
+
+        const receivingPartnerId = await resolvePartnerIdFromISAId(
+          ediDocuments[0].metadata.receiverId
+        );
+
+        // load the outbound x12 configuration for the sender
+        const partnership = await loadPartnership(
+          sendingPartnerId,
+          receivingPartnerId
+        );
+
+        // get the config for the transaction set
+        const transactionSetConfig = resolveTransactionSetConfig({
+          partnership,
+          sendingPartnerId,
+          receivingPartnerId,
+        });
+
         // For each EDI document:
         // - look up the guideId and mappingId
         // - call processEdiDocument, which translates X12 to JSON, and then invokes the mapping
         // - send the result to the webhook
         // - delete the input file once processed successfully
+
         for await (const ediDocument of ediDocuments) {
-          console.log("loading routing", ediDocument);
-          const routes = await loadRouting(
-            "inbound",
-            "X12",
-            ediDocument.metadata.release,
-            ediDocument.metadata.code
-          );
+          // load the guide for the transaction set
+          const guideSummary = await resolveGuide({
+            guideIds: transactionSetConfig.guideIds,
+            transactionSet: ediDocument.metadata.code,
+          });
 
-          for (const { guideId, mappingId, destination } of routes) {
-            console.log("processing route", guideId, mappingId, destination);
-
-            const ediProcessingResult = await processEdiDocument(
-              guideId,
-              mappingId,
-              ediDocument.edi
+          if (guideSummary === undefined)
+            throw new Error(
+              `No guide found for transaction set '${ediDocument.metadata.code}'`
             );
 
-            await fetch(destination.url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(ediProcessingResult),
-            });
+          console.log(guideSummary);
+
+          for (const {
+            destination,
+            mappingId,
+          } of transactionSetConfig.destinations) {
+            console.log(
+              "processing",
+              guideSummary.guideId,
+              mappingId,
+              destination
+            );
+
+            const ediProcessingResult = await processEdiDocument(
+              guideSummary.guideId,
+              ediDocument.edi,
+              mappingId
+            );
+
+            await deliverToDestination(destination, ediProcessingResult);
           }
         }
 

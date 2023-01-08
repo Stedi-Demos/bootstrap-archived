@@ -21,7 +21,7 @@ dotenv.config({ override: true });
     );
   }
 
-  const functionPaths = getFunctionPaths("process-edi");
+  const functionPaths = getFunctionPaths("inbound");
   if (functionPaths.length != 1) {
     throw new Error("Error: expected to find exactly 1 `read` function");
   }

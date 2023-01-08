@@ -1,0 +1,289 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 1390 1376">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&amp;display=swap');
+
+    :root {
+      --black:      #181819;
+      --gray:       #313135;
+      --light-gray: #7c7c83;
+      --white:      #ffffff;
+      --magenta:    #b660c3;
+      --blue:       #0082e6;
+      --red:        #e5484d;
+      --green:      #2f8e83;
+      --yellow:     #ffb224;
+    }
+ 
+    text { font: 24px "IBM Plex Mono", "Monaco", monospace; text-anchor: middle; dominant-baseline: middle; letter-spacing: 0.1ex }
+    .product text, .system text { font: 30px sans-serif }
+    .system text { fill: var(--black) }
+    .product text { fill: var(--white) }
+    .data text { fill: var(--gray); stroke: var(--gray) }
+    .step text { fill: var(--white) }
+
+    .product > g > rect, .connector circle { fill: var(--gray) }
+    .data rect { fill: var(--white); stroke: var(--gray); stroke-width: 4 }
+    .connector path { fill: var(--light-gray) }
+    .arrow { fill: var(--light-gray); stroke: var(--light-gray); stroke-width: 4 }
+    #external rect { fill: #b0b0b0 }
+    #external rect.background { fill: var(--white) }
+    .step circle { fill: var(--magenta) }
+
+    @media (prefers-color-scheme: dark) {
+      .system text { fill: var(--white) }
+      .step text { fill: var(--black); stroke: var(--black) }
+      .data text { fill: var(--white); stroke: var(--white) }
+      .data rect { fill: var(--black); stroke: var(--white) }
+      #external rect { fill: #484848 }
+      #external rect.background { fill: var(--black) }
+    }
+  </style>
+
+  <defs>
+    <pattern id="external" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect class="background" x="0" y="0" width="12" height="12" />
+      <rect x="0" y="0" width="3" height="3" />
+      <rect x="6" y="6" width="3" height="3" />
+    </pattern>
+  </defs>
+
+  <g class="arrow">
+    <g transform="translate(250 100)">
+      <path d="M 0 0 v 104 m 0 0 h -9 l 9 16 l 9 -16 z" />
+    </g>
+
+    <g transform="translate(950 300)">
+      <path d="M 0 0 h -429 m 0 0 v -9 l -16 9 l 16 9 z" />
+    </g>
+
+    <g transform="translate(500 462)">
+      <path d="M 0 0 h 429 m 0 0 v -9 l 16 9 l -16 9 z" />
+    </g>
+
+    <g transform="translate(950 538)">
+      <path d="M 0 0 h -429 m 0 0 v -9 l -16 9 l 16 9 z" />
+    </g>
+
+    <g transform="translate(500 662)">
+      <path d="M 0 0 h 429 m 0 0 v -9 l 16 9 l -16 9 z" />
+    </g>
+
+    <g transform="translate(950 738)">
+      <path d="M 0 0 h -429 m 0 0 v -9 l -16 9 l 16 9 z" />
+    </g>
+
+    <g transform="translate(250 775)">
+      <path d="M 0 0 v 104 m 0 0 h -9 l 9 16 l 9 -16 z" />
+    </g>
+
+    <g transform="translate(250 1131)">
+      <path d="M 0 0 v 104 m 0 0 h -9 l 9 16 l 9 -16 z" />
+    </g>
+  </g>
+
+  
+  <g class="system">
+    <g transform="translate(0 0)">
+      <rect x="0" y="0" width="500" height="100" fill="url(#external)" />
+      <text x="250" y="50">Your system</text>
+    </g>
+
+    <g transform="translate(0 1256)">
+      <rect x="0" y="0" width="500" height="100" fill="url(#external)" />
+      <text x="250" y="50">Trading partner’s system</text>
+    </g>
+  </g>
+
+
+  <g class="product">
+    <g transform="translate(0 225)">
+      <rect x="0" y="0" width="500" height="550" />
+      <text x="250" y="275">Functions</text>
+
+      <g transform="translate(130, 258)">
+        <circle cx="4" cy="4" r="4" fill="var(--magenta)" />
+        <rect x="16" y="0" width="16" height="8" fill="var(--white)" />
+        <rect x="8" y="8" width="8" height="8" fill="var(--white)" />
+        <rect x="0" y="16" width="8" height="8" fill="var(--white)" />
+        <rect x="16" y="16" width="16" height="8" fill="var(--red)" />
+        <rect x="8" y="24" width="8" height="8" fill="var(--red)" />
+      </g>
+    </g>
+
+    <g transform="translate(870 225)">
+      <rect x="0" y="0" width="500" height="150" />
+      <text x="250" y="75">Stash</text>
+
+      <g transform="translate(160, 59)">
+        <rect x="8" y="0" width="24" height="8" fill="var(--white)" />
+        <rect x="0" y="8" width="8" height="8" fill="var(--white)" />
+        <rect x="8" y="16" width="16" height="8" fill="var(--blue)" />
+        <circle cx="4" cy="28" r="4" fill="var(--red)" />
+        <rect x="24" y="24" width="8" height="8" fill="var(--blue)" />
+      </g>
+    </g>
+
+    <g transform="translate(870 425)">
+      <rect x="0" y="0" width="500" height="150" />
+      <text x="250" y="75">Mappings</text>
+
+      <g transform="translate(130, 59)">
+        <circle cx="4" cy="4" r="4" fill="var(--magenta)" />
+        <rect x="16" y="0" width="8" height="8" fill="var(--white)" />
+        <rect x="8" y="8" width="8" height="8" fill="var(--white)" />
+        <rect x="24" y="8" width="8" height="8" fill="var(--blue)" />
+        <rect x="0" y="16" width="8" height="8" fill="var(--white)" />
+        <rect x="16" y="16" width="16" height="8" fill="var(--blue)" />
+        <rect x="8" y="24" width="8" height="8" fill="var(--white)" />
+      </g>
+    </g>
+
+    <g transform="translate(870 625)">
+      <rect x="0" y="0" width="246" height="150" />
+      <text x="122.5" y="100">EDI Translate</text>
+
+      <g transform="translate(110, 35)">
+        <rect x="0" y="0" width="16" height="8" fill="var(--green)" />
+        <rect x="24" y="0" width="8" height="8" fill="var(--green)" />
+        <rect x="8" y="8" width="16" height="8" fill="var(--white)" />
+        <rect x="0" y="16" width="16" height="8" fill="var(--white)" />
+        <rect x="24" y="16" width="8" height="8" fill="var(--white)" />
+        <circle cx="20" cy="28" r="4" fill="var(--blue)" />
+      </g>
+    </g>
+
+    <g transform="translate(1123 625)">
+      <rect x="0" y="0" width="246" height="150" />
+      <text x="122.5" y="100">Guides</text>
+
+      <g transform="translate(110, 35)">
+        <rect x="8" y="0" width="16" height="8" fill="var(--white)" />
+        <rect x="0" y="8" width="8" height="8" fill="var(--white)" />
+        <circle cx="30" cy="12" r="4" fill="var(--green)" />
+        <rect x="0" y="24" width="32" height="8" fill="var(--blue)" />
+      </g>
+    </g>
+
+    <g transform="translate(0 900)">
+      <rect x="0" y="0" width="500" height="150" />
+      <text x="250" y="75">Buckets</text>
+
+      <g transform="translate(140, 58)">
+        <rect x="0" y="0" width="8" height="8" fill="var(--magenta)" />
+        <circle cx="28" cy="4" r="4" fill="var(--yellow)" />
+        <rect x="8" y="8" width="16" height="8" fill="var(--magenta)" />
+        <rect x="0" y="16" width="8" height="8" fill="var(--white)" />
+        <rect x="24" y="16" width="8" height="8" fill="var(--white)" />
+        <rect x="8" y="24" width="16" height="8" fill="var(--white)" />
+      </g>
+    </g>
+
+    <g transform="translate(0 1056)">
+      <rect x="0" y="0" width="500" height="75" />
+      <text x="250" y="37.5">SFTP</text>
+
+      <g transform="translate(155, 21)">
+        <rect x="0" y="0" width="8" height="8" fill="var(--white)" />
+        <rect x="16" y="0" width="16" height="8" fill="var(--white)" />
+        <circle cx="12" cy="12" r="4" fill="var(--magenta)" />
+        <rect x="0" y="16" width="8" height="8" fill="var(--yellow)" />
+        <rect x="16" y="16" width="8" height="8" fill="var(--white)" />
+        <rect x="0" y="24" width="16" height="8" fill="var(--yellow)" />
+        <rect x="24" y="24" width="8" height="8" fill="var(--white)" />
+      </g>
+    </g>
+  </g>
+
+  <g class="connector">
+    <g transform="translate(1120 700)">
+      <circle cx="0" cy="0" r="20" />
+      <path d="M -5 0 l 6 -6 v 12 l -6 -6" />
+    </g>
+
+    <g transform="translate(250 1055)">
+      <circle cx="0" cy="0" r="20" />
+      <path d="M 0 4 l -6 -6 h 12 l 6 -6" />
+    </g>
+  </g>
+
+
+  <g class="data">
+    <g transform="translate(140 135)">
+      <rect x="0" y="0" width="220" height="50" />
+      <text x="110" y="27">CUSTOM JSON</text>
+    </g>
+
+    <g transform="translate(550 275)">
+      <rect x="0" y="0" width="270" height="50" />
+      <text x="135" y="27">CONTROL NUMBER</text>
+    </g>
+
+    <g transform="translate(575 437)">
+      <rect x="0" y="0" width="220" height="50" />
+      <text x="110" y="27">CUSTOM JSON</text>
+    </g>
+
+    <g transform="translate(560 512)">
+      <rect x="0" y="0" width="250" height="50" />
+      <text x="125" y="27">EDI-LIKE JSON</text>
+    </g>
+
+    <g transform="translate(560 637)">
+      <rect x="0" y="0" width="250" height="50" />
+      <text x="125" y="27">EDI-LIKE JSON</text>
+    </g>
+
+    <g transform="translate(635 712)">
+      <rect x="0" y="0" width="100" height="50" />
+      <text x="50" y="27">EDI</text>
+    </g>
+
+    <g transform="translate(200 810)">
+      <rect x="0" y="0" width="100" height="50" />
+      <text x="50" y="27">EDI</text>
+    </g>
+
+    <g transform="translate(200 1166)">
+      <rect x="0" y="0" width="100" height="50" />
+      <text x="50" y="27">EDI</text>
+    </g>
+  </g>
+
+
+  <g class="step">
+    <g transform="translate(320 225)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">1</text>
+    </g>
+
+    <g transform="translate(500 350)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">2</text>
+    </g>
+
+    <g transform="translate(500 500)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">3</text>
+    </g>
+
+    <g transform="translate(500 700)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">4</text>
+    </g>
+
+    <g transform="translate(1120 775)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">5</text>
+    </g>
+
+    <g transform="translate(320 775)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">6</text>
+    </g>
+
+    <g transform="translate(320 1131)">
+      <circle cx="0" cy="0" r="25" />
+      <text x="0.5" y="1">7</text>
+    </g>
+  </g>
+</svg>

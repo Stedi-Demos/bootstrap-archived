@@ -1,27 +1,19 @@
 import dotenv from "dotenv";
-
 import {
   CreateKeyspaceCommand,
   SetValueCommand,
-  StashClient,
 } from "@stedi/sdk-client-stash";
-
-import {
-  DEFAULT_SDK_CLIENT_PROPS,
-  PARTNERS_KEYSPACE_NAME,
-} from "../lib/constants.js";
+import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { requiredEnvVar } from "../lib/environment.js";
 import { Partnership, PartnershipSchema } from "../lib/types/PartnerRouting.js";
 import { ensureGuideExists } from "../support/guide.js";
 import { ensureMappingExists } from "../support/mapping.js";
+import { stashClient as buildStashClient } from "../lib/stash.js";
 
 dotenv.config({ override: true });
 
 (async () => {
-  const stashClient = new StashClient({
-    ...DEFAULT_SDK_CLIENT_PROPS,
-    endpoint: "https://stash.us.stedi.com/2022-04-20",
-  });
+  const stashClient = buildStashClient();
 
   try {
     await stashClient.send(
@@ -68,10 +60,6 @@ dotenv.config({ override: true });
   );
 
   const partnership: Partnership = {
-    applicationIds: {
-      ANOTHERMERCH: "ANOAPPID",
-      THISISME: "MYAPPID",
-    },
     transactionSets: [],
   };
 

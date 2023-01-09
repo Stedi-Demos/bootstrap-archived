@@ -22,7 +22,7 @@
     "@stedi/sdk-client-functions": "^0.0.21",
     "@stedi/sdk-client-guides": "^0.0.40",
     "@stedi/sdk-client-mappings": "^0.0.40",
-    "@stedi/sdk-client-partners": "^0.0.44",
+    "@stedi/sdk-client-partners": "^0.0.45",
     "@stedi/sdk-client-sftp": "^0.0.40",
     "@stedi/sdk-client-stash": "^0.0.40",
     "@types/node": "^18.11.15",

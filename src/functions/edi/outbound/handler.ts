@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { serializeError } from "serialize-error";
-import { IncrementValueCommand, StashClient } from "@stedi/sdk-client-stash";
+
 import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
 import {
@@ -14,8 +14,7 @@ import { deliverToDestination } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
-import { loadX12PartnerProfile } from "../../../lib/loadX12PartnerProfile.js";
-import { resolveSenderCode } from "../../../lib/resolveSenderCode.js";
+import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
 import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 
@@ -41,11 +40,11 @@ export const handler = async (
 
     // load "my" Trading Partner profile
     const { sendingPartnerId } = event.metadata;
-    const senderX12Profile = await loadX12PartnerProfile(sendingPartnerId);
+    const senderProfile = await loadPartnerProfile(sendingPartnerId);
 
     // load the receiver's Trading Partner profile
     const { receivingPartnerId } = event.metadata;
-    const receiverX12Profile = await loadX12PartnerProfile(receivingPartnerId);
+    const receiverProfile = await loadPartnerProfile(receivingPartnerId);
 
     // load the outbound x12 configuration for the sender
     const partnership = await loadPartnership(
@@ -75,16 +74,6 @@ export const handler = async (
     const functionalIdentifierCode =
       lookupFunctionalIdentifierCode(transactionSet);
 
-    // resolve senders applicaitonId / senderCode
-    const applicationSenderCode = resolveSenderCode(
-      partnership,
-      sendingPartnerId
-    );
-    const applicationReceiverCode = resolveSenderCode(
-      partnership,
-      receivingPartnerId
-    );
-
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
@@ -105,10 +94,10 @@ export const handler = async (
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
       interchangeHeader: {
-        senderQualifier: senderX12Profile.partnerInterchangeQualifier,
-        senderId: senderX12Profile.partnerInterchangeId,
-        receiverQualifier: receiverX12Profile.partnerInterchangeQualifier,
-        receiverId: receiverX12Profile.partnerInterchangeId,
+        senderQualifier: senderProfile.x12.partnerInterchangeQualifier,
+        senderId: senderProfile.x12.partnerInterchangeId,
+        receiverQualifier: receiverProfile.x12.partnerInterchangeQualifier,
+        receiverId: receiverProfile.x12.partnerInterchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
         controlNumber: isaControlNumber,
@@ -116,8 +105,8 @@ export const handler = async (
       },
       groupHeader: {
         functionalIdentifierCode,
-        applicationSenderCode,
-        applicationReceiverCode,
+        applicationSenderCode: senderProfile.x12.partnerApplicationId,
+        applicationReceiverCode: receiverProfile.x12.partnerApplicationId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
         controlNumber: gsControlNumber,

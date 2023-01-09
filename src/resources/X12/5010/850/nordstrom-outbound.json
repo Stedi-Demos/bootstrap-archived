@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "sendingPartnerId": "nordstrom",
+    "receivingPartnerId": "zara",
+    "transactionSet": "850"
+  },
+  "payload": {
+    "heading": {
+      "transaction_set_header_ST": {
+        "transaction_set_identifier_code_01": "850",
+        "transaction_set_control_number_02": "XXXXXXX"
+      },
+      "beginning_segment_for_purchase_order_BEG": {
+        "transaction_set_purpose_code_01": "07",
+        "purchase_order_type_code_02": "BK",
+        "purchase_order_number_03": "XXXX",
+        "date_05": "2023-01-09"
+      },
+      "currency_CUR": {
+        "entity_identifier_code_01": "BY",
+        "currency_code_02": "XXX"
+      },
+      "reference_identification_REF": [
+        {
+          "reference_identification_qualifier_01": "QC",
+          "reference_identification_02": "XXXXXX",
+          "description_03": "XXXXXX"
+        }
+      ]
+    },
+    "detail": {
+      "baseline_item_data_PO1_loop": [
+        {
+          "baseline_item_data_PO1": {
+            "quantity_ordered_02": 0,
+            "unit_or_basis_for_measurement_code_03": "CA",
+            "unit_price_04": 0,
+            "product_service_id_qualifier_06": "UP",
+            "product_service_id_07": "XXXXXX"
+          }
+        }
+      ]
+    },
+    "summary": {
+      "transaction_set_trailer_SE": {
+        "number_of_included_segments_01": 6,
+        "transaction_set_control_number_02": 1
+      }
+    }
+  }
+}

@@ -22,7 +22,6 @@ const DestinationSchema = z.strictObject({
 export type Destination = z.infer<typeof DestinationSchema>;
 
 export const PartnershipSchema = z.strictObject({
-  applicationIds: z.record(z.string(), z.string()),
   transactionSets: z.array(
     z.strictObject({
       description: z.string().optional(),
@@ -45,3 +44,16 @@ export const ISAPartnerIdLookupSchema = z.strictObject({
   partnerId: z.string(),
 });
 export type ISAPartnerIdLookup = z.infer<typeof ISAPartnerIdLookupSchema>;
+
+export const PartnerProfleSchema = z.strictObject({
+  id: z.string(),
+  partnerName: z.string(),
+  x12: z.strictObject({
+    acknowledgementRequestedCode: z.string(),
+    partnerInterchangeQualifier: z.string(),
+    partnerInterchangeId: z.string(),
+    partnerApplicationId: z.string(),
+  }),
+});
+
+export type PartnerProfile = z.infer<typeof PartnerProfleSchema>;

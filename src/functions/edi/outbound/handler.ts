@@ -17,8 +17,8 @@ import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIde
 import { loadX12PartnerProfile } from "../../../lib/loadX12PartnerProfile.js";
 import { resolveSenderCode } from "../../../lib/resolveSenderCode.js";
 import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
+import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 
-const stashClient = new StashClient(DEFAULT_SDK_CLIENT_PROPS);
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 
 type OutboudEvent = {
@@ -88,24 +88,19 @@ export const handler = async (
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
-    const key = `${transactionSetConfig.usageIndicatorCode}-${functionalIdentifierCode}-${sendingPartnerId}-${receivingPartnerId}`;
-    let { value: controlNumber } = await stashClient.send(
-      new IncrementValueCommand({
-        keyspaceName: "outbound-control-numbers",
-        key,
-        amount: 1,
-      })
-    );
-
-    if (!controlNumber) {
-      return failedExecution(
-        executionId,
-        new Error("Issue generating control number")
-      );
-    }
-
-    controlNumber = controlNumber.toString().padStart(9, "0");
-    console.log(`generated control number: ${controlNumber}`);
+    const isaControlNumber = await generateControlNumber({
+      segment: "ISA",
+      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
+      sendingPartnerId,
+      receivingPartnerId,
+    });
+    const gsControlNumber = await generateControlNumber({
+      segment: "GS",
+      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
+      sendingPartnerId,
+      receivingPartnerId,
+    });
+    const stControlNumber = "0001"; //TODO: this should be based on the number of ST segments in the document
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
@@ -116,7 +111,7 @@ export const handler = async (
         receiverId: receiverX12Profile.partnerInterchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
-        controlNumber,
+        controlNumber: isaControlNumber,
         usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
       },
       groupHeader: {
@@ -125,7 +120,7 @@ export const handler = async (
         applicationReceiverCode,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
-        controlNumber,
+        controlNumber: gsControlNumber,
       },
     };
 
@@ -144,7 +139,7 @@ export const handler = async (
         const mapResult = await mappingsClient.send(
           new MapDocumentCommand({
             id: mappingId,
-            content: { controlNumber, ...event.payload },
+            content: { controlNumber: stControlNumber, ...event.payload },
           })
         );
         console.log(`mapping result: ${JSON.stringify(mapResult)}`);
@@ -152,7 +147,7 @@ export const handler = async (
       } else {
         guideGuideJson = event.payload;
         guideGuideJson.heading.transaction_set_header_ST.transaction_set_control_number_02 =
-          controlNumber;
+          stControlNumber;
       }
 
       // Translate the Guide schema-based JSON to X12 EDI
@@ -163,7 +158,7 @@ export const handler = async (
       );
 
       if (destination.type === "bucket")
-        destination.path = `${destination.path}/${controlNumber}-${transactionSet}.edi`;
+        destination.path = `${destination.path}/${isaControlNumber}-${transactionSet}.edi`;
 
       const result = await deliverToDestination(destination, translation);
 

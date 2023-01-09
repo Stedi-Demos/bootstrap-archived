@@ -123,7 +123,7 @@ dotenv.config({ override: true });
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `partnership|ANOTHERMERCH|THISISME`,
-      value: parseResult,
+      value: parseResult.data,
     })
   );
   await stashClient.send(

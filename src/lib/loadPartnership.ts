@@ -25,9 +25,8 @@ export const loadPartnership = async (
         })
       );
 
-      if (value !== null && typeof value === "object" && "data" in value) {
-        console.log(value);
-        partnership = PartnershipSchema.parse(value.data);
+      if (value !== null && typeof value === "object") {
+        partnership = PartnershipSchema.parse(value);
         break;
       }
     } catch (error) {

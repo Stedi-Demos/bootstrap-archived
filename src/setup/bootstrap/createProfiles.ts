@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 import { CreateProfileCommand } from "@stedi/sdk-client-partners";
-import { partnersClient as buildPartnersClient } from "../lib/partners.js";
-import { stashClient as buildStashClient } from "../lib/stash.js";
-import { PartnerProfleSchema } from "../lib/types/PartnerRouting.js";
+import { partnersClient as buildPartnersClient } from "../../lib/partners.js";
+import { stashClient as buildStashClient } from "../../lib/stash.js";
+import { PartnerProfleSchema } from "../../lib/types/PartnerRouting.js";
 import { SetValueCommand } from "@stedi/sdk-client-stash";
-import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
+import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 
-(async () => {
+export const createProfiles = async () => {
   const profiles = [
     {
       id: "THISISME",
@@ -50,7 +50,7 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
       }
     }
   } else {
-    console.log("[BETA] Creating X12 Trading Partner Profile in Stash");
+    console.log("Creating X12 Trading Partner Profile in Stash");
     const stashClient = buildStashClient();
 
     for (const profile of profiles) {
@@ -68,4 +68,4 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
       );
     }
   }
-})();
+};

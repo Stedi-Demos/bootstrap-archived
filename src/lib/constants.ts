@@ -10,3 +10,4 @@ export const DEFAULT_SDK_CLIENT_PROPS = {
 };
 
 export const PARTNERS_KEYSPACE_NAME = "partners-configuration";
+export const CONTROL_NUMBER_KEYSPACE_NAME = "outbound-control-numbers";

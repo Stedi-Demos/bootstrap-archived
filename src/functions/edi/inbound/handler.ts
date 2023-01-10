@@ -108,7 +108,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         for await (const ediDocument of ediDocuments) {
           // load the guide for the transaction set
           const guideSummary = await resolveGuide({
-            guideIds: transactionSetConfig.guideIds,
+            guideIds: [transactionSetConfig.guideId],
             transactionSet: ediDocument.metadata.code,
           });
 

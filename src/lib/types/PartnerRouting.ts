@@ -32,7 +32,7 @@ export const PartnershipSchema = z.strictObject({
         z.literal("T"),
         z.literal("I"),
       ]),
-      guideIds: z.array(z.string()),
+      guideId: z.string(),
       destinations: z.array(DestinationSchema),
     })
   ),

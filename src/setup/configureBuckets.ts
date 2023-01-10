@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-
 import {
   SftpClient,
   CreateUserCommand,
@@ -18,6 +17,8 @@ import { updateDotEnvFile } from "../support/utils.js";
 dotenv.config({ override: true });
 
 (async () => {
+  console.log("Configuring buckets...");
+
   const sftpClient = new SftpClient({
     region: "us-east-1",
     endpoint: "https://api.sftp.us.stedi.com/2022-04-01",
@@ -77,8 +78,6 @@ dotenv.config({ override: true });
     ...existingEnvVars,
     ...bucketEnvVarEntries,
   });
-
-  console.log(`\nDone.`);
 
   // Clean up temporary user and corresponding home directory
   await sftpClient.send(new DeleteUserCommand({ username: user.username }));

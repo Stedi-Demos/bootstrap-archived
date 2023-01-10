@@ -300,19 +300,3 @@ Once deployed, the function will be invoked when files are written to the SFTP b
      ]
    }
    ```
-
-4. You can also view the other resources that were created during setup in the UIs for the associated products:
-
-   - [Guides Web UI](https://www.stedi.com/app/guides): a guide for each transaction set that you enabled
-   - [Mappings Web UI](https://www.stedi.com/app/mappings): a mapping for each transaction set that you enabled
-
-5. [Optional -- Bonus / Extra Credit] Try invoking the workflow via SFTP!
-   1. Provision an SFTP user, by visiting the [SFTP Web UI](https://www.stedi.com/app/sftp), be sure to set its `Home directory` to `/trading_partners/ANOTHERMERCH` and record the password (it will not be shown again)
-   1. Using the SFTP client of your choice (the `sftp` command line client and [Cyberduck](https://cyberduck.io/) are popular options) connect to the SFTP service using the credentials for the SFTP user that you created.
-   1. Navigate to the `/inbound` subdirectory
-   1. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/input.edi) document to the `/inbound` directory via SFTP
-   1. view the results at your webhook destination!
-
-## Adding support for new Transaction Sets
-
-You can easily add support for additional inbound transaction sets by following these steps:

@@ -16,6 +16,7 @@ export const createSampleStashRecords = async ({
   mapToGuide850,
   guide855,
 }: CreateSampleStashRecordsInput) => {
+  console.log({ guide850, mapToGuide850, guide855 });
   const stashClient = buildStashClient();
 
   const partnership: Partnership = {

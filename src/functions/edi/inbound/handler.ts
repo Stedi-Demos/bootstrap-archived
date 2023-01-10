@@ -65,6 +65,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
     // Iterate through each key that represents an object within an `inbound` directory
     for await (const keyToProcess of groupedEventKeys.keysToProcess) {
+      // load the object from the bucket
       const getObjectResponse = await bucketsClient.send(
         new GetObjectCommand(keyToProcess)
       );
@@ -78,15 +79,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         const ediDocuments = splitEdi(fileContents);
         await trackProgress("split edi documents", ediDocuments);
 
+        // resolve the partnerIds for the sending and receiving partners
         const sendingPartnerId = await resolvePartnerIdFromISAId(
           ediDocuments[0].metadata.senderId
         );
-
         const receivingPartnerId = await resolvePartnerIdFromISAId(
           ediDocuments[0].metadata.receiverId
         );
 
-        // load the outbound x12 configuration for the sender
+        // load the Partnership for the sending and receiving partners
         const partnership = await loadPartnership(
           sendingPartnerId,
           receivingPartnerId

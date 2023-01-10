@@ -64,7 +64,7 @@ export const handler = async (
 
     // load the guide for the transaction set
     const guideSummary = await resolveGuide({
-      guideIds: transactionSetConfig.guideIds || [],
+      guideIds: [transactionSetConfig.guideId],
       transactionSet,
     });
     if (guideSummary === undefined)

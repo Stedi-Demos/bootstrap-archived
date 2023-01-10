@@ -27,7 +27,9 @@ import { createProfiles } from "./bootstrap/createProfiles.js";
   // record all migrations as run (as this file always creates the latest state)
   const migrationStore = new StashStorage({});
   const allMigrations = await migrator.migrations({});
+  const appliedMigrations = await migrationStore.executed();
   for (const { name } of allMigrations) {
+    if (appliedMigrations.includes(name)) continue;
     migrationStore.logMigration({ name });
   }
 })();

@@ -64,10 +64,10 @@ const createMapping = async (
   );
 
   if (!createMappingResponse.id) {
-    throw new Error(`[Error creating mapping (id not found in response)`);
+    throw new Error(`Error creating mapping (id not found in response)`);
   }
 
-  console.log(`[ Mapping created: ${createMappingResponse.id}`);
+  console.log(`Mapping created: ${createMappingResponse.id}`);
   return createMappingResponse.id;
 };
 

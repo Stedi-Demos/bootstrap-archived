@@ -48,8 +48,9 @@ export const ensureGuideExists = async (guidePath: string): Promise<string> => {
 
   try {
     const guideId = await createGuide(guide);
-    console.log(`Guide created: ${guideId}`);
-    return parseGuideId(guideId);
+    const parsedGuideId = parseGuideId(guideId);
+    console.log(`Guide created: ${parsedGuideId}`);
+    return parsedGuideId;
   } catch (e) {
     if (!(e instanceof ResourceConflictException)) {
       // re-throw all errors except resource conflict

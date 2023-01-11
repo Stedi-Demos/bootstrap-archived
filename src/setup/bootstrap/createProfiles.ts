@@ -23,7 +23,7 @@ export const createProfiles = async () => {
       id: "ANOTHERMERCH",
       partnerName: "A.N. & Other Merchants",
       x12: {
-        partnerInterchangeQualifier: "ZZ",
+        partnerInterchangeQualifier: "14",
         partnerInterchangeId: "ANOTHERMERCH",
         acknowledgementRequestedCode: "0",
         partnerApplicationId: "ANOTAPPID",

@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "sendingPartnerId": "THISISME",
-    "receivingPartnerId": "ANOTHERMERCH",
+    "sendingPartnerId": "this-is-me",
+    "receivingPartnerId": "another-merchant",
     "transactionSet": "850"
   },
   "payload": {

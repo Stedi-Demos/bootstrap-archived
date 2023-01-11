@@ -10,7 +10,7 @@ import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 export const createProfiles = async () => {
   const profiles = [
     {
-      id: "THISISME",
+      id: "this-is-me",
       partnerName: "Me, Myself and I",
       x12: {
         partnerInterchangeQualifier: "ZZ",
@@ -20,7 +20,7 @@ export const createProfiles = async () => {
       },
     },
     {
-      id: "ANOTHERMERCH",
+      id: "another-merchant",
       partnerName: "A.N. & Other Merchants",
       x12: {
         partnerInterchangeQualifier: "14",

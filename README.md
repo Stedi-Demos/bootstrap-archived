@@ -16,11 +16,11 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
 
 1. Go to [webhook.site](https://webhook.site/) and copy the unique URL. The demo will send output to this webhook.
 
-1. This project uses `dotenv` to manage the environmental variables required. You must create a `.env` file in the root directory of this repo and add three required environment variables:
+1. This project uses `dotenv` to manage the environmental variables required. Rename the `.env.example` file to `.env` and amend the following variables:
 
    - `STEDI_API_KEY`: Your Stedi API Key - used to deploy the function and internally to interact with product APIs. If you don't already have one, you can generate an [API Key here](https://www.stedi.com/app/settings/api-keys).
    - `DESTINATION_WEBHOOK_URL`: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step.
-   - `USE_BETA`: allows using non-GA products, it is recommended to keep this set to `false`.
+   - `USE_BETA`: allows using non-[GA](https://www.stedi.com/docs/getting-started/preview-program#general-availability) products, it is recommended to keep this set to `false`.
 
    Example `.env` file:
 

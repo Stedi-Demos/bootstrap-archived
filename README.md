@@ -10,7 +10,7 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
 
    ```bash
    git clone https://github.com/Stedi-Demos/bootstrap.git
-   cd bootsrap
+   cd bootstrap
    npm ci
    ```
 

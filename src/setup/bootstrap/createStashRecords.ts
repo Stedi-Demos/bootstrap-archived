@@ -8,15 +8,12 @@ import { savePartnership } from "../../lib/savePartnership.js";
 type CreateSampleStashRecordsInput = {
   guide850: string;
   guide855: string;
-  mapToGuide850: string;
 };
 
 export const createSampleStashRecords = async ({
   guide850,
-  mapToGuide850,
   guide855,
 }: CreateSampleStashRecordsInput) => {
-  console.log({ guide850, mapToGuide850, guide855 });
   const stashClient = buildStashClient();
 
   const partnership: Partnership = {
@@ -34,7 +31,6 @@ export const createSampleStashRecords = async ({
           bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
           path: "trading_partners/ANOTHERMERCH/outbound",
         },
-        mappingId: mapToGuide850,
       },
     ],
     receivingPartnerId: "another-merchant",

@@ -1,62 +1,123 @@
 {
   "metadata": {
     "sendingPartnerId": "this-is-me",
-    "receivingPartnerId": "another-merchant",
-    "transactionSet": "850"
+    "receivingPartnerId": "another-merchant"
   },
   "payload": {
-    "orderDetails": {
-      "internalOrderNumber": "ACME-4567",
-      "orderNumber": "365465413",
-      "orderType": "drop-ship",
-      "orderDate": "2022-08-30T14:22:22Z",
-      "orderMemo": "Thank you for your business",
-      "orderAdminContact": {
-        "name": "Marvin Acme",
-        "address": {
-          "street1": "123 Main Street",
-          "city": "Fairfield",
-          "state": "NJ",
-          "zip": "07004",
-          "country": "US"
-        },
-        "phone": "973-555-1212",
-        "email": "marvin@acme.com"
-      }
-    },
-    "shippingDetails": {
-      "carrier": "FedEx Home Delivery"
-    },
-    "shipTo": {
-      "customerId": "123",
-      "name": "Wile E Coyote",
-      "address": {
-        "street1": "111 Canyon Court",
-        "city": "Phoenix",
-        "state": "AZ",
-        "zip": "85001",
-        "country": "US"
-      }
-    },
-    "items": [
-      {
-        "id": "item-1",
-        "quantity": 8,
-        "unitCode": "EA",
-        "price": 400,
-        "vendorPartNumber": "VND1234567",
-        "sku": "ACM/8900-400",
-        "description": "400 pound anvil"
+    "heading": {
+      "transaction_set_header_ST": {
+        "transaction_set_identifier_code_01": "850"
       },
-      {
-        "id": "item-2",
-        "quantity": 4,
-        "unitCode": "EA",
-        "price": 125,
-        "vendorPartNumber": "VND000111222",
-        "sku": "ACM/1100-001",
-        "description": "Detonator"
-      }
-    ]
+      "beginning_segment_for_purchase_order_BEG": {
+        "transaction_set_purpose_code_01": "00",
+        "purchase_order_type_code_02": "DS",
+        "purchase_order_number_03": "365465413",
+        "date_05": "2022-08-30"
+      },
+      "reference_information_REF_customer_order": [
+        {
+          "reference_identification_qualifier_01": "CO",
+          "reference_identification_02": "ACME-4567"
+        }
+      ],
+      "reference_information_REF_memo_field": [
+        {
+          "reference_identification_qualifier_01": "ZZ",
+          "reference_identification_02": "Thank you for your business"
+        }
+      ],
+      "administrative_communications_contact_PER": {
+        "contact_function_code_01": "OC",
+        "name_02": "Marvin Acme",
+        "communication_number_qualifier_03": "TE",
+        "communication_number_04": "973-555-1212",
+        "communication_number_qualifier_05": "EM",
+        "communication_number_06": "marvin@acme.com"
+      },
+      "carrier_details_routing_sequence_transit_time_TD5": {
+        "transportation_method_type_code_04": "ZZ",
+        "routing_05": "FHD"
+      },
+      "party_identification_N1_loop": [
+        {
+          "party_identification_N1": {
+            "entity_identifier_code_01": "ST",
+            "name_02": "Wile E Coyote",
+            "identification_code_qualifier_03": "92",
+            "identification_code_04": "123"
+          },
+          "party_location_N3": [
+            {
+              "address_information_01": "111 Canyon Court"
+            }
+          ],
+          "geographic_location_N4": [
+            {
+              "city_name_01": "Phoenix",
+              "state_or_province_code_02": "AZ",
+              "postal_code_03": "85001",
+              "country_code_04": "US"
+            }
+          ]
+        }
+      ]
+    },
+    "detail": {
+      "baseline_item_data_PO1_loop": [
+        {
+          "baseline_item_data_PO1": {
+            "assigned_identification_01": "item-1",
+            "quantity_02": "0008",
+            "unit_or_basis_for_measurement_code_03": "EA",
+            "unit_price_04": 400,
+            "product_service_id_qualifier_06": "VC",
+            "product_service_id_07": "VND1234567",
+            "product_service_id_qualifier_08": "SK",
+            "product_service_id_09": "ACM/8900-400"
+          },
+          "product_item_description_PID_loop": [
+            {
+              "product_item_description_PID": {
+                "item_description_type_01": "F",
+                "description_05": "400 pound anvil"
+              }
+            }
+          ]
+        },
+        {
+          "baseline_item_data_PO1": {
+            "assigned_identification_01": "item-2",
+            "quantity_02": "0004",
+            "unit_or_basis_for_measurement_code_03": "EA",
+            "unit_price_04": 125,
+            "product_service_id_qualifier_06": "VC",
+            "product_service_id_07": "VND000111222",
+            "product_service_id_qualifier_08": "SK",
+            "product_service_id_09": "ACM/1100-001"
+          },
+          "product_item_description_PID_loop": [
+            {
+              "product_item_description_PID": {
+                "item_description_type_01": "F",
+                "description_05": "Detonator"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "transaction_totals_CTT_loop": [
+        {
+          "transaction_totals_CTT": {
+            "number_of_line_items_01": 2
+          },
+          "monetary_amount_information_AMT": {
+            "amount_qualifier_code_01": "TT",
+            "monetary_amount_02": 3700
+          }
+        }
+      ]
+    }
   }
 }

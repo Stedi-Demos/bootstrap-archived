@@ -16,7 +16,7 @@ type ResolveGuideInput = {
 export const resolveGuide = async ({
   guideIds,
   transactionSet,
-}: ResolveGuideInput): Promise<GuideSummary | undefined> => {
+}: ResolveGuideInput): Promise<GuideSummary> => {
   for (const guideId of guideIds) {
     // deal with raw guide ids or not
     let guideIdsToAttempToLoad: string[] = [];
@@ -38,8 +38,12 @@ export const resolveGuide = async ({
       )
         continue;
 
-      if (guide.target.transactionSet === transactionSet)
+      if (guide.target.transactionSet === transactionSet) {
         return { guideId: guide.id, release: guide.target.release };
+      }
     }
   }
+
+  // if no matching guide is found, throw an error
+  throw new Error(`No guide found for transaction set '${transactionSet}'`);
 };

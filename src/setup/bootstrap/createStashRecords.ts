@@ -37,8 +37,8 @@ export const createSampleStashRecords = async ({
         mappingId: mapToGuide850,
       },
     ],
-    receivingPartnerId: "ANOTHERMERCH",
-    sendingPartnerId: "THISISME",
+    receivingPartnerId: "another-merchant",
+    sendingPartnerId: "this-is-me",
     usageIndicatorCode: "T",
   });
 
@@ -54,20 +54,20 @@ export const createSampleStashRecords = async ({
         },
       },
     ],
-    receivingPartnerId: "THISISME",
-    sendingPartnerId: "ANOTHERMERCH",
+    receivingPartnerId: "this-is-me",
+    sendingPartnerId: "another-merchant",
     usageIndicatorCode: "T",
   });
 
   // write to Stash
-  await savePartnership("partnership|THISISME|ANOTHERMERCH", partnership);
+  await savePartnership("partnership|this-is-me|another-merchant", partnership);
 
   await stashClient.send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `lookup|ISA|14/ANOTHERMERCH`,
       value: {
-        partnerId: "ANOTHERMERCH",
+        partnerId: "another-merchant",
       },
     })
   );
@@ -76,7 +76,7 @@ export const createSampleStashRecords = async ({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `lookup|ISA|ZZ/THISISME`,
       value: {
-        partnerId: "THISISME",
+        partnerId: "this-is-me",
       },
     })
   );

@@ -113,11 +113,6 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             transactionSet: ediDocument.metadata.code,
           });
 
-          if (guideSummary === undefined)
-            throw new Error(
-              `No guide found for transaction set '${ediDocument.metadata.code}'`
-            );
-
           console.log(guideSummary);
 
           for (const {

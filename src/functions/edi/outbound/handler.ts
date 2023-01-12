@@ -67,8 +67,6 @@ export const handler = async (
       guideIds: [transactionSetConfig.guideId],
       transactionSet,
     });
-    if (guideSummary === undefined)
-      throw new Error(`No guide found for transaction set '${transactionSet}'`);
 
     // resolve the functional group for the transaction set
     const functionalIdentifierCode =

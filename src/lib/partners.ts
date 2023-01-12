@@ -15,7 +15,6 @@ export const partnersClient = () => {
       requestHandler: new NodeHttpHandler({
         connectionTimeout: 5_000,
       }),
-      endpoint: "https://legacy.partners.us.stedi.com/2021-06-05/",
     };
 
     _partnersClient = new PartnersClient(config);

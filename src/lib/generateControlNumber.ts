@@ -18,7 +18,7 @@ export const generateControlNumber = async ({
   receivingPartnerId,
   amount,
 }: GenerateControlNumberInput) => {
-  const key = `${usageIndicatorCode}-${segment}-${sendingPartnerId}-${receivingPartnerId}`;
+  const key = `${usageIndicatorCode}|${segment}|${sendingPartnerId}|${receivingPartnerId}`;
   let { value: controlNumber } = await stashClient.send(
     new IncrementValueCommand({
       keyspaceName: "outbound-control-numbers",

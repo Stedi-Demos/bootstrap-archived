@@ -4,7 +4,7 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
 
 # Prerequisites & Deployment
 
-1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(`npm` version must be 7.x or greater)_
+1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
 
 1. Clone this repo and install the necessary dependencies:
 
@@ -20,14 +20,12 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
 
    - `STEDI_API_KEY`: Your Stedi API Key - used to deploy the function and internally to interact with product APIs. If you don't already have one, you can generate an [API Key here](https://www.stedi.com/app/settings/api-keys).
    - `DESTINATION_WEBHOOK_URL`: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step.
-   - `USE_BETA`: allows using non-[GA](https://www.stedi.com/docs/getting-started/preview-program#general-availability) products, it is recommended to keep this set to `false`.
 
    Example `.env` file:
 
    ```
    STEDI_API_KEY=<REPLACE_ME>
    DESTINATION_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
-   USE_BETA=false
    ```
 
 1. To deploy the components:
@@ -38,15 +36,16 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
 
 ## Testing the system
 
-Once deployed, the function will be invoked when files are written to the SFTP bucket.
+### Inbound EDI
+The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.
 
 1. Using the [Buckets UI](https://www.stedi.com/app/buckets) navigate to the `inbound` directory for your trading partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`
 
-2. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/inbound.edi) document to this directory. (_note_: if you upload the document to the root directory `/`, it will be intentionally ignored by the `read-inbound-edi`).
+2. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/inbound.edi) document to this directory. (_note_: if you upload the document to any directory not named `inbound`, it will be intentionally ignored by the `inbound-edi`).
 
 3. Look for the output of the function wherever you created your test webhook! The function sends the JSON received from EDI Translate to the endpoint you have configured.
 
-   Webhook output:
+<details><summary>Example webhook output (click to expand):</summary>
 
    ```json
    {
@@ -300,3 +299,38 @@ Once deployed, the function will be invoked when files are written to the SFTP b
      ]
    }
    ```
+</details>
+
+### Outbound EDI
+
+The `outbound-edi` function can be invoked via the UI for testing. 
+
+1. In the [Functions List view](https://www.stedi.com/terminal/functions) you should see a function labelled `outbound-edi`, click on it's name to view its details.
+
+2. Clicking on the `Edit environment variables` link will allow you to see the variables that were populated during the deploy step.
+
+3. Click the `Edit execution payload` link, paste the contents of [src/resources/X12/5010/850/outbound.json](src/resources/X12/5010/850/outbound.json) into the payload modal, and click save.
+
+4. Hit the `Execute` button, if successful the `Output` should look similar to the following:
+  
+  <details><summary>Example function output (click to expand):</summary>
+
+   ```json
+   { 
+      "statusCode": 200,
+      "deliveryResults": [
+        {
+          "type": "bucket",
+          "payload": {
+            "bucketName": "4c22f54a-9ecf-41c8-b404-6a1f20674953-sftp",
+            "key": "trading_partners/ANOTHERMERCH/outbound/000000005-850.edi",
+            "body": "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *230113*2027*U*00501*000000005*0*T*>~GS*PO*MYAPPID*ANOTAPPID*20230113*202727*000000005*X*005010~ST*850*0001~BEG*00*DS*365465413**20220830~REF*CO*ACME-4567~REF*ZZ*Thank you for your business~PER*OC*Marvin Acme*TE*973-555-1212*EM*marvin@acme.com~TD5****ZZ*FHD~N1*ST*Wile E Coyote*92*123~N3*111 Canyon Court~N4*Phoenix*AZ*85001*US~PO1*item-1*0008*EA*400**VC*VND1234567*SK*ACM/8900-400~PID*F****400 pound anvil~PO1*item-2*0004*EA*125**VC*VND000111222*SK*ACM/1100-001~PID*F****Detonator~CTT*2~AMT*TT*3700~SE*16*0001~GE*1*000000005~IEA*1*000000005~"
+          }
+        }
+      ]
+   }
+   ```
+
+  </details>
+
+5. You can view the file using the [Buckets Web View](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.

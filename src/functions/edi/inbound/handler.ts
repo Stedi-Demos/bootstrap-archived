@@ -32,7 +32,10 @@ import { deliverToDestination } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
-import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
+import {
+  getTransactionSetConfigsForPartnership,
+  resolveTransactionSetConfig
+} from "../../../lib/transactionSetConfigs";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -93,8 +96,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           receivingPartnerId
         );
 
-        // get the config for the transaction set
-        const transactionSetConfig = resolveTransactionSetConfig({
+        // get transaction set configs for partnership
+        const transactionSetConfigs = getTransactionSetConfigsForPartnership({
           partnership,
           sendingPartnerId,
           receivingPartnerId,
@@ -109,11 +112,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         for await (const ediDocument of ediDocuments) {
           // load the guide for the transaction set
           const guideSummary = await resolveGuide({
-            guideIds: [transactionSetConfig.guideId],
+            guideIdsForPartnership: transactionSetConfigs.map((config) => config.guideId),
             transactionSet: ediDocument.metadata.code,
           });
 
           console.log(guideSummary);
+
+          // find the transaction set config for partnership that includes guide
+          const transactionSetConfig = resolveTransactionSetConfig(transactionSetConfigs, guideSummary.guideId);
 
           for (const {
             destination,

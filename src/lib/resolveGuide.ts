@@ -9,41 +9,43 @@ type GuideSummary = {
 };
 
 type ResolveGuideInput = {
-  guideIds: string[];
+  guideIdsForPartnership: string[];
   transactionSet: string;
 };
 
 export const resolveGuide = async ({
-  guideIds,
+  guideIdsForPartnership,
   transactionSet,
 }: ResolveGuideInput): Promise<GuideSummary> => {
-  for (const guideId of guideIds) {
+  const resolvedGuides: GuideSummary[] = [];
+  for await (const guideId of guideIdsForPartnership) {
     // deal with raw guide ids or not
-    let guideIdsToAttempToLoad: string[] = [];
-    guideIdsToAttempToLoad =
+    const guideIdsToAttemptToLoad =
       guideId.split("_").length !== 2
         ? [`LIVE_${guideId}`, `DRFT_${guideId}`]
         : [guideId];
 
-    for (const guideId of guideIdsToAttempToLoad) {
+    for await (const guideIdToLoad of guideIdsToAttemptToLoad) {
       const guide = await guidesClient.send(
-        new GetGuideCommand({ id: guideId })
+        new GetGuideCommand({ id: guideIdToLoad })
       );
 
-      // silence type issues with undefined fields
-      if (
-        guide.id === undefined ||
-        guide.target === undefined ||
-        guide.target.release === undefined
-      )
-        continue;
+      if (guide.id !== undefined &&
+        guide.target &&
+        guide.target.release &&
+        guide.target.transactionSet === transactionSet) {
+        resolvedGuides.push({ guideId, release: guide.target.release });
 
-      if (guide.target.transactionSet === transactionSet) {
-        return { guideId: guide.id, release: guide.target.release };
+        // don't check `DRFT_` guide if `LIVE_` matches
+        break;
       }
     }
   }
 
-  // if no matching guide is found, throw an error
-  throw new Error(`No guide found for transaction set '${transactionSet}'`);
+  // if single matching guide is not found, throw an error
+  if (resolvedGuides.length !== 1) {
+    throw new Error(`${resolvedGuides.length} guides resolved for transaction set '${transactionSet}'.`);
+  }
+
+  return resolvedGuides[0];
 };

@@ -15,12 +15,12 @@ import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
 import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
-import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
+import { getTransactionSetConfigsForPartnership, resolveTransactionSetConfig } from "../../../lib/transactionSetConfigs";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 
-type OutboudEvent = {
+type OutboundEvent = {
   metadata: {
     sendingPartnerId: string;
     receivingPartnerId: string;
@@ -30,7 +30,7 @@ type OutboudEvent = {
 };
 
 export const handler = async (
-  event: OutboudEvent
+  event: OutboundEvent
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
   console.log("starting", JSON.stringify({ input: event, executionId }));
@@ -55,8 +55,8 @@ export const handler = async (
     // get the transaction set from Guide JSON or event metadata
     const transactionSet = determineTransactionSet(event);
 
-    // get the config for the transaction set
-    const transactionSetConfig = resolveTransactionSetConfig({
+    // get transaction set configs for partnership
+    const transactionSetConfigs = getTransactionSetConfigsForPartnership({
       partnership,
       sendingPartnerId,
       receivingPartnerId,
@@ -64,9 +64,12 @@ export const handler = async (
 
     // load the guide for the transaction set
     const guideSummary = await resolveGuide({
-      guideIds: [transactionSetConfig.guideId],
+      guideIdsForPartnership: transactionSetConfigs.map((config) => config.guideId),
       transactionSet,
     });
+
+    // find the transaction set config for partnership that includes guide
+    const transactionSetConfig = resolveTransactionSetConfig(transactionSetConfigs, guideSummary.guideId);
 
     // resolve the functional group for the transaction set
     const functionalIdentifierCode =
@@ -165,6 +168,13 @@ export const handler = async (
   }
 };
 
-const determineTransactionSet = (event: OutboudEvent) =>
-  event.payload?.heading?.transaction_set_header_ST
-    ?.transaction_set_identifier_code_01 ?? event.metadata.transactionSet;
+const determineTransactionSet = (event: OutboundEvent): string => {
+  const transactionSet = event.payload?.heading?.transaction_set_header_ST
+    ?.transaction_set_identifier_code_01 as string ?? event.metadata.transactionSet;
+
+  if (transactionSet === undefined) {
+    throw new Error("unable to determine transaction set from input");
+  }
+
+  return transactionSet;
+};

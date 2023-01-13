@@ -33,7 +33,7 @@ export const createSampleStashRecords = async ({
         },
       },
     ],
-    receivingPartnerId: "another-merchant",
+    receivingPartnerId: "a-second-merch",
     sendingPartnerId: "this-is-me",
     usageIndicatorCode: "T",
   });
@@ -51,19 +51,19 @@ export const createSampleStashRecords = async ({
       },
     ],
     receivingPartnerId: "this-is-me",
-    sendingPartnerId: "another-merchant",
+    sendingPartnerId: "a-second-merch",
     usageIndicatorCode: "T",
   });
 
   // write to Stash
-  await savePartnership("partnership|this-is-me|another-merchant", partnership);
+  await savePartnership("partnership|this-is-me|a-second-merch", partnership);
 
   await stashClient.send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `lookup|ISA|14/ANOTHERMERCH`,
       value: {
-        partnerId: "another-merchant",
+        partnerId: "a-second-merch",
       },
     })
   );

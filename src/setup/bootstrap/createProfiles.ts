@@ -20,13 +20,13 @@ export const createProfiles = async () => {
       },
     },
     {
-      id: "another-merchant",
+      id: "a-second-merch",
       partnerName: "A.N. & Other Merchants",
       x12: {
         partnerInterchangeQualifier: "14",
-        partnerInterchangeId: "ANOTHERMERCH",
+        partnerInterchangeId: "ASECONDMERCH",
         acknowledgementRequestedCode: "0",
-        partnerApplicationId: "ANOTAPPID",
+        partnerApplicationId: "ASECAPPID",
       },
     },
   ];

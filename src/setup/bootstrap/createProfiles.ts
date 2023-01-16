@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
-import { CreateProfileCommand } from "@stedi/sdk-client-partners";
+import { CreateX12ProfileCommand } from "@stedi/sdk-client-partners";
 import { partnersClient as buildPartnersClient } from "../../lib/partners.js";
 import { stashClient as buildStashClient } from "../../lib/stash.js";
-import { PartnerProfleSchema } from "../../lib/types/PartnerRouting.js";
+import { PartnerProfileSchema } from "../../lib/types/PartnerRouting.js";
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 
@@ -12,22 +12,18 @@ export const createProfiles = async () => {
     {
       id: "this-is-me",
       partnerName: "Me, Myself and I",
-      x12: {
-        partnerInterchangeQualifier: "ZZ",
-        partnerInterchangeId: "THISISME",
-        acknowledgementRequestedCode: "0",
-        partnerApplicationId: "MYAPPID",
-      },
+      partnerInterchangeQualifier: "ZZ",
+      partnerInterchangeId: "THISISME",
+      acknowledgmentRequestedCode: "0",
+      partnerApplicationId: "MYAPPID",
     },
     {
       id: "another-merchant",
       partnerName: "A.N. & Other Merchants",
-      x12: {
-        partnerInterchangeQualifier: "14",
-        partnerInterchangeId: "ANOTHERMERCH",
-        acknowledgementRequestedCode: "0",
-        partnerApplicationId: "ANOTAPPID",
-      },
+      partnerInterchangeQualifier: "14",
+      partnerInterchangeId: "ANOTHERMERCH",
+      acknowledgmentRequestedCode: "0",
+      partnerApplicationId: "ANOTAPPID",
     },
   ];
 
@@ -37,7 +33,7 @@ export const createProfiles = async () => {
 
     for (const profile of profiles) {
       try {
-        await partnersClient.send(new CreateProfileCommand(profile));
+        await partnersClient.send(new CreateX12ProfileCommand(profile));
       } catch (error) {
         if (
           typeof error === "object" &&
@@ -54,7 +50,7 @@ export const createProfiles = async () => {
     const stashClient = buildStashClient();
 
     for (const profile of profiles) {
-      const parseResult = PartnerProfleSchema.safeParse(profile);
+      const parseResult = PartnerProfileSchema.safeParse(profile);
 
       if (!parseResult.success) throw new Error(parseResult.error.message);
       // throw new Error(`Invalid profile for ${profile.id}`);

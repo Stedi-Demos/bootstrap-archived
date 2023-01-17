@@ -1,0 +1,123 @@
+{
+  "metadata": {
+    "sendingPartnerId": "this-is-me",
+    "receivingPartnerId": "another-merchant"
+  },
+  "payload": {
+    "heading": {
+      "transaction_set_header_ST": {
+        "transaction_set_identifier_code_01": "850",
+        "transaction_set_control_number_02": "XXXXXXX"
+      },
+      "beginning_segment_for_purchase_order_BEG": {
+        "transaction_set_purpose_code_01": "00",
+        "purchase_order_type_code_02": "SS",
+        "purchase_order_number_03": "XXXX",
+        "date_05": "2023-01-11"
+      },
+      "reference_information_REF_division_code": [
+        {
+          "reference_identification_qualifier_01": "CC",
+          "reference_identification_02": "X"
+        }
+      ],
+      "reference_information_REF_customer_order": [
+        {
+          "reference_identification_qualifier_01": "CO",
+          "reference_identification_02": "X"
+        }
+      ],
+      "reference_information_REF_memo_field": [
+        {
+          "reference_identification_qualifier_01": "ZZ",
+          "reference_identification_02": "Memo field"
+        }
+      ],
+      "administrative_communications_contact_PER": {
+        "contact_function_code_01": "OC",
+        "name_02": "X",
+        "communication_number_qualifier_03": "TE",
+        "communication_number_04": "XXXX",
+        "communication_number_qualifier_05": "EM",
+        "communication_number_06": "XXXX"
+      },
+      "carrier_details_routing_sequence_transit_time_TD5": {
+        "transportation_method_type_code_04": "ZZ",
+        "routing_05": "FHD"
+      },
+      "party_identification_N1_loop": [
+        {
+          "party_identification_N1": {
+            "entity_identifier_code_01": "ST",
+            "name_02": "XX",
+            "identification_code_qualifier_03": "92",
+            "identification_code_04": "DROPSHIP CUSTOMER"
+          },
+          "party_location_N3": [
+            {
+              "address_information_01": "XX",
+              "address_information_02": "XXXXXX"
+            }
+          ],
+          "geographic_location_N4": [
+            {
+              "city_name_01": "XXXX",
+              "state_or_province_code_02": "XX",
+              "postal_code_03": "XXX",
+              "country_code_04": "XXX"
+            }
+          ]
+        }
+      ]
+    },
+    "detail": {
+      "baseline_item_data_PO1_loop": [
+        {
+          "baseline_item_data_PO1": {
+            "assigned_identification_01": "XXXX",
+            "quantity_02": "XXXXXX",
+            "unit_or_basis_for_measurement_code_03": "EA",
+            "unit_price_04": 0,
+            "product_service_id_qualifier_06": "VC",
+            "product_service_id_07": "XX",
+            "product_service_id_qualifier_08": "SK",
+            "product_service_id_09": "XXXXX"
+          },
+          "product_item_description_PID_loop": [
+            {
+              "product_item_description_PID": {
+                "item_description_type_01": "F",
+                "description_05": "XXXXXX"
+              }
+            }
+          ],
+          "service_promotion_allowance_or_charge_information_SAC_loop": {
+            "service_promotion_allowance_or_charge_information_SAC": {
+              "allowance_or_charge_indicator_01": "P",
+              "service_promotion_allowance_or_charge_code_02": "E380",
+              "amount_05": 0,
+              "description_15": "5% AD CO-OP DISCOUNT"
+            }
+          }
+        }
+      ]
+    },
+    "summary": {
+      "transaction_totals_CTT_loop": [
+        {
+          "transaction_totals_CTT": {
+            "number_of_line_items_01": 0
+          },
+          "monetary_amount_information_AMT": {
+            "amount_qualifier_code_01": "TT",
+            "monetary_amount_02": 0
+          }
+        }
+      ],
+      "transaction_set_trailer_SE": {
+        "number_of_included_segments_01": 16,
+        "transaction_set_control_number_02": "XXXXXXXXX"
+      }
+    }
+  }
+}

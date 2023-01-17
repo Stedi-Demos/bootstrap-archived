@@ -34,7 +34,7 @@ import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
 import {
   getTransactionSetConfigsForPartnership,
-  resolveTransactionSetConfig
+  resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs";
 
 // Buckets client is shared across handler and execution tracking logic
@@ -57,7 +57,10 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // - filteredKeys:  keys that won't be processed (notifications for folders or objects not in an `inbound` directory)
     // - keysToProcess: keys for objects in an `inbound` directory, which will be processed by the handler
     const groupedEventKeys = groupEventKeys(bucketNotificationEvent.Records);
-    await trackProgress("grouped event keys", groupedEventKeys);
+    await trackProgress("grouped event keys", {
+      groupedEventKeys,
+      executionId,
+    });
 
     // empty structure to hold the results of each key that is processed
     const results: ProcessingResults = {
@@ -80,7 +83,10 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         // Split EDI input into multiple documents if there are multiple functional groups
         // within an interchange, or multiple interchanges in the same file
         const ediDocuments = splitEdi(fileContents);
-        await trackProgress("split edi documents", ediDocuments);
+        await trackProgress("split edi documents", {
+          ediDocuments,
+          executionId,
+        });
 
         // resolve the partnerIds for the sending and receiving partners
         const sendingPartnerId = await resolvePartnerIdFromISAId(
@@ -112,14 +118,19 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         for await (const ediDocument of ediDocuments) {
           // load the guide for the transaction set
           const guideSummary = await resolveGuide({
-            guideIdsForPartnership: transactionSetConfigs.map((config) => config.guideId),
+            guideIdsForPartnership: transactionSetConfigs.map(
+              (config) => config.guideId
+            ),
             transactionSet: ediDocument.metadata.code,
           });
 
           console.log(guideSummary);
 
           // find the transaction set config for partnership that includes guide
-          const transactionSetConfig = resolveTransactionSetConfig(transactionSetConfigs, guideSummary.guideId);
+          const transactionSetConfig = resolveTransactionSetConfig(
+            transactionSetConfigs,
+            guideSummary.guideId
+          );
 
           for (const {
             destination,
@@ -153,6 +164,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         await trackProgress("error processing document", {
           key: keyToProcess.key,
           error: serializeError(error),
+          executionId,
         });
         results.processingErrors.push({
           key: keyToProcess.key,
@@ -174,13 +186,16 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     }
 
     await markExecutionAsSuccessful(executionId);
-    await trackProgress("results", results);
+    await trackProgress("results", { results, executionId });
 
     return results;
   } catch (e) {
     const error =
       e instanceof Error ? e : new Error(`unknown error: ${JSON.stringify(e)}`);
-    await trackProgress("handler error", { error: serializeError(error) });
+    await trackProgress("handler error", {
+      error: serializeError(error),
+      executionId,
+    });
 
     // Note, if an infinite Function execution loop is detected by `executionsBucketClient()`
     // the failed execution will not be uploaded to the executions bucket

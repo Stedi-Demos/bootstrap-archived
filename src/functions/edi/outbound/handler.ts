@@ -15,7 +15,10 @@ import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
 import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
-import { getTransactionSetConfigsForPartnership, resolveTransactionSetConfig } from "../../../lib/transactionSetConfigs";
+import {
+  getTransactionSetConfigsForPartnership,
+  resolveTransactionSetConfig,
+} from "../../../lib/transactionSetConfigs";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
@@ -64,12 +67,17 @@ export const handler = async (
 
     // load the guide for the transaction set
     const guideSummary = await resolveGuide({
-      guideIdsForPartnership: transactionSetConfigs.map((config) => config.guideId),
+      guideIdsForPartnership: transactionSetConfigs.map(
+        (config) => config.guideId
+      ),
       transactionSet,
     });
 
     // find the transaction set config for partnership that includes guide
-    const transactionSetConfig = resolveTransactionSetConfig(transactionSetConfigs, guideSummary.guideId);
+    const transactionSetConfig = resolveTransactionSetConfig(
+      transactionSetConfigs,
+      guideSummary.guideId
+    );
 
     // resolve the functional group for the transaction set
     const functionalIdentifierCode =
@@ -169,8 +177,10 @@ export const handler = async (
 };
 
 const determineTransactionSet = (event: OutboundEvent): string => {
-  const transactionSet = event.payload?.heading?.transaction_set_header_ST
-    ?.transaction_set_identifier_code_01 as string ?? event.metadata.transactionSet;
+  const transactionSet =
+    (event.payload?.heading?.transaction_set_header_ST
+      ?.transaction_set_identifier_code_01 as string) ??
+    event.metadata.transactionSet;
 
   if (transactionSet === undefined) {
     throw new Error("unable to determine transaction set from input");

@@ -9,12 +9,16 @@
     "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
-    "test": "ava"
+    "test": "ava",
+    "fix": "npm run fix:lint && npm run fix:style",
+    "fix:lint": "eslint src bin e2e --no-error-on-unmatched-pattern --ignore-path .gitignore --fix",
+    "fix:style": "prettier -w ."
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@ava/typescript": "^3.0.1",
+    "@aws-sdk/client-cloudwatch-logs": "^3.250.0",
     "@stedi/sdk-client-buckets": "^0.0.23",
     "@stedi/sdk-client-edi-translate": "^0.0.46",
     "@stedi/sdk-client-functions": "^0.0.23",
@@ -49,5 +53,9 @@
       },
       "compile": "tsc"
     }
+  },
+  "dependencies": {
+    "eslint": "^8.32.0",
+    "prettier": "^2.8.3"
   }
 }

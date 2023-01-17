@@ -27,13 +27,17 @@ export const getTransactionSetConfigsForPartnership = ({
 
 export const resolveTransactionSetConfig = (
   transactionSetConfigs: Partnership["transactionSets"],
-  guideId: string,
+  guideId: string
 ): Partnership["transactionSets"][0] => {
-  const transactionSetConfig = transactionSetConfigs.find((config) => config.guideId === guideId);
+  const transactionSetConfig = transactionSetConfigs.find(
+    (config) => config.guideId === guideId
+  );
 
   if (transactionSetConfig === undefined) {
-    throw new Error(`no matching transaction set config found for guide id: '${guideId}'`);
+    throw new Error(
+      `no matching transaction set config found for guide id: '${guideId}'`
+    );
   }
 
   return transactionSetConfig;
-}
+};

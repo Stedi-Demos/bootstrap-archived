@@ -33,13 +33,15 @@ export const translateJsonToEdi = async (
   guideId: string,
   envelope: any
 ): Promise<string> => {
-  const translateResult = await translateClient().send(new TranslateJsonToX12Command({
-    guideId,
-    input,
-    envelope
-  }));
+  const translateResult = await translateClient().send(
+    new TranslateJsonToX12Command({
+      guideId,
+      input,
+      envelope,
+    })
+  );
 
-  if(!translateResult.output) {
+  if (!translateResult.output) {
     throw new Error("translation did not return any output");
   }
 
@@ -48,12 +50,14 @@ export const translateJsonToEdi = async (
 
 export const translateEdiToJson = async (
   input: string,
-  guideId: string,
+  guideId: string
 ): Promise<Parsed> => {
-  const translateResult = await translateClient().send(new TranslateX12ToJsonCommand({
-    input,
-    guideId,
-  }));
+  const translateResult = await translateClient().send(
+    new TranslateX12ToJsonCommand({
+      input,
+      guideId,
+    })
+  );
 
   if (!translateResult.output) {
     throw new Error("translation did not return any output");

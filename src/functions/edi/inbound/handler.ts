@@ -32,13 +32,16 @@ import { deliverToDestination } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
+import { TransactionContext, wrap } from "../../../lib/transactionLogger.js";
 import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
 
-export const handler = async (event: any): Promise<Record<string, any>> => {
+export const handler = wrap(async (event: any, context: TransactionContext): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
+  context.executionId = executionId;
+
   await trackProgress(`starting ${functionName()}`, {
     input: event,
     executionId,
@@ -132,6 +135,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
               mappingId
             );
 
+            context.documents.push(ediProcessingResult);
+
             await deliverToDestination(destination, ediProcessingResult);
           }
         }
@@ -160,9 +165,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     if (errorCount > 0) {
       const keyCount = groupedEventKeys.keysToProcess.length;
       const keyCountMessage = `${keyCount} key${keyCount > 1 ? "s" : ""}`;
-      const errorCountMessage = `${errorCount} error${
-        errorCount > 1 ? "s" : ""
-      }`;
+      const errorCountMessage = `${errorCount} error${errorCount > 1 ? "s" : ""
+        }`;
       const message = `encountered ${errorCountMessage} while attempting to process ${keyCountMessage}`;
       return failedExecution(executionId, new Error(message));
     }
@@ -180,7 +184,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // the failed execution will not be uploaded to the executions bucket
     return failedExecution(executionId, error);
   }
-};
+});
 
 const groupEventKeys = (
   records: BucketNotificationRecord[]

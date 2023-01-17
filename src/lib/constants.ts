@@ -1,11 +1,14 @@
 import dotenv from "dotenv";
-
-import { requiredEnvVar } from "./environment.js";
+import { fromCredentials } from "@stedi/sdk-token-provider";
 
 dotenv.config({ override: true });
 
 export const DEFAULT_SDK_CLIENT_PROPS = {
-  apiKey: requiredEnvVar("STEDI_API_KEY"),
+  ...(process.env.STEDI_API_KEY ? {
+    apiKey: process.env.STEDI_API_KEY
+  } : {
+    token: fromCredentials()
+  }),
   region: "us",
 };
 

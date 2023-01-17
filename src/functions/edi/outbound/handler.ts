@@ -17,6 +17,7 @@ import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIde
 import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
 import { resolveTransactionSetConfig } from "../../../lib/resolveTransactionSetConfig.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
+import { TransactionContext, wrap } from "../../../lib/transactionLogger.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 
@@ -29,10 +30,12 @@ type OutboudEvent = {
   payload: any;
 };
 
-export const handler = async (
-  event: OutboudEvent
+export const handler = wrap(async (
+  event: OutboundEvent,
+  context: TransactionContext
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
+  context.executionId = executionId;
   console.log("starting", JSON.stringify({ input: event, executionId }));
 
   try {
@@ -137,6 +140,9 @@ export const handler = async (
           stControlNumber;
       }
 
+
+      context.documents.push(guideGuideJson);
+
       // Translate the Guide schema-based JSON to X12 EDI
       const translation = await translateJsonToEdi(
         guideGuideJson,
@@ -163,7 +169,7 @@ export const handler = async (
       e instanceof Error ? e : new Error(`unknown error: ${serializeError(e)}`);
     return failedExecution(executionId, error);
   }
-};
+});
 
 const determineTransactionSet = (event: OutboudEvent) =>
   event.payload?.heading?.transaction_set_header_ST

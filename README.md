@@ -24,8 +24,8 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
    Example `.env` file:
 
    ```
-   STEDI_API_KEY=<REPLACE_ME>
-   DESTINATION_WEBHOOK_URL=https://webhook.site/<YOUR_UNIQUE_ID>
+   STEDI_API_KEY=<YOUR_STEDI_API_KEY>
+   DESTINATION_WEBHOOK_URL=<YOUR_WEBHOOK_URL>
    ```
 
 1. To deploy the components:

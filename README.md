@@ -3,7 +3,7 @@
 This repository contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one way to build an integration for the common read and write EDI use case. Your solution may differ, depending on your systems and requirements. We encourage you to [contact us](mailto:support@stedi.com) as you get started with Stedi, so we can help you design a custom integration.
 
 
-# Read and Write Workflow 
+## Read and Write Workflow 
 
 The bootstrap workflow uses the following process to handle incoming EDI:
 

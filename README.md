@@ -344,7 +344,7 @@ The `outbound-edi` function can be invoked via the UI for testing.
 
   </details>
 
-5. You can view the file using the [Buckets Web View](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
+5. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
 
 # Customizing the Bootstrap Workflow
 

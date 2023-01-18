@@ -49,7 +49,7 @@ The bootstrap uses a similar process in reverse to translate JSON documents to E
 
 ## Testing the system
 
-## Inbound EDI
+### Inbound EDI
 The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.
 
 1. Using the [Buckets UI](https://www.stedi.com/app/buckets) navigate to the `inbound` directory for your trading partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`

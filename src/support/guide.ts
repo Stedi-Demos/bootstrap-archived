@@ -14,6 +14,8 @@ import {
 import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 import path from "node:path";
 import fs from "node:fs";
+import { updateDotEnvFile } from "./utils.js";
+import * as dotenv from "dotenv";
 
 let _guidesClient: GuidesClient;
 
@@ -50,6 +52,14 @@ export const ensureGuideExists = async (guidePath: string): Promise<string> => {
     const guideId = await createGuide(guide);
     const parsedGuideId = parseGuideId(guideId);
     console.log(`Guide created: ${parsedGuideId}`);
+    const existingEnvVars = dotenv.config().parsed ?? {};
+    const guideIds = existingEnvVars.GUIDE_IDS
+      ? `${existingEnvVars.GUIDE_IDS},${parsedGuideId}`
+      : parsedGuideId;
+    updateDotEnvFile({
+      ...existingEnvVars,
+      GUIDE_IDS: guideIds,
+    });
     return parsedGuideId;
   } catch (e) {
     if (!(e instanceof ResourceConflictException)) {

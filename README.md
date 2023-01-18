@@ -15,7 +15,7 @@ The bootstrap workflow uses the following process to handle incoming EDI:
 The bootstrap uses a similar process in reverse to translate JSON documents to EDI and publish them to a bucket.
 
 
-# Prerequisites & Deployment
+## Prerequisites & Deployment
 
 1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
 

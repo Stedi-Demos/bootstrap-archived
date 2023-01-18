@@ -314,7 +314,7 @@ The `inbound-edi` function will be invoked automatically when files are written 
    ```
 </details>
 
-## Outbound EDI
+### Outbound EDI
 
 The `outbound-edi` function can be invoked via the UI for testing. 
 

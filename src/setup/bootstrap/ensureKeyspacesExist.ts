@@ -7,7 +7,8 @@ import {
 } from "@stedi/sdk-client-stash";
 import {
   PARTNERS_KEYSPACE_NAME,
-  CONTROL_NUMBER_KEYSPACE_NAME,
+  OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+  INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
 } from "../../lib/constants.js";
 import { stashClient as buildStashClient } from "../../lib/stash.js";
 
@@ -15,7 +16,11 @@ const stashClient = buildStashClient();
 
 export const ensureKeyspacesExist = async () => {
   console.log("Creating keyspaces...");
-  const keyspaceNames = [PARTNERS_KEYSPACE_NAME, CONTROL_NUMBER_KEYSPACE_NAME];
+  const keyspaceNames = [
+    PARTNERS_KEYSPACE_NAME,
+    OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+    INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+  ];
 
   for (const keyspaceName of keyspaceNames) {
     await ensureKeyspace(keyspaceName);

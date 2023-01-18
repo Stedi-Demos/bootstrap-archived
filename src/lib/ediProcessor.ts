@@ -1,6 +1,4 @@
-import { DocumentType } from "@aws-sdk/types";
 import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
-
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { translateEdiToJson } from "./translateV3.js";
 import { trackProgress } from "./progressTracking.js";
@@ -15,10 +13,6 @@ export const processEdiDocument = async (
   const translation = await translateEdiToJson(ediDocument, guideId);
   await trackProgress("translated edi document", translation);
 
-  if (!translation.envelope) {
-    throw new Error(`no envelope found in input`);
-  }
-
   if (
     !translation.transactionSets ||
     translation.transactionSets.length === 0
@@ -31,7 +25,6 @@ export const processEdiDocument = async (
       new MapDocumentCommand({
         id: mappingId,
         content: {
-          envelope: translation.envelope,
           transactionSets: translation.transactionSets,
         },
       })

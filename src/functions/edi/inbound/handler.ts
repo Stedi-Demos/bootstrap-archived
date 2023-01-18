@@ -27,14 +27,14 @@ import {
   ProcessingResults,
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
-import { splitEdi } from "../../../lib/ediSplitter.js";
+import { prepareMetadata } from "../../../lib/prepareMetadata.js";
 import { deliverToDestination } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
 import {
   getTransactionSetConfigsForPartnership,
-  resolveTransactionSetConfig
+  resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs";
 
 // Buckets client is shared across handler and execution tracking logic
@@ -79,72 +79,88 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       try {
         // Split EDI input into multiple documents if there are multiple functional groups
         // within an interchange, or multiple interchanges in the same file
-        const ediDocuments = splitEdi(fileContents);
-        await trackProgress("split edi documents", ediDocuments);
+        const metadata = prepareMetadata(fileContents);
 
-        // resolve the partnerIds for the sending and receiving partners
-        const sendingPartnerId = await resolvePartnerIdFromISAId(
-          ediDocuments[0].metadata.senderId
-        );
-        const receivingPartnerId = await resolvePartnerIdFromISAId(
-          ediDocuments[0].metadata.receiverId
-        );
-
-        // load the Partnership for the sending and receiving partners
-        const partnership = await loadPartnership(
-          sendingPartnerId,
-          receivingPartnerId
-        );
-
-        // get transaction set configs for partnership
-        const transactionSetConfigs = getTransactionSetConfigsForPartnership({
-          partnership,
-          sendingPartnerId,
-          receivingPartnerId,
-        });
-
-        // For each EDI document:
-        // - look up the guideId and mappingId
-        // - call processEdiDocument, which translates X12 to JSON, and then invokes the mapping
-        // - send the result to the webhook
-        // - delete the input file once processed successfully
-
-        for await (const ediDocument of ediDocuments) {
-          // load the guide for the transaction set
-          const guideSummary = await resolveGuide({
-            guideIdsForPartnership: transactionSetConfigs.map((config) => config.guideId),
-            transactionSet: ediDocument.metadata.code,
-          });
-
-          console.log(guideSummary);
-
-          // find the transaction set config for partnership that includes guide
-          const transactionSetConfig = resolveTransactionSetConfig(transactionSetConfigs, guideSummary.guideId);
-
-          for (const {
-            destination,
-            mappingId,
-          } of transactionSetConfig.destinations) {
-            console.log(
-              "processing",
-              guideSummary.guideId,
-              mappingId,
-              destination
+        for (const { interchange } of metadata) {
+          for (const functionalGroup of interchange.functionalGroups) {
+            // resolve the partnerIds for the sending and receiving partners
+            const sendingPartnerId = await resolvePartnerIdFromISAId(
+              interchange.senderId
+            );
+            const receivingPartnerId = await resolvePartnerIdFromISAId(
+              interchange.receiverId
             );
 
-            const ediProcessingResult = await processEdiDocument(
-              guideSummary.guideId,
-              ediDocument.edi,
-              mappingId
+            // load the Partnership for the sending and receiving partners
+            const partnership = await loadPartnership(
+              sendingPartnerId,
+              receivingPartnerId
             );
 
-            await deliverToDestination(destination, ediProcessingResult);
+            // const controlNumberCheck = await trackInboundControlNumbers(
+            //   partnershipId: partnership.id
+
+            // )
+
+            // get transaction set configs for partnership
+            const transactionSetConfigs =
+              getTransactionSetConfigsForPartnership({
+                partnership,
+                sendingPartnerId,
+                receivingPartnerId,
+              });
+
+            // For each EDI document:
+            // - look up the guideId and mappingId
+            // - call processEdiDocument, which translates X12 to JSON, and then invokes the mapping
+            // - send the result to the webhook
+            // - delete the input file once processed successfully
+
+            for await (const transactionSet of functionalGroup.transactionSets) {
+              // load the guide for the transaction set
+              const guideSummary = await resolveGuide({
+                guideIdsForPartnership: transactionSetConfigs.map(
+                  (config) => config.guideId
+                ),
+                transactionSetType: transactionSet.transactionSetType,
+              });
+
+              const edi = transactionSet.segments.join(
+                interchange.delimiters.segment
+              );
+
+              // find the transaction set config for partnership that includes guide
+              const transactionSetConfig = resolveTransactionSetConfig(
+                transactionSetConfigs,
+                guideSummary.guideId
+              );
+
+              for (const {
+                destination,
+                mappingId,
+              } of transactionSetConfig.destinations) {
+                console.log(
+                  "processing",
+                  guideSummary.guideId,
+                  mappingId,
+                  destination
+                );
+
+                const ediProcessingResult = await processEdiDocument(
+                  guideSummary.guideId,
+                  edi,
+                  mappingId
+                );
+
+                await deliverToDestination(destination, ediProcessingResult);
+              }
+            }
+
+            // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
+            await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
+            results.processedKeys.push(keyToProcess.key);
           }
         }
-
-        // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
-        await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
-        results.processedKeys.push(keyToProcess.key);
       } catch (e) {
         const error =
           e instanceof Error

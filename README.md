@@ -2,6 +2,11 @@
 
 This repo contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one possible way to interact with Stedi's Products and APIs to achieve a typical EDI workload; your implementation may include some or all of these products depending on your particular systems and requirements.
 
+To learn more about the repo and how it works, you can read more here in our docs: 
+- [Bootstrap overview](https://www.stedi.com/docs/bootstrap)
+- [Adjusting the workflow](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow)
+- [Understanding the workflow](https://www.stedi.com/docs/bootstrap/understanding-the-workflow)
+
 # Prerequisites & Deployment
 
 1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_

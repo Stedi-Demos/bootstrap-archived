@@ -47,7 +47,7 @@ The bootstrap uses a similar process in reverse to translate JSON documents to E
    npm run bootstrap
    ```
 
-# Testing the system
+## Testing the system
 
 ## Inbound EDI
 The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.

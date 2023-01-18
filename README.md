@@ -5,7 +5,7 @@ This repository contains an end-to-end configuration for building a full X12 EDI
 
 # Read and Write Workflow 
 
-The bootstrap uses the following process to handle incoming EDI:
+The bootstrap workflow uses the following process to handle incoming EDI:
 
 1. An example trading partner uses [Stedi SFTP](https://www.stedi.com/products/sftp) to send EDI documents to a [Stedi Bucket](https://www.stedi.com/products/buckets).
 2. New documents automatically invoke a [Stedi Function](https://www.stedi.com/products/functions) that contains custom code for the workflow. 

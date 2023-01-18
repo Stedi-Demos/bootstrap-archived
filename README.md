@@ -1,6 +1,19 @@
 # Stedi EDI Bootstrap
 
-This repo contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one possible way to interact with Stedi's Products and APIs to achieve a typical EDI workload; your implementation may include some or all of these products depending on your particular systems and requirements.
+This repository contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one way to build an integration for the common read and write EDI use case. Your implementation may differ, depending on your systems and requirements. We encourage you to [contact us](mailto:support@stedi.com) as you get started with Stedi, so we can help you design a custom integration.
+
+
+# Read and Write Workflow 
+
+The bootstrap uses the following process to handle incoming EDI:
+
+1. An example trading partner uses [Stedi SFTP](https://www.stedi.com/products/sftp) to send EDI documents to a [Stedi Bucket](https://www.stedi.com/products/buckets).
+2. New documents automatically invoke a [Stedi Function](https://www.stedi.com/products/functions) that contains custom code for the workflow. 
+3. The function calls [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the EDI data into JSON. This process uses a [Stedi Guide](https://www.stedi.com/products/guides) to map EDI fields to JSON fields. 
+4. The function sends the JSON document to an internal webhook that you configure.
+
+The bootstrap uses a similar process in reverse to translate JSON documents to EDI and publish them to a bucket.
+
 
 # Prerequisites & Deployment
 
@@ -34,9 +47,9 @@ This repo contains an end-to-end configuration for building a full X12 EDI syste
    npm run bootstrap
    ```
 
-## Testing the system
+# Testing the system
 
-### Inbound EDI
+## Inbound EDI
 The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.
 
 1. Using the [Buckets UI](https://www.stedi.com/app/buckets) navigate to the `inbound` directory for your trading partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`
@@ -301,7 +314,7 @@ The `inbound-edi` function will be invoked automatically when files are written 
    ```
 </details>
 
-### Outbound EDI
+## Outbound EDI
 
 The `outbound-edi` function can be invoked via the UI for testing. 
 
@@ -332,3 +345,10 @@ The `outbound-edi` function can be invoked via the UI for testing.
   </details>
 
 5. You can view the file using the [Buckets Web View](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
+
+# Customizing the Bootstrap
+
+The bootstrap uses a sample trading partner to set up and test the read and write EDI workflows. You can customize the bootstrap for your use case by doing one or all of the following:
+- [Adda partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile) to replace the test trading partner with your real trading partners' details and requirements.
+- [Create Stedi Mappings](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#map-inbound-messages) that transform EDI documents into a custom JSON shape for your internal system. The base bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. 
+- [Create SFTP Users](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#sending-and-receiving-documents-with-sftp) for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets. 

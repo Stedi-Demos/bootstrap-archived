@@ -20,10 +20,11 @@ export interface TransactionContext {
 
 
 export const wrap = (handler: (event: any, context: TransactionContext) => Promise<Record<string, any>>) => {
-  return async (event: any) => {
+  return async (event: any, lambdaContext: { awsRequestId: string; }) => {
     const context: TransactionContext = {
       documents: [],
       executionStartTime: Date.now(),
+      executionId: lambdaContext.awsRequestId,
       functionName: process.env.AWS_LAMBDA_FUNCTION_NAME,
       accountId: "de1eefa7-1bea-4401-a743-3476ddce96a6",
       executionInput: event

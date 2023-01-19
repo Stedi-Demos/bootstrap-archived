@@ -12,7 +12,7 @@ The bootstrap workflow uses the following process to handle incoming EDI:
 3. The function calls [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the EDI data into JSON. This process uses a [Stedi Guide](https://www.stedi.com/products/guides) to map EDI fields to JSON fields. 
 4. The function sends the JSON document to an internal webhook that you configure.
 
-The bootstrap uses a similar process in reverse to translate JSON documents to EDI and publish them to a bucket.
+The bootstrap uses a similar process in reverse to handle outgoing EDI. It translates JSON documents to EDI and publishes them to a Stedi bucket.
 
 
 ## Prerequisites & Deployment

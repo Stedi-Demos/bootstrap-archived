@@ -83,17 +83,20 @@ export const prepareMetadata = (ediDocument: string): EDIMetadata[] => {
           );
         }
 
-        const release = extractRelease(elements);
         currentFunctionalGroup = {
-          release,
-          controlNumber: parseInt(elements[5]),
-          applicationSenderCode: elements[2],
-          applicationReceiverCode: elements[3],
+          ...extractFunctionalGroupMetadata(elements),
+
           transactionSets: [],
           segments: { GS: currentSegment },
         };
         break;
       case "ST":
+        if (!currentFunctionalGroup) {
+          throw new Error(
+            "transaction set encountered outside the scope of a functional group"
+          );
+        }
+
         if (currentTransactionSet !== undefined)
           throw new Error("incomplete transaction set found");
 
@@ -196,12 +199,17 @@ const extractIsaIds = (
   };
 };
 
-const extractRelease = (elements: string[]): string => {
+const extractFunctionalGroupMetadata = (elements: string[]) => {
   if (elements.length < 9) {
     throw new Error("invalid GS segment: not enough elements detected");
   }
 
-  return elements[8];
+  return {
+    release: elements[8],
+    controlNumber: parseInt(elements[5]),
+    applicationSenderCode: elements[2],
+    applicationReceiverCode: elements[3],
+  };
 };
 
 const extractTransactionSetType = (elements: string[]): string => {

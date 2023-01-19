@@ -5,7 +5,7 @@ import { trackProgress } from "./progressTracking.js";
 
 const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
 
-export const processEdiDocument = async (
+export const processTransactionSet = async (
   guideId: string,
   ediDocument: string,
   mappingId?: string

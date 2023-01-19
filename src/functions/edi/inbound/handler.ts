@@ -7,7 +7,7 @@ import {
   GetObjectCommand,
 } from "@stedi/sdk-client-buckets";
 
-import { processEdiDocument } from "../../../lib/ediProcessor.js";
+import { processTransactionSet } from "../../../lib/processTransactionSet.js";
 import {
   failedExecution,
   functionName,
@@ -77,51 +77,46 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       );
 
       try {
-        // Split EDI input into multiple documents if there are multiple functional groups
-        // within an interchange, or multiple interchanges in the same file
+        // parse EDI and determine what is contains
         const metadata = prepareMetadata(fileContents);
 
         for (const { interchange } of metadata) {
+          // resolve the partnerIds for the sending and receiving partners
+          const sendingPartnerId = await resolvePartnerIdFromISAId(
+            interchange.senderId
+          );
+          const receivingPartnerId = await resolvePartnerIdFromISAId(
+            interchange.receiverId
+          );
+
+          // load the Partnership for the sending and receiving partners
+          const partnership = await loadPartnership(
+            sendingPartnerId,
+            receivingPartnerId
+          );
+
+          // get transaction set configs for partnership
+          const transactionSetConfigs = getTransactionSetConfigsForPartnership({
+            partnership,
+            sendingPartnerId,
+            receivingPartnerId,
+          });
+
           for (const functionalGroup of interchange.functionalGroups) {
-            // resolve the partnerIds for the sending and receiving partners
-            const sendingPartnerId = await resolvePartnerIdFromISAId(
-              interchange.senderId
-            );
-            const receivingPartnerId = await resolvePartnerIdFromISAId(
-              interchange.receiverId
+            const guideIdsForPartnership = transactionSetConfigs.map(
+              (config) => config.guideId
             );
 
-            // load the Partnership for the sending and receiving partners
-            const partnership = await loadPartnership(
-              sendingPartnerId,
-              receivingPartnerId
-            );
-
-            // const controlNumberCheck = await trackInboundControlNumbers(
-            //   partnershipId: partnership.id
-
-            // )
-
-            // get transaction set configs for partnership
-            const transactionSetConfigs =
-              getTransactionSetConfigsForPartnership({
-                partnership,
-                sendingPartnerId,
-                receivingPartnerId,
-              });
-
-            // For each EDI document:
+            // For each Transaction Set:
             // - look up the guideId and mappingId
-            // - call processEdiDocument, which translates X12 to JSON, and then invokes the mapping
+            // - call processTransactionSet, which translates X12 to JSON, and then invokes the mapping
             // - send the result to the webhook
             // - delete the input file once processed successfully
 
-            for await (const transactionSet of functionalGroup.transactionSets) {
+            for (const transactionSet of functionalGroup.transactionSets) {
               // load the guide for the transaction set
               const guideSummary = await resolveGuide({
-                guideIdsForPartnership: transactionSetConfigs.map(
-                  (config) => config.guideId
-                ),
+                guideIdsForPartnership,
                 transactionSetType: transactionSet.transactionSetType,
               });
 
@@ -146,7 +141,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                   destination
                 );
 
-                const ediProcessingResult = await processEdiDocument(
+                const ediProcessingResult = await processTransactionSet(
                   guideSummary.guideId,
                   edi,
                   mappingId

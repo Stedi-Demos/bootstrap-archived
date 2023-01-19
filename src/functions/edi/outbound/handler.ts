@@ -95,10 +95,10 @@ export const handler = async (
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
       interchangeHeader: {
-        senderQualifier: senderProfile.x12.partnerInterchangeQualifier,
-        senderId: senderProfile.x12.partnerInterchangeId,
-        receiverQualifier: receiverProfile.x12.partnerInterchangeQualifier,
-        receiverId: receiverProfile.x12.partnerInterchangeId,
+        senderQualifier: senderProfile.partnerInterchangeQualifier,
+        senderId: senderProfile.partnerInterchangeId,
+        receiverQualifier: receiverProfile.partnerInterchangeQualifier,
+        receiverId: receiverProfile.partnerInterchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
         controlNumber: isaControlNumber,
@@ -106,8 +106,8 @@ export const handler = async (
       },
       groupHeader: {
         functionalIdentifierCode,
-        applicationSenderCode: senderProfile.x12.partnerApplicationId,
-        applicationReceiverCode: receiverProfile.x12.partnerApplicationId,
+        applicationSenderCode: senderProfile.partnerApplicationId,
+        applicationReceiverCode: receiverProfile.partnerApplicationId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
         controlNumber: gsControlNumber,

@@ -45,15 +45,13 @@ export const ISAPartnerIdLookupSchema = z.strictObject({
 });
 export type ISAPartnerIdLookup = z.infer<typeof ISAPartnerIdLookupSchema>;
 
-export const PartnerProfleSchema = z.strictObject({
+export const PartnerProfileSchema = z.strictObject({
   id: z.string(),
   partnerName: z.string(),
-  x12: z.strictObject({
-    acknowledgementRequestedCode: z.string(),
-    partnerInterchangeQualifier: z.string(),
-    partnerInterchangeId: z.string(),
-    partnerApplicationId: z.string(),
-  }),
+  acknowledgmentRequestedCode: z.string(),
+  partnerInterchangeQualifier: z.string(),
+  partnerInterchangeId: z.string(),
+  partnerApplicationId: z.string(),
 });
 
-export type PartnerProfile = z.infer<typeof PartnerProfleSchema>;
+export type PartnerProfile = z.infer<typeof PartnerProfileSchema>;

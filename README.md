@@ -7,7 +7,7 @@ This repository contains an end-to-end configuration for building a full X12 EDI
 
 The bootstrap workflow uses the following process to handle incoming EDI:
 
-1. An example trading partner uses [Stedi SFTP](https://www.stedi.com/products/sftp) to send EDI documents to a [Stedi bucket](https://www.stedi.com/products/buckets).
+1. You upload EDI documents to a [Stedi bucket](https://www.stedi.com/products/buckets). A trading partner could also do this using [Stedi SFTP](https://www.stedi.com/products/sftp).
 2. New documents automatically invoke a [Stedi Function](https://www.stedi.com/products/functions) that contains custom code for the workflow. 
 3. The function calls [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the EDI data into JSON. This process uses a [Stedi Guide](https://www.stedi.com/products/guides) to map EDI fields to JSON fields. 
 4. The function sends the JSON document to an internal webhook that you configure.

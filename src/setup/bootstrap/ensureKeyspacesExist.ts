@@ -2,8 +2,6 @@ import {
   CreateKeyspaceCommand,
   GetKeyspaceCommand,
   GetKeyspaceCommandOutput,
-  ListKeyspacesCommand,
-  ListKeyspacesCommandOutput,
 } from "@stedi/sdk-client-stash";
 import {
   PARTNERS_KEYSPACE_NAME,

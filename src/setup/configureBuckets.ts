@@ -26,7 +26,6 @@ dotenv.config({ override: true });
   );
 
   if (!user.bucketName) throw new Error("ftp bucket name not found");
-  if (!user.username) throw new Error("ftp user name not found");
 
   // Pre-create trading partner inbound/outbound directories for convenience
   const tradingPartnerPrefix = "trading_partners/ANOTHERMERCH";

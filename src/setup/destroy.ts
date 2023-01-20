@@ -5,7 +5,8 @@ import { stashClient } from "../lib/stash.js";
 import { DeleteGuideCommand } from "@stedi/sdk-client-guides";
 import {
   PARTNERS_KEYSPACE_NAME,
-  CONTROL_NUMBER_KEYSPACE_NAME,
+  OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+  INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
 } from "../lib/constants.js";
 import {
   DeleteKeyspaceCommand,
@@ -14,6 +15,7 @@ import {
 import { functionClient } from "../support/functions.js";
 import { DeleteFunctionCommand } from "@stedi/sdk-client-functions";
 import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
+import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
@@ -49,17 +51,24 @@ import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
     new DeleteKeyspaceCommand({ keyspaceName: PARTNERS_KEYSPACE_NAME })
   );
   await stashClient().send(
-    new DeleteKeyspaceCommand({ keyspaceName: CONTROL_NUMBER_KEYSPACE_NAME })
+    new DeleteKeyspaceCommand({
+      keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+    })
+  );
+
+  await stashClient().send(
+    new DeleteKeyspaceCommand({
+      keyspaceName: INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+    })
   );
 
   // Delete Functions
   console.log("Deleting Functions");
-  await functionClient().send(
-    new DeleteFunctionCommand({ functionName: "edi-inbound" })
-  );
-  await functionClient().send(
-    new DeleteFunctionCommand({ functionName: "edi-outbound" })
-  );
+  const functionPaths = getFunctionPaths();
+  for (const path of functionPaths) {
+    const functionName = functionNameFromPath(path);
+    await functionClient().send(new DeleteFunctionCommand({ functionName }));
+  }
 
   console.log("Done");
 })();

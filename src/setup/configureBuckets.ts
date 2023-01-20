@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
-import { CreateUserCommand, DeleteUserCommand } from "@stedi/sdk-client-sftp";
+import {
+  SftpClient,
+  CreateUserCommand,
+  DeleteUserCommand,
+} from "@stedi/sdk-client-sftp";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -9,7 +13,6 @@ import {
 
 import { bucketClient } from "../lib/buckets.js";
 import { updateDotEnvFile } from "../support/utils.js";
-import { sftpClient } from "../lib/sftp.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
 dotenv.config({ override: true });
@@ -18,7 +21,14 @@ dotenv.config({ override: true });
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
-  const user = await sftpClient().send(
+
+  const sftpClient = new SftpClient({
+    region: "us-east-1",
+    endpoint: "https://api.sftp.us.stedi.com/2022-04-01",
+    apiKey: process.env.STEDI_API_KEY,
+  });
+
+  const user = await sftpClient.send(
     new CreateUserCommand({
       description: "Temp user to get bucket name",
       homeDirectory: "/_stedi/void",
@@ -74,7 +84,7 @@ dotenv.config({ override: true });
   await updateResourceMetadata(bucketEnvVarEntries);
 
   // Clean up temporary user and corresponding home directory
-  await sftpClient().send(new DeleteUserCommand({ username: user.username }));
+  await sftpClient.send(new DeleteUserCommand({ username: user.username }));
   await bucketClient().send(
     new DeleteObjectCommand({
       bucketName: user.bucketName,

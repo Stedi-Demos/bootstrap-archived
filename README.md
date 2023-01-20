@@ -1,8 +1,21 @@
 # Stedi EDI Bootstrap
 
-This repo contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one possible way to interact with Stedi's Products and APIs to achieve a typical EDI workload; your implementation may include some or all of these products depending on your particular systems and requirements.
+This repository contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This implementation demonstrates one way to build an integration for the common read and write EDI use cases. Your solution may differ, depending on your systems and requirements. We encourage you to [contact us](mailto:support@stedi.com) as you get started with Stedi, so we can help you customize the workflow.
 
-# Prerequisites & Deployment
+
+## Read and Write Workflow 
+
+The bootstrap workflow uses the following process to handle incoming EDI:
+
+1. You upload EDI documents to a [Stedi bucket](https://www.stedi.com/products/buckets). A trading partner could also do this using [Stedi SFTP](https://www.stedi.com/products/sftp).
+2. New documents automatically invoke a [Stedi Function](https://www.stedi.com/products/functions) that contains custom code for the workflow. 
+3. The function calls [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the EDI data into JSON. This process uses a [Stedi Guide](https://www.stedi.com/products/guides) to map EDI fields to JSON fields. 
+4. The function sends the JSON document to an internal webhook that you configure.
+
+The bootstrap uses a similar process in reverse to handle outgoing EDI. It translates JSON documents to EDI and publishes them to a Stedi bucket.
+
+
+## Prerequisites & Deployment
 
 1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
 
@@ -331,7 +344,14 @@ The `outbound-edi` function can be invoked via the UI for testing.
 
   </details>
 
-5. You can view the file using the [Buckets Web View](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
+5. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
+
+# Customizing the Bootstrap Workflow
+
+The bootstrap workflow uses a sample trading partner to set up and test the read and write EDI workflows. You can customize the bootstrap workflow for your use case by doing one or all of the following:
+- [Edit the partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile) to replace the test trading partner with your real trading partners' details and requirements.
+- [Create Stedi mappings](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#map-inbound-messages). The base bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. You may need to create a mapping to transform EDI documents into a custom JSON shape for your internal system. You can also create a mapping that transforms JSON data from your system into the JSON schema required for outgoing EDI documents.
+- [Create SFTP users](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#sending-and-receiving-documents-with-sftp) for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets. 
 
 # Cleanup
 

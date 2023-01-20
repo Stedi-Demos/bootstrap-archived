@@ -1,24 +1,21 @@
 import {
-  GetProfileCommand,
-  GetProfileCommandOutput,
-  X12Profile,
+  GetX12ProfileCommand,
+  GetX12ProfileCommandOutput,
 } from "@stedi/sdk-client-partners";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
 import { partnersClient as buildPartnersClient } from "./partners.js";
 import { stashClient as buildStashClient } from "./stash.js";
-import { PartnerProfleSchema } from "./types/PartnerRouting.js";
+import { PartnerProfileSchema } from "./types/PartnerRouting.js";
 
 const stashClient = buildStashClient();
 
 const partnersClient = buildPartnersClient();
 
 type Profile = Omit<
-  GetProfileCommandOutput,
+  GetX12ProfileCommandOutput,
   "createdAt" | "updatedAt" | "$metadata"
-> & {
-  x12: X12Profile;
-};
+>;
 
 export const loadPartnerProfile = async (
   partnerId: string
@@ -26,7 +23,7 @@ export const loadPartnerProfile = async (
   if (process.env["USE_BETA"] === "true") {
     // load x12 Trading Partner Profile (pre-GA)
     const profile = await partnersClient.send(
-      new GetProfileCommand({
+      new GetX12ProfileCommand({
         id: partnerId,
       })
     );
@@ -53,7 +50,7 @@ export const loadPartnerProfile = async (
         `No X12 profile id at '${key}' in '${PARTNERS_KEYSPACE_NAME}'`
       );
 
-    const parsedProfile = PartnerProfleSchema.safeParse(value);
+    const parsedProfile = PartnerProfileSchema.safeParse(value);
 
     if (!parsedProfile.success)
       throw new Error(

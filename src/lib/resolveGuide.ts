@@ -10,12 +10,12 @@ type GuideSummary = {
 
 type ResolveGuideInput = {
   guideIdsForPartnership: string[];
-  transactionSet: string;
+  transactionSetType: string;
 };
 
 export const resolveGuide = async ({
   guideIdsForPartnership,
-  transactionSet,
+  transactionSetType,
 }: ResolveGuideInput): Promise<GuideSummary> => {
   const resolvedGuides: GuideSummary[] = [];
   for await (const guideId of guideIdsForPartnership) {
@@ -30,10 +30,12 @@ export const resolveGuide = async ({
         new GetGuideCommand({ id: guideIdToLoad })
       );
 
-      if (guide.id !== undefined &&
+      if (
+        guide.id !== undefined &&
         guide.target &&
         guide.target.release &&
-        guide.target.transactionSet === transactionSet) {
+        guide.target.transactionSet === transactionSetType
+      ) {
         resolvedGuides.push({ guideId, release: guide.target.release });
 
         // don't check `DRFT_` guide if `LIVE_` matches
@@ -44,7 +46,9 @@ export const resolveGuide = async ({
 
   // if single matching guide is not found, throw an error
   if (resolvedGuides.length !== 1) {
-    throw new Error(`${resolvedGuides.length} guides resolved for transaction set '${transactionSet}'.`);
+    throw new Error(
+      `${resolvedGuides.length} guides resolved for transaction set '${transactionSetType}'.`
+    );
   }
 
   return resolvedGuides[0];

@@ -6,6 +6,7 @@ import { StashStorage } from "../lib/migration/stashStorage.js";
 import { migrator } from "../lib/migration/config.js";
 import { ensureKeyspacesExist } from "./bootstrap/ensureKeyspacesExist.js";
 import { createProfiles } from "./bootstrap/createProfiles.js";
+import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
 (async () => {
   await ensureKeyspacesExist();
@@ -17,6 +18,7 @@ import { createProfiles } from "./bootstrap/createProfiles.js";
     "src/resources/X12/5010/855/guide.json"
   );
 
+  await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
   await createProfiles();
   await createSampleStashRecords({ guide850, guide855 });
 

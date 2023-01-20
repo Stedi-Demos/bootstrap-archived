@@ -4,7 +4,7 @@
   "description": "One-click deploy X12 EDI system on Stedi",
   "type": "module",
   "scripts": {
-    "bootstrap": "npm run configure-buckets && npx ts-node-esm ./src/setup/bootstrap.ts && npm run deploy && npm run enable-notifications",
+    "bootstrap": "npx ts-node-esm ./src/setup/bootstrap.ts && npm run configure-buckets && npm run deploy && npm run enable-notifications",
     "destroy": "ts-node-esm ./src/setup/destroy.ts",
     "deploy": "ts-node-esm ./src/setup/deploy.ts",
     "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",

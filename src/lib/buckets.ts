@@ -1,5 +1,11 @@
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
-import { BucketsClient, BucketsClientConfig } from "@stedi/sdk-client-buckets";
+import {
+  BucketsClient,
+  BucketsClientConfig,
+  DeleteObjectCommand,
+  ListObjectsCommand,
+  ObjectListOutput,
+} from "@stedi/sdk-client-buckets";
 
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 
@@ -21,4 +27,49 @@ export const bucketClient = () => {
   }
 
   return _bucketClient;
+};
+
+const deleteItemsWithPrefix = async (
+  bucketName: string,
+  items: ObjectListOutput[],
+  prefix: string
+) => {
+  const keysToDelete = items?.reduce((keysToDelete: string[], item) => {
+    return item.key?.startsWith(prefix)
+      ? keysToDelete.concat(item.key)
+      : keysToDelete;
+  }, []);
+  for await (const key of keysToDelete || []) {
+    await bucketClient().send(
+      new DeleteObjectCommand({
+        bucketName,
+        key,
+      })
+    );
+  }
+};
+
+export const emptyBucket = async (bucketName: string) => {
+  const prefix = "";
+  const firstPageOfItems = await bucketClient().send(
+    new ListObjectsCommand({
+      bucketName,
+      pageSize: 50,
+    })
+  );
+  let nextPageToken = firstPageOfItems.nextPageToken;
+  firstPageOfItems.items &&
+    (await deleteItemsWithPrefix(bucketName, firstPageOfItems.items, prefix));
+  while (nextPageToken) {
+    const bucketItems = await bucketClient().send(
+      new ListObjectsCommand({
+        bucketName,
+        pageSize: 50,
+        pageToken: nextPageToken,
+      })
+    );
+    nextPageToken = bucketItems.nextPageToken;
+    bucketItems.items &&
+      (await deleteItemsWithPrefix(bucketName, bucketItems.items, prefix));
+  }
 };

@@ -13,11 +13,14 @@ import {
 
 import { bucketClient } from "../lib/buckets.js";
 import { updateDotEnvFile } from "../support/utils.js";
+import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
 dotenv.config({ override: true });
 
 (async () => {
   console.log("Configuring buckets...");
+
+  // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
 
   const sftpClient = new SftpClient({
     region: "us-east-1",
@@ -25,7 +28,6 @@ dotenv.config({ override: true });
     apiKey: process.env.STEDI_API_KEY,
   });
 
-  // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
   const user = await sftpClient.send(
     new CreateUserCommand({
       description: "Temp user to get bucket name",
@@ -78,6 +80,8 @@ dotenv.config({ override: true });
     ...existingEnvVars,
     ...bucketEnvVarEntries,
   });
+
+  await updateResourceMetadata(bucketEnvVarEntries);
 
   // Clean up temporary user and corresponding home directory
   await sftpClient.send(new DeleteUserCommand({ username: user.username }));

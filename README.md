@@ -352,3 +352,11 @@ The bootstrap workflow uses a sample trading partner to set up and test the read
 - [Edit the partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile) to replace the test trading partner with your real trading partners' details and requirements.
 - [Create Stedi mappings](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#map-inbound-messages). The base bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. You may need to create a mapping to transform EDI documents into a custom JSON shape for your internal system. You can also create a mapping that transforms JSON data from your system into the JSON schema required for outgoing EDI documents.
 - [Create SFTP users](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#sending-and-receiving-documents-with-sftp) for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets. 
+
+# Cleanup
+
+In order to delete all the resources created by the bootstrap, run the following command:
+
+```bash
+npm run destroy
+```

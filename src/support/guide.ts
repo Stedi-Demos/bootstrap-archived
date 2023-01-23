@@ -14,8 +14,6 @@ import {
 import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 import path from "node:path";
 import fs from "node:fs";
-import { updateDotEnvFile } from "./utils.js";
-import * as dotenv from "dotenv";
 
 let _guidesClient: GuidesClient;
 

@@ -15,11 +15,11 @@ The bootstrap workflow uses the following process to handle incoming EDI:
 The bootstrap uses a similar process in reverse to handle outgoing EDI. It translates JSON documents to EDI and publishes them to a Stedi bucket.
 
 
-## Prerequisites & Deployment
+## Requirements
 
-1. [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
+1. Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
 
-1. Clone this repo and install the necessary dependencies:
+1. Clone the bootstrap repository and install the necessary dependencies:
 
    ```bash
    git clone https://github.com/Stedi-Demos/bootstrap.git
@@ -27,27 +27,31 @@ The bootstrap uses a similar process in reverse to handle outgoing EDI. It trans
    npm ci
    ```
 
-1. Go to [webhook.site](https://webhook.site/) and copy the unique URL. The demo will send output to this webhook.
+1. Create a [Stedi account](https://www.stedi.com/auth/sign-up?) and [generate an API Key](https://www.stedi.com/app/settings/api-keys). An API key is required to authenticate with Stedi APIs and deploy Stedi functions. 
 
-1. This project uses `dotenv` to manage the environmental variables required. Rename the `.env.example` file to `.env` and amend the following variables:
+1. Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap workflow sends output to this webhook.
 
-   - `STEDI_API_KEY`: Your Stedi API Key - used to deploy the function and internally to interact with product APIs. If you don't already have one, you can generate an [API Key here](https://www.stedi.com/app/settings/api-keys).
-   - `DESTINATION_WEBHOOK_URL`: the unique URL copied from [webhook.site](https://webhook.site/) in the previous step.
+1. Rename the bootstrap's `.env.example` file to `.env` and update the following environment variables:
 
-   Example `.env` file:
-
+   - `STEDI_API_KEY`: Your Stedi API Key
+   - `DESTINATION_WEBHOOK_URL`: the unique URL you copied from [webhook.site](https://webhook.site/)
+   
+   Example `.env` file
    ```
    STEDI_API_KEY=<YOUR_STEDI_API_KEY>
    DESTINATION_WEBHOOK_URL=<YOUR_WEBHOOK_URL>
    ```
 
-1. To deploy the components:
 
-   ```bash
-   npm run bootstrap
-   ```
+## Deploying the bootstrap
 
-## Testing the system
+Run the following command in the bootstrap directory: 
+
+```bash
+npm run bootstrap
+```
+
+## Testing the workflow
 
 ### Inbound EDI
 The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.
@@ -346,7 +350,7 @@ The `outbound-edi` function can be invoked via the UI for testing.
 
 5. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
 
-# Customizing the Bootstrap Workflow
+# Customizing the workflow
 
 The bootstrap workflow uses a sample trading partner to set up and test the read and write EDI workflows. You can customize the bootstrap workflow for your use case by doing one or all of the following:
 - [Edit the partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile) to replace the test trading partner with your real trading partners' details and requirements.

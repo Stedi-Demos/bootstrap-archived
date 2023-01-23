@@ -4,13 +4,10 @@ import { ensureGuideExists } from "../support/guide.js";
 import { createSampleStashRecords } from "./bootstrap/createStashRecords.js";
 import { StashStorage } from "../lib/migration/stashStorage.js";
 import { migrator } from "../lib/migration/config.js";
-import { ensureKeyspacesExist } from "./bootstrap/ensureKeyspacesExist.js";
 import { createProfiles } from "./bootstrap/createProfiles.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
 (async () => {
-  await ensureKeyspacesExist();
-
   const guide850 = await ensureGuideExists(
     "src/resources/X12/5010/850/guide.json"
   );

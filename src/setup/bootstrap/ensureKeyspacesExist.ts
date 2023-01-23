@@ -12,7 +12,28 @@ import { stashClient as buildStashClient } from "../../lib/stash.js";
 
 const stashClient = buildStashClient();
 
-export const ensureKeyspacesExist = async () => {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const ensureKeyspace = async (keyspaceName: string) => {
+  try {
+    await stashClient.send(
+      new CreateKeyspaceCommand({
+        keyspaceName,
+      })
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "KeyspaceAlreadyExistsError"
+    )
+      console.log(`Keypsace '${keyspaceName}' already exists`);
+    else throw error;
+  }
+};
+
+(async () => {
   console.log("Creating keyspaces...");
   const keyspaceNames = [
     PARTNERS_KEYSPACE_NAME,
@@ -39,25 +60,4 @@ export const ensureKeyspacesExist = async () => {
     if (result.status !== "ACTIVE")
       throw new Error("Failed to create keyspace");
   }
-};
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const ensureKeyspace = async (keyspaceName: string) => {
-  try {
-    await stashClient.send(
-      new CreateKeyspaceCommand({
-        keyspaceName,
-      })
-    );
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      error.name === "KeyspaceAlreadyExistsError"
-    )
-      console.log(`Keypsace '${keyspaceName}' already exists`);
-    else throw error;
-  }
-};
+})();

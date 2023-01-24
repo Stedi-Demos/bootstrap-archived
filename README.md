@@ -27,7 +27,9 @@ The bootstrap uses a similar process in reverse to handle outgoing EDI. It trans
    npm ci
    ```
 
-1. Create a [Stedi account](https://www.stedi.com/auth/sign-up?) and [generate an API Key](https://www.stedi.com/app/settings/api-keys). An API key is required to authenticate with Stedi APIs and deploy Stedi functions. 
+1. Create a [Stedi account](https://www.stedi.com/auth/sign-up?).
+
+ 1. [Generate an API Key](https://www.stedi.com/app/settings/api-keys). An API key is required to authenticate with Stedi APIs and deploy Stedi functions. 
 
 1. Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap workflow sends output to this webhook.
 

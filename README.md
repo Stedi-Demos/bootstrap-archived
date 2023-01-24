@@ -45,7 +45,7 @@ The bootstrap uses a similar process in reverse to handle outgoing EDI. It trans
    ```
 
 
-## Deploying the bootstrap
+## Deploying the bootstrap workflow
 
 Run the following command in the bootstrap directory: 
 

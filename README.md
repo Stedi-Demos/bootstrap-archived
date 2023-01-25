@@ -27,7 +27,7 @@ The bootstrap uses a similar process in reverse to handle outgoing EDI. It trans
    npm ci
    ```
 
-1. Create a [Stedi account](https://www.stedi.com/auth/sign-up?).
+1. Create a [Stedi account](https://www.stedi.com/auth/sign-up).
 
 1. Rename the bootstrap's `.env.example` file to `.env` and update the following environment variables:
 

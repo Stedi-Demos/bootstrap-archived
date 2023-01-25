@@ -29,14 +29,10 @@ The bootstrap uses a similar process in reverse to handle outgoing EDI. It trans
 
 1. Create a [Stedi account](https://www.stedi.com/auth/sign-up?).
 
- 1. [Generate an API Key](https://www.stedi.com/app/settings/api-keys). An API key is required to authenticate with Stedi APIs and deploy Stedi functions. 
-
-1. Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap workflow sends output to this webhook.
-
 1. Rename the bootstrap's `.env.example` file to `.env` and update the following environment variables:
 
-   - `STEDI_API_KEY`: Your Stedi API Key
-   - `DESTINATION_WEBHOOK_URL`: the unique URL you copied from [webhook.site](https://webhook.site/)
+   - `STEDI_API_KEY`: A Stedi API key is required for authentication. You can [generate an API key](https://www.stedi.com/app/settings/api-keys) in your Stedi account. 
+   - `DESTINATION_WEBHOOK_URL`: Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap workflow sends output to this webhook.
    
    Example `.env` file
    ```

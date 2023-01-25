@@ -320,7 +320,7 @@ The `inbound-edi` function will be invoked automatically when files are written 
 
 The `outbound-edi` function can be invoked via the UI for testing. 
 
-1. Navigate to the `outbound-edi` function in the [Functions UI](https://www.stedi.com/terminal/functions/edi-outbound/edit).
+1. Navigate to the `outbound-edi` function in the [Functions UI][https://www.stedi.com/terminal/functions/edi-outbound/edit](https://www.stedi.com/app/functions).
 
 2. Click the `Edit execution payload` link, paste the contents of [src/resources/X12/5010/850/outbound.json](src/resources/X12/5010/850/outbound.json) into the payload modal, and click save.
 

@@ -46,7 +46,7 @@ const ensureKeyspace = async (keyspaceName: string) => {
   }
 
   for (const keyspaceName of keyspaceNames) {
-    let result: Partial<GetKeyspaceCommandOutput> = { status: "UNKNWON" };
+    let result: Partial<GetKeyspaceCommandOutput> = { status: "UNKNOWN" };
     for (let i = 0; i < 15; i++) {
       result = await stashClient.send(new GetKeyspaceCommand({ keyspaceName }));
 

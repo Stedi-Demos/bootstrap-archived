@@ -9,7 +9,7 @@ We'd like to set up and customize the bootstrap repository with you. Working tog
 - Help deploying the bootstrap workflows and customizing them for your use cases
 - Best practices for designing a scalable Stedi integration
 - EDI experts to answer your questions
-- Live troubleshooting over slack or video call
+- Live troubleshooting over Slack or video call
 
 [Contact us](https://www.stedi.com/contact) to get started.
 

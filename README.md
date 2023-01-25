@@ -49,7 +49,7 @@ Run the following command in the bootstrap directory:
 npm run bootstrap
 ```
 
-## Testing the workflow
+## Testing the workflows
 
 ### Inbound EDI
 The `inbound-edi` function will be invoked automatically when files are written to the SFTP bucket.

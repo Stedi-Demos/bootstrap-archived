@@ -348,7 +348,7 @@ The `outbound-edi` function can be invoked via the UI for testing.
 
 5. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). As shown above, the output of the function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
 
-# Customizing the workflow
+# Customizing the workflows
 
 The bootstrap workflow uses a sample trading partner to set up and test the read and write EDI workflows. You can customize the bootstrap workflow for your use case by doing one or all of the following:
 - [Edit the partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile) to replace the test trading partner with your real trading partners' details and requirements.

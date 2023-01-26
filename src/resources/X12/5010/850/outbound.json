@@ -6,7 +6,8 @@
   "payload": {
     "heading": {
       "transaction_set_header_ST": {
-        "transaction_set_identifier_code_01": "850"
+        "transaction_set_identifier_code_01": "850",
+        "transaction_set_control_number_02": 1
       },
       "beginning_segment_for_purchase_order_BEG": {
         "transaction_set_purpose_code_01": "00",

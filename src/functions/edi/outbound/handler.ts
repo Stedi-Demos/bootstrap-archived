@@ -8,7 +8,7 @@ import {
   markExecutionAsSuccessful,
   recordNewExecution,
 } from "../../../lib/execution.js";
-import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import { deliverToDestination, DeliveryResult } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
@@ -111,7 +111,7 @@ export const handler = async (
       },
     };
 
-    const deliveryResults = await Promise.all(transactionSetConfig.destinations.map(
+    const deliveryResults = await Promise.allSettled(transactionSetConfig.destinations.map(
       async ({destination, mappingId}) => {
         console.log(destination);
 
@@ -135,11 +135,26 @@ export const handler = async (
       })
     );
 
+    const deliveryResultsByStatus = deliveryResults.reduce(
+      (groupedResults: { "fulfilled": { value: DeliveryResult }[], "rejected": { reason: any }[]}, result) => {
+        const { status, ...rest } = result;
+        // @ts-ignore: TS doesn't correctly narrow `rest` as FulfilledResult or RejectedResult like it should
+        groupedResults[status].push(rest);
+        return groupedResults;
+      }, { "fulfilled": [], "rejected": [] });
+
+    const rejectedCount = deliveryResultsByStatus.rejected.length;
+    if (rejectedCount > 0) {
+      return failedExecution(executionId, new Error(
+        `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`
+      ), deliveryResultsByStatus);
+    }
+
     await markExecutionAsSuccessful(executionId);
 
     return {
       statusCode: 200,
-      deliveryResults,
+      deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
     };
   } catch (e) {
     const error =

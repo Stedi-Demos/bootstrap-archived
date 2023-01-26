@@ -69,9 +69,9 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
   return { inputResult, previousFailure };
 };
 
-export const failedExecution = async (executionId: string, error: Error): Promise<FailureResponse> => {
+export const failedExecution = async (executionId: string, error: Error, context?: any): Promise<FailureResponse> => {
   const rawError = serializeError(error)
-  const failureRecord = await markExecutionAsFailed(executionId, rawError);
+  const failureRecord = await markExecutionAsFailed(executionId, rawError, context);
   const statusCode = (error as any)?.["$metadata"]?.httpStatusCode || 500;
   const message = "execution failed";
   await trackProgress(message, { error: rawError });
@@ -80,7 +80,8 @@ export const failedExecution = async (executionId: string, error: Error): Promis
 
 const markExecutionAsFailed = async (
   executionId: string,
-  error: ErrorObject
+  error: ErrorObject,
+  context?: any,
 ): Promise<FailureRecord> => {
   const client = await executionsBucketClient();
   const key = `functions/${functionName()}/${executionId}/failure.json`;
@@ -88,7 +89,7 @@ const markExecutionAsFailed = async (
     new PutObjectCommand({
       bucketName,
       key,
-      body: new TextEncoder().encode(JSON.stringify(error)),
+      body: new TextEncoder().encode(JSON.stringify({ error, context })),
     })
   );
 

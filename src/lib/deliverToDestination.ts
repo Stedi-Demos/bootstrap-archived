@@ -8,11 +8,16 @@ import { bucketClient } from "./buckets";
 
 const bucketsClient = bucketClient();
 
+export type DeliveryResult = {
+  type: Destination["destination"]["type"];
+  payload: any;
+}
+
 export const deliverToDestination = async (
   destination: Destination["destination"],
   payload: object | string
-) => {
-  const result = { type: destination.type, payload: {} };
+): Promise<DeliveryResult> => {
+  const result: DeliveryResult = { type: destination.type, payload: {} };
 
   const body = typeof payload === "object" ? JSON.stringify(payload) : payload;
   switch (destination.type) {

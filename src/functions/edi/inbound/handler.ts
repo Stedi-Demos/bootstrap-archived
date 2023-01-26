@@ -181,7 +181,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         errorCount > 1 ? "s" : ""
       }`;
       const message = `encountered ${errorCountMessage} while attempting to process ${keyCountMessage}`;
-      return failedExecution(executionId, new Error(message));
+      return failedExecution(executionId, new Error(message), results);
     }
 
     await markExecutionAsSuccessful(executionId);

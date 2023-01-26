@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { serializeError } from "serialize-error";
 
-import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
 import {
   failedExecution,
@@ -9,7 +8,6 @@ import {
   markExecutionAsSuccessful,
   recordNewExecution,
 } from "../../../lib/execution.js";
-import { DEFAULT_SDK_CLIENT_PROPS } from "../../../lib/constants.js";
 import { deliverToDestination } from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
@@ -18,35 +16,27 @@ import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
 import {
   getTransactionSetConfigsForPartnership,
   resolveTransactionSetConfig,
-} from "../../../lib/transactionSetConfigs";
+} from "../../../lib/transactionSetConfigs.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
-
-const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
-
-type OutboundEvent = {
-  metadata: {
-    sendingPartnerId: string;
-    receivingPartnerId: string;
-    transactionSet?: string;
-  };
-  payload: any;
-};
+import { invokeMapping } from "../../../lib/mappings.js";
+import { OutboundEvent, OutboundEventSchema } from "../../../lib/types/OutboundEvent.js";
 
 export const handler = async (
-  event: OutboundEvent
+  event: any
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
   console.log("starting", JSON.stringify({ input: event, executionId }));
 
   try {
     await recordNewExecution(executionId, event);
+    const outboundEvent = OutboundEventSchema.parse(event);
 
     // load "my" Trading Partner profile
-    const { sendingPartnerId } = event.metadata;
+    const { sendingPartnerId } = outboundEvent.metadata;
     const senderProfile = await loadPartnerProfile(sendingPartnerId);
 
     // load the receiver's Trading Partner profile
-    const { receivingPartnerId } = event.metadata;
+    const { receivingPartnerId } = outboundEvent.metadata;
     const receiverProfile = await loadPartnerProfile(receivingPartnerId);
 
     // load the outbound x12 configuration for the sender
@@ -98,7 +88,6 @@ export const handler = async (
       sendingPartnerId,
       receivingPartnerId,
     });
-    const stControlNumber = "0001"; //TODO: this should be based on the number of ST segments in the document
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
@@ -122,46 +111,29 @@ export const handler = async (
       },
     };
 
-    const deliveryResults = [];
+    const deliveryResults = await Promise.all(transactionSetConfig.destinations.map(
+      async ({destination, mappingId}) => {
+        console.log(destination);
 
-    for (const {
-      destination,
-      mappingId,
-    } of transactionSetConfig.destinations) {
-      console.log(destination);
+        const guideJson = mappingId !== undefined
+          ? await invokeMapping(mappingId, outboundEvent.payload)
+          : outboundEvent.payload;
 
-      let guideGuideJson: any;
+        validateTransactionSetControlNumbers(guideJson);
 
-      if (mappingId !== undefined) {
-        // Execute mapping to transform API JSON input to Guide schema-based JSON
-        const mapResult = await mappingsClient.send(
-          new MapDocumentCommand({
-            id: mappingId,
-            content: { controlNumber: stControlNumber, ...event.payload },
-          })
+        // Translate the Guide schema-based JSON to X12 EDI
+        const translation = await translateJsonToEdi(
+          guideJson,
+          guideSummary.guideId,
+          envelope
         );
-        console.log(`mapping result: ${JSON.stringify(mapResult)}`);
-        guideGuideJson = mapResult.content;
-      } else {
-        guideGuideJson = event.payload;
-        guideGuideJson.heading.transaction_set_header_ST.transaction_set_control_number_02 =
-          stControlNumber;
-      }
 
-      // Translate the Guide schema-based JSON to X12 EDI
-      const translation = await translateJsonToEdi(
-        guideGuideJson,
-        guideSummary.guideId,
-        envelope
-      );
+        if (destination.type === "bucket")
+          destination.path = `${destination.path}/${isaControlNumber}-${transactionSetType}.edi`;
 
-      if (destination.type === "bucket")
-        destination.path = `${destination.path}/${isaControlNumber}-${transactionSetType}.edi`;
-
-      const result = await deliverToDestination(destination, translation);
-
-      deliveryResults.push(result);
-    }
+        return await deliverToDestination(destination, translation);
+      })
+    );
 
     await markExecutionAsSuccessful(executionId);
 
@@ -177,14 +149,52 @@ export const handler = async (
 };
 
 const determineTransactionSetType = (event: OutboundEvent): string => {
-  const transactionSet =
-    (event.payload?.heading?.transaction_set_header_ST
-      ?.transaction_set_identifier_code_01 as string) ??
-    event.metadata.transactionSet;
+  return event.metadata.transactionSet ??
+    extractTransactionSetTypeFromGuideJson(event.payload);
+};
 
-  if (transactionSet === undefined) {
-    throw new Error("unable to determine transaction set from input");
+const normalizeGuideJson = (guideJson: any): any[] => {
+  // guide JSON can either be a single transaction set object: { heading, detail, summary },
+  // or an array of transaction set objects: [{ heading, detail, summary}]
+  return Array.isArray(guideJson)
+    ? guideJson
+    : [ guideJson ];
+};
+
+const extractTransactionSetTypeFromGuideJson = (guideJson: any): string => {
+  const normalizedGuideJson = normalizeGuideJson(guideJson);
+
+  // ensure that there is exactly 1 transaction set type in the input
+  const uniqueTransactionSets = normalizedGuideJson.reduce((transactionSetIds: Set<string>, t) => {
+    const currentId = t.heading?.transaction_set_header_ST?.transaction_set_identifier_code_01;
+    if (currentId !== undefined) {
+      transactionSetIds.add(currentId as string);
+    }
+
+    return transactionSetIds;
+  }, new Set<string>());
+
+  if (uniqueTransactionSets.size !== 1) {
+    throw new Error("unable to determine transaction set type from input");
   }
 
-  return transactionSet;
+  return uniqueTransactionSets.values().next().value;
+};
+
+const validateTransactionSetControlNumbers = (guideJson: any) => {
+  const normalizedGuideJson = normalizeGuideJson(guideJson);
+
+  let expectedControlNumber = 1;
+  normalizedGuideJson.forEach((t) => {
+    // handle both string and numeric values
+    const controlNumberValue = Number(t.heading?.transaction_set_header_ST?.transaction_set_control_number_02);
+    if (controlNumberValue !== expectedControlNumber) {
+      console.log(JSON.stringify({transactionSet: t}));
+      throw new Error(
+        `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`
+      );
+    }
+
+    expectedControlNumber++;
+  });
 };

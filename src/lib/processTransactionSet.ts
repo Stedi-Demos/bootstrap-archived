@@ -1,9 +1,6 @@
-import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
-import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { translateEdiToJson } from "./translateV3.js";
 import { trackProgress } from "./progressTracking.js";
-
-const mappingsClient = new MappingsClient(DEFAULT_SDK_CLIENT_PROPS);
+import { invokeMapping } from "./mappings.js";
 
 export const processTransactionSet = async (
   guideId: string,
@@ -20,26 +17,7 @@ export const processTransactionSet = async (
     throw new Error(`no transaction sets found in input`);
   }
 
-  if (mappingId !== undefined) {
-    const mapResult = await mappingsClient.send(
-      new MapDocumentCommand({
-        id: mappingId,
-        content: {
-          transactionSets: translation.transactionSets,
-        },
-      })
-    );
-
-    if (!mapResult.content) {
-      throw new Error(
-        `Failed to map transaction set. No content returned: ${JSON.stringify(
-          translation.envelope
-        )}`
-      );
-    }
-
-    return mapResult.content;
-  }
-
-  return translation;
+  return mappingId !== undefined
+    ? await invokeMapping(mappingId, { transactionSets: translation.transactionSets })
+    : translation;
 };

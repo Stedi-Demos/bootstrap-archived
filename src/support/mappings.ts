@@ -4,25 +4,11 @@ import {
   CreateMappingCommand,
   CreateMappingCommandInput,
   ListMappingsCommand,
-  MappingsClient,
 } from "@stedi/sdk-client-mappings";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 import fs from "node:fs";
 import path from "node:path";
-
-let _mappingsClient: MappingsClient;
-
-export const mappingsClient = (): MappingsClient => {
-  if (_mappingsClient == undefined) {
-    _mappingsClient = new MappingsClient({
-      ...DEFAULT_SDK_CLIENT_PROPS,
-      endpoint: "https://mappings.us.stedi.com/2021-06-01",
-    });
-  }
-
-  return _mappingsClient;
-};
+import { mappingsClient } from "../lib/mappings.js";
 
 export const ensureMappingExists = async (
   mappingPath: string

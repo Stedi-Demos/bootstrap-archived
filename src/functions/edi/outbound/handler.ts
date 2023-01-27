@@ -8,7 +8,10 @@ import {
   markExecutionAsSuccessful,
   recordNewExecution,
 } from "../../../lib/execution.js";
-import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import {
+  deliverToDestination,
+  DeliveryResult,
+} from "../../../lib/deliverToDestination.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
@@ -19,11 +22,12 @@ import {
 } from "../../../lib/transactionSetConfigs.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 import { invokeMapping } from "../../../lib/mappings.js";
-import { OutboundEvent, OutboundEventSchema } from "../../../lib/types/OutboundEvent.js";
+import {
+  OutboundEvent,
+  OutboundEventSchema,
+} from "../../../lib/types/OutboundEvent.js";
 
-export const handler = async (
-  event: any
-): Promise<Record<string, any>> => {
+export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
   console.log("starting", JSON.stringify({ input: event, executionId }));
 
@@ -111,35 +115,60 @@ export const handler = async (
       },
     };
 
-    const deliveryResults = await Promise.all(transactionSetConfig.destinations.map(
-      async ({destination, mappingId}) => {
-        console.log(destination);
+    const deliveryResults = await Promise.allSettled(
+      transactionSetConfig.destinations.map(
+        async ({ destination, mappingId }) => {
+          console.log(destination);
 
-        const guideJson = mappingId !== undefined
-          ? await invokeMapping(mappingId, outboundEvent.payload)
-          : outboundEvent.payload;
+          const guideJson =
+            mappingId !== undefined
+              ? await invokeMapping(mappingId, outboundEvent.payload)
+              : outboundEvent.payload;
 
-        validateTransactionSetControlNumbers(guideJson);
+          validateTransactionSetControlNumbers(guideJson);
 
-        // Translate the Guide schema-based JSON to X12 EDI
-        const translation = await translateJsonToEdi(
-          guideJson,
-          guideSummary.guideId,
-          envelope
-        );
+          // Translate the Guide schema-based JSON to X12 EDI
+          const translation = await translateJsonToEdi(
+            guideJson,
+            guideSummary.guideId,
+            envelope
+          );
 
-        if (destination.type === "bucket")
-          destination.path = `${destination.path}/${isaControlNumber}-${transactionSetType}.edi`;
+          if (destination.type === "bucket")
+            destination.path = `${destination.path}/${isaControlNumber}-${transactionSetType}.edi`;
 
-        return await deliverToDestination(destination, translation);
-      })
+          return await deliverToDestination(destination, translation);
+        }
+      )
     );
+
+    const deliveryResultsByStatus = deliveryResults.reduce(
+      (
+        groupedResults: Record<"fulfilled" | "rejected", any[]>,
+        { status, ...rest }
+      ) => {
+        groupedResults[status].push(rest);
+        return groupedResults;
+      },
+      { fulfilled: [], rejected: [] }
+    );
+
+    const rejectedCount = deliveryResultsByStatus.rejected.length;
+    if (rejectedCount > 0) {
+      return failedExecution(
+        executionId,
+        new Error(
+          `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`
+        ),
+        deliveryResultsByStatus
+      );
+    }
 
     await markExecutionAsSuccessful(executionId);
 
     return {
       statusCode: 200,
-      deliveryResults,
+      deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
     };
   } catch (e) {
     const error =
@@ -149,30 +178,35 @@ export const handler = async (
 };
 
 const determineTransactionSetType = (event: OutboundEvent): string => {
-  return event.metadata.transactionSet ??
-    extractTransactionSetTypeFromGuideJson(event.payload);
+  return (
+    event.metadata.transactionSet ??
+    extractTransactionSetTypeFromGuideJson(event.payload)
+  );
 };
 
 const normalizeGuideJson = (guideJson: any): any[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },
   // or an array of transaction set objects: [{ heading, detail, summary}]
-  return Array.isArray(guideJson)
-    ? guideJson
-    : [ guideJson ];
+  return Array.isArray(guideJson) ? guideJson : [guideJson];
 };
 
 const extractTransactionSetTypeFromGuideJson = (guideJson: any): string => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   // ensure that there is exactly 1 transaction set type in the input
-  const uniqueTransactionSets = normalizedGuideJson.reduce((transactionSetIds: Set<string>, t) => {
-    const currentId = t.heading?.transaction_set_header_ST?.transaction_set_identifier_code_01;
-    if (currentId !== undefined) {
-      transactionSetIds.add(currentId as string);
-    }
+  const uniqueTransactionSets = normalizedGuideJson.reduce(
+    (transactionSetIds: Set<string>, t) => {
+      const currentId =
+        t.heading?.transaction_set_header_ST
+          ?.transaction_set_identifier_code_01;
+      if (currentId !== undefined) {
+        transactionSetIds.add(currentId as string);
+      }
 
-    return transactionSetIds;
-  }, new Set<string>());
+      return transactionSetIds;
+    },
+    new Set<string>()
+  );
 
   if (uniqueTransactionSets.size !== 1) {
     throw new Error("unable to determine transaction set type from input");
@@ -187,9 +221,11 @@ const validateTransactionSetControlNumbers = (guideJson: any) => {
   let expectedControlNumber = 1;
   normalizedGuideJson.forEach((t) => {
     // handle both string and numeric values
-    const controlNumberValue = Number(t.heading?.transaction_set_header_ST?.transaction_set_control_number_02);
+    const controlNumberValue = Number(
+      t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
+    );
     if (controlNumberValue !== expectedControlNumber) {
-      console.log(JSON.stringify({transactionSet: t}));
+      console.log(JSON.stringify({ transactionSet: t }));
       throw new Error(
         `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`
       );

@@ -7,7 +7,7 @@ import {
   GetObjectCommand,
 } from "@stedi/sdk-client-buckets";
 
-import { processTransactionSet } from "../../../lib/processTransactionSet.js";
+import { processEdi } from "../../../lib/processEdi.js";
 import {
   failedExecution,
   functionName,
@@ -35,7 +35,7 @@ import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAI
 import {
   getTransactionSetConfigsForPartnership,
   resolveTransactionSetConfig,
-} from "../../../lib/transactionSetConfigs";
+} from "../../../lib/transactionSetConfigs.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -77,7 +77,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       );
 
       try {
-        // parse EDI and determine what is contains
+        // parse EDI and determine what it contains
         const metadata = prepareMetadata(fileContents);
 
         for (const { interchange } of metadata) {
@@ -102,17 +102,18 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             receivingPartnerId,
           });
 
+          const guideIdsForPartnership = transactionSetConfigs.map(
+            (config) => config.guideId
+          );
+
           for (const functionalGroup of interchange.functionalGroups) {
-            const guideIdsForPartnership = transactionSetConfigs.map(
-              (config) => config.guideId
-            );
-
             // For each Transaction Set:
-            // - look up the guideId and mappingId
-            // - call processTransactionSet, which translates X12 to JSON, and then invokes the mapping
-            // - send the result to the webhook
-            // - delete the input file once processed successfully
-
+            // - look up the guideId
+            // - find the corresponding transaction set config from the partnership
+            // - call processEdi, which translates X12 to JSON
+            // - call deliverToDestination for each destination, which does the following:
+            //   - optionally invokes the mapping if one is included in config
+            //   - sends the result to the destination
             for (const transactionSet of functionalGroup.transactionSets) {
               // load the guide for the transaction set
               const guideSummary = await resolveGuide({
@@ -120,14 +121,29 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 transactionSetType: transactionSet.transactionSetType,
               });
 
-              const edi = transactionSet.segments.join(
+              const transactionSetContents = transactionSet.segments.join(
                 interchange.delimiters.segment
               );
+
+              const documentContents = [
+                interchange.segments.ISA,
+                functionalGroup.segments.GS,
+                transactionSetContents,
+                functionalGroup.segments.GE,
+                interchange.segments.IEA,
+              ];
+
+              const edi = documentContents.join(interchange.delimiters.segment);
 
               // find the transaction set config for partnership that includes guide
               const transactionSetConfig = resolveTransactionSetConfig(
                 transactionSetConfigs,
                 guideSummary.guideId
+              );
+
+              const ediJson = await processEdi(
+                guideSummary.guideId,
+                edi,
               );
 
               for (const {
@@ -141,21 +157,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                   destination
                 );
 
-                const ediProcessingResult = await processTransactionSet(
-                  guideSummary.guideId,
-                  edi,
-                  mappingId
-                );
-
-                await deliverToDestination(destination, ediProcessingResult);
+                await deliverToDestination(destination, ediJson, mappingId);
               }
             }
-
-            // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
-            await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
-            results.processedKeys.push(keyToProcess.key);
           }
         }
+
+        // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
+        await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
+        results.processedKeys.push(keyToProcess.key);
       } catch (e) {
         const error =
           e instanceof Error

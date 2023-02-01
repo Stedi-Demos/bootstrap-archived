@@ -1,11 +1,9 @@
 import { translateEdiToJson } from "./translateV3.js";
 import { trackProgress } from "./progressTracking.js";
-import { invokeMapping } from "./mappings.js";
 
-export const processTransactionSet = async (
+export const processEdi = async (
   guideId: string,
   ediDocument: string,
-  mappingId?: string
 ): Promise<any> => {
   const translation = await translateEdiToJson(ediDocument, guideId);
   await trackProgress("translated edi document", translation);
@@ -17,7 +15,5 @@ export const processTransactionSet = async (
     throw new Error(`no transaction sets found in input`);
   }
 
-  return mappingId !== undefined
-    ? await invokeMapping(mappingId, { transactionSets: translation.transactionSets })
-    : translation;
+  return translation;
 };

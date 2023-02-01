@@ -5,6 +5,7 @@ import {
   PutObjectCommandInput,
 } from "@stedi/sdk-client-buckets";
 import { bucketClient } from "./buckets";
+import { invokeMapping } from "./mappings";
 
 const bucketsClient = bucketClient();
 
@@ -15,11 +16,19 @@ export type DeliveryResult = {
 
 export const deliverToDestination = async (
   destination: Destination["destination"],
-  payload: object | string
+  payload: object | string,
+  mappingId?: string,
 ): Promise<DeliveryResult> => {
   const result: DeliveryResult = { type: destination.type, payload: {} };
 
-  const body = typeof payload === "object" ? JSON.stringify(payload) : payload;
+  const destinationPayload = mappingId !== undefined
+    ? await invokeMapping(mappingId, payload)
+    : payload;
+
+  const body = typeof destinationPayload === "object"
+    ? JSON.stringify(destinationPayload)
+    : destinationPayload;
+
   switch (destination.type) {
     case "webhook":
       const params: RequestInit = {

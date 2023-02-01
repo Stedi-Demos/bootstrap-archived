@@ -5,20 +5,20 @@ import {
 } from "@stedi/sdk-client-stash";
 import { serializeError } from "serialize-error";
 
-import { requiredEnvVar } from "../../../lib/environment";
-import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants";
+import { requiredEnvVar } from "../../../lib/environment.js";
+import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
 import {
   failedExecution, FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution
-} from "../../../lib/execution";
+} from "../../../lib/execution.js";
 import {
   FtpPollerConfig,
   FtpPollerConfigMap,
-} from "../../../lib/types/FtpPollerConfig";
-import { FtpPollingResults } from "./types";
-import { pollFtp } from "./protocols/ftp";
+} from "../../../lib/types/FtpPollerConfig.js";
+import { FtpPollingResults } from "./types.js";
+import { pollFtp } from "./protocols/ftp.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
 const ftpConfigStashKey = "bootstrap|ftp-poller-config";

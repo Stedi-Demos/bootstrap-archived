@@ -10,7 +10,7 @@ import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 export const createProfiles = async () => {
   const profiles = [
     {
-      id: "this-is-me",
+      profileId: "this-is-me",
       partnerName: "Me, Myself and I",
       partnerInterchangeQualifier: "ZZ",
       partnerInterchangeId: "THISISME",
@@ -18,7 +18,7 @@ export const createProfiles = async () => {
       partnerApplicationId: "MYAPPID",
     },
     {
-      id: "another-merchant",
+      profileId: "another-merchant",
       partnerName: "A.N. & Other Merchants",
       partnerInterchangeQualifier: "14",
       partnerInterchangeId: "ANOTHERMERCH",
@@ -58,7 +58,7 @@ export const createProfiles = async () => {
       await stashClient.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `profile|${profile.id}`,
+          key: `profile|${profile.profileId}`,
           value: parseResult.data,
         })
       );

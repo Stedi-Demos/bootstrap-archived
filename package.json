@@ -24,7 +24,7 @@
     "@stedi/sdk-client-functions": "^0.0.23",
     "@stedi/sdk-client-guides": "^0.0.46",
     "@stedi/sdk-client-mappings": "^0.0.46",
-    "@stedi/sdk-client-partners": "^0.1.5",
+    "@stedi/sdk-client-partners": "^0.1.15",
     "@stedi/sdk-client-sftp": "^0.0.46",
     "@stedi/sdk-client-stash": "^0.0.46",
     "@ts2asl/asl-lib": "^0.1.35",

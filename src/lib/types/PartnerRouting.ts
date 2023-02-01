@@ -46,7 +46,7 @@ export const ISAPartnerIdLookupSchema = z.strictObject({
 export type ISAPartnerIdLookup = z.infer<typeof ISAPartnerIdLookupSchema>;
 
 export const PartnerProfileSchema = z.strictObject({
-  id: z.string(),
+  profileId: z.string(),
   partnerName: z.string(),
   acknowledgmentRequestedCode: z.string(),
   partnerInterchangeQualifier: z.string(),

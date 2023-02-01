@@ -24,7 +24,7 @@ export const loadPartnerProfile = async (
     // load x12 Trading Partner Profile (pre-GA)
     const profile = await partnersClient.send(
       new GetX12ProfileCommand({
-        id: partnerId,
+        profileId: partnerId,
       })
     );
 

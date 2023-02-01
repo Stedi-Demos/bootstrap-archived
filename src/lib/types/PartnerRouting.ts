@@ -56,7 +56,7 @@ export const PartnershipSchema = z.strictObject({
       destinations: z.array(DestinationSchema),
     })
   ),
-  ack: AckSchema.default({ enabled: false }),
+  ack: AckSchema.default({ enabled: false }).optional(),
 });
 
 export type Partnership = z.infer<typeof PartnershipSchema>;

@@ -16,7 +16,18 @@ export const createSampleStashRecords = async ({
 }: CreateSampleStashRecordsInput) => {
   const stashClient = buildStashClient();
 
+  const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
+  const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
+
   const partnership: Partnership = {
+    ack: {
+      enabled: true,
+      destination: {
+        type: "bucket",
+        bucketName: sftpBucketName,
+        path: outboundBucketPath,
+      }
+    },
     transactionSets: [],
   };
 
@@ -28,8 +39,8 @@ export const createSampleStashRecords = async ({
       {
         destination: {
           type: "bucket",
-          bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
-          path: "trading_partners/ANOTHERMERCH/outbound",
+          bucketName: sftpBucketName,
+          path: outboundBucketPath,
         },
       },
     ],

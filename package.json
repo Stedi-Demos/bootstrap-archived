@@ -11,6 +11,7 @@
     "configure-storage": "npm run ensure-keyspaces-exist && npm run configure-buckets",
     "ensure-keyspaces-exist": "ts-node-esm ./src/setup/bootstrap/ensureKeyspacesExist.ts",
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
+    "execute": "ts-node-esm ./src/scripts/execute.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
     "test": "ava",
     "coverage": "c8 ava"
@@ -32,6 +33,7 @@
     "@types/node-fetch": "^2.6.2",
     "@types/object-hash": "^3.0.2",
     "ava": "^5.1.0",
+    "basic-ftp": "^5.0.2",
     "c8": "^7.12.0",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",

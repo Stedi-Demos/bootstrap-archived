@@ -15,6 +15,8 @@ import {
 
 import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
 
+type FunctionInvocationId = string;
+
 let _functionsClient: FunctionsClient;
 
 export const functionClient = (): FunctionsClient => {
@@ -44,7 +46,30 @@ export const invokeFunction = async (
     })
   );
 
-  return result.responsePayload?.toString();
+  return result.responsePayload
+    ? Buffer.from(result.responsePayload).toString()
+    : undefined;
+};
+
+export const invokeFunctionAsync = async (
+  functionName: string,
+  input?: any
+): Promise<FunctionInvocationId> => {
+  const requestPayload = input
+    ? new TextEncoder().encode(JSON.stringify(input))
+    : undefined;
+
+  const { functionInvocationId } = await functionClient().send(
+    new InvokeFunctionCommand({
+      functionName,
+      invocationType: "Event",
+      requestPayload,
+      contentType: "application/json",
+    })
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return functionInvocationId!;
 };
 
 export const createFunction = async (

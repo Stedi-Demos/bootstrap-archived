@@ -1,5 +1,13 @@
 import z from "zod";
 
+export const UsageIndicatorCodeSchema = z.union([
+  z.literal("P"),
+  z.literal("T"),
+  z.literal("I"),
+]);
+
+export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
+
 const DestinationWebhookSchema = z.strictObject({
   type: z.literal("webhook"),
   url: z.string(),
@@ -19,6 +27,22 @@ const DestinationSchema = z.strictObject({
   ]),
 });
 
+const DisabledAckSchema = z.strictObject({
+  enabled: z.literal(false),
+});
+
+const EnabledAckSchema = z.strictObject({
+  enabled: z.literal(true),
+  destination: DestinationBucketSchema,
+});
+
+export type EnabledAck = z.infer<typeof EnabledAckSchema>;
+
+const AckSchema = z.discriminatedUnion("enabled", [
+  DisabledAckSchema,
+  EnabledAckSchema,
+]);
+
 export type Destination = z.infer<typeof DestinationSchema>;
 
 export const PartnershipSchema = z.strictObject({
@@ -27,15 +51,12 @@ export const PartnershipSchema = z.strictObject({
       description: z.string().optional(),
       sendingPartnerId: z.string(),
       receivingPartnerId: z.string(),
-      usageIndicatorCode: z.union([
-        z.literal("P"),
-        z.literal("T"),
-        z.literal("I"),
-      ]),
+      usageIndicatorCode: UsageIndicatorCodeSchema,
       guideId: z.string(),
       destinations: z.array(DestinationSchema),
     })
   ),
+  ack: AckSchema.default({ enabled: false }),
 });
 
 export type Partnership = z.infer<typeof PartnershipSchema>;

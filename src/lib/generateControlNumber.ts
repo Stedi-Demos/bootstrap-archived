@@ -1,10 +1,12 @@
 import { IncrementValueCommand, StashClient } from "@stedi/sdk-client-stash";
+
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
+import { UsageIndicatorCode } from "./types/PartnerRouting.js";
 
 const stashClient = new StashClient(DEFAULT_SDK_CLIENT_PROPS);
 
 type GenerateControlNumberInput = {
-  usageIndicatorCode: "T" | "P" | "I";
+  usageIndicatorCode: UsageIndicatorCode;
   segment: "ISA" | "GS";
   sendingPartnerId: string;
   receivingPartnerId: string;

@@ -27,6 +27,7 @@
     "@stedi/sdk-client-partners": "^0.1.5",
     "@stedi/sdk-client-sftp": "^0.0.46",
     "@stedi/sdk-client-stash": "^0.0.46",
+    "@stedi/x12-tools": "^1.0.0",
     "@ts2asl/asl-lib": "^0.1.35",
     "@types/node": "^18.11.18",
     "@types/node-fetch": "^2.6.2",

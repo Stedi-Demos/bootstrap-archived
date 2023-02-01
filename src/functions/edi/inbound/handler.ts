@@ -36,6 +36,7 @@ import {
   getTransactionSetConfigsForPartnership,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
+import { deliverAck } from "../../../lib/acks.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -78,9 +79,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
       try {
         // parse EDI and determine what it contains
-        const metadata = prepareMetadata(fileContents);
+        const metadataList = prepareMetadata(fileContents);
 
-        for (const { interchange } of metadata) {
+        for (const metadata of metadataList) {
+          const interchange = metadata.interchange;
+
           // resolve the partnerIds for the sending and receiving partners
           const sendingPartnerId = await resolvePartnerIdFromISAId(
             interchange.senderId
@@ -160,6 +163,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 await deliverToDestination(destination, ediJson, mappingId);
               }
             }
+          }
+
+          // if enabled, send ack for interchange
+          if (partnership.ack?.enabled === true) {
+            await deliverAck(partnership.ack, metadata, sendingPartnerId, receivingPartnerId);
           }
         }
 

@@ -30,7 +30,13 @@ export const deliverToDestination = async (
         body,
       };
       result.payload = params;
-      await fetch(destination.url, params);
+      const response = await fetch(destination.url, params);
+      if (!response.ok) {
+        throw new Error(
+          `delivery to ${destination.url} failed: ${response.statusText} (status code: ${response.status})`
+        );
+      }
+
       break;
 
     case "bucket":

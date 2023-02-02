@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 
 import {
+  ReadBucketCommand,
   UpdateBucketCommand,
   UpdateBucketInput,
 } from "@stedi/sdk-client-buckets";
@@ -23,10 +24,27 @@ dotenv.config({ override: true });
 
   const functionPaths = getFunctionPaths("inbound");
   if (functionPaths.length != 1) {
-    throw new Error("Error: expected to find exactly 1 `read` function");
+    throw new Error("Error: expected to find exactly 1 `inbound` function");
   }
 
   const functionName = functionNameFromPath(functionPaths[0]);
+
+  const existingBucketConfig = await bucketClient().send(
+    new ReadBucketCommand({
+      bucketName: sftpBucketName,
+    }),
+  );
+
+  const currentNotificationFunctionCount =
+    existingBucketConfig?.notifications?.functions?.length || 0;
+
+  if (currentNotificationFunctionCount !== 0) {
+    const bucketNotificationListOutput = JSON.stringify(existingBucketConfig.notifications);
+    console.log(
+      `Bucket notifications already enabled for ${sftpBucketName}: ${bucketNotificationListOutput}. Skipping.`
+    );
+    return;
+  }
 
   const enableBucketNotificationsArgs: UpdateBucketInput = {
     bucketName: sftpBucketName,

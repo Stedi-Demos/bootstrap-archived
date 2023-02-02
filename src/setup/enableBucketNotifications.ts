@@ -39,7 +39,10 @@ dotenv.config({ override: true });
     existingBucketConfig?.notifications?.functions?.length || 0;
 
   if (currentNotificationFunctionCount !== 0) {
-    const bucketNotificationListOutput = JSON.stringify(existingBucketConfig.notifications);
+    const notificationFunctionNames = existingBucketConfig?.notifications?.functions?.map(
+      (fn) => fn.functionName
+    );
+    const bucketNotificationListOutput = JSON.stringify(notificationFunctionNames);
     console.log(
       `Bucket notifications already enabled for ${sftpBucketName}: ${bucketNotificationListOutput}. Skipping.`
     );

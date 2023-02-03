@@ -25,5 +25,37 @@ export const invokeMapping = async (mappingId: string, payload: any): Promise<an
     throw new Error(`map (id=${mappingId}) operation did not return any content`);
   }
 
+  // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
+  removeEmptyObjects(mapResult.content);
   return mapResult.content;
 };
+
+export const removeEmptyObjects = (input: any): any => {
+  // return the input if it is not an object
+  if (typeof input !== "object") {
+    return input;
+  }
+
+  // return the input if either of the following apply:
+  // - it is null/undefined
+  // - it is an object with no keys, but has a constructor other than the Object constructor (such as a Date)
+  if (!input || (Object.keys(input).length === 0 && input.constructor !== Object)) {
+    return input;
+  }
+
+  // remove empty objects from arrays (empty arrays are not modified)
+  if (Array.isArray(input)) {
+    return(input.map(removeEmptyObjects).filter((item) => item));
+  }
+
+  // otherwise, loop through all properties of the object and recursively remove empty objects
+  const filteredObjectEntries = Object.entries(input).map(
+    ([key, value]) => [key, removeEmptyObjects(value)]
+  );
+
+  // if there are any non-empty entries after filtering, reconstruct the object,
+  // otherwise remove the object from the tree
+  return filteredObjectEntries.length !== 0
+    ? Object.fromEntries(filteredObjectEntries)
+    : undefined;
+}

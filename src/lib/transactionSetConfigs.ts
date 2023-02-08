@@ -27,6 +27,7 @@ export const getTransactionSetConfigsForPartnership = ({
 }: ResolveTransactionSetConfigInput): Partnership["transactionSets"] => {
   const transactionSetConfigs = partnership.transactionSets.filter(
     (config) => {
+      // ack transaction set does not include partner ids (they are inferred from interchange being acknowledged)
       return isAckTransactionSet(config) ||
         (isNonAckTransactionSet(config) &&
           config.sendingPartnerId === sendingPartnerId &&

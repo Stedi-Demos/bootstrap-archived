@@ -140,7 +140,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           );
 
           const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
-          return await deliverToDestination(destination, translation, destinationFilename);
+          return await deliverToDestination(destination, translation, undefined, destinationFilename);
         }
       )
     );

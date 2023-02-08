@@ -67,7 +67,7 @@ export const createSampleStashRecords = async ({
     destinations: [
       {
         destination: {
-          bucketName: "4c22f54a-9ecf-41c8-b404-6a1f20674953-sftp",
+          bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
           path: "trading_partners/ANOTHERMERCH/outbound",
           type: "bucket"
         }

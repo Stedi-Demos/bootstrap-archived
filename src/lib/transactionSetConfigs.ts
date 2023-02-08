@@ -1,9 +1,23 @@
-import { Partnership } from "./types/PartnerRouting";
+import {
+  AckTransactionSet,
+  isAckTransactionSet,
+  isNonAckTransactionSet,
+  isTransactionSetWithGuideId,
+  isTransactionSetWithoutGuideId,
+  Partnership,
+  TransactionSetWithGuideId,
+  TransactionSetWithoutGuideId
+} from "./types/PartnerRouting.js";
 
 type ResolveTransactionSetConfigInput = {
   partnership: Partnership;
   sendingPartnerId: string;
   receivingPartnerId: string;
+};
+
+type GroupedTransactionSets = {
+  transactionSetConfigsWithoutGuideIds: TransactionSetWithoutGuideId[];
+  transactionSetConfigsWithGuideIds: TransactionSetWithGuideId[];
 };
 
 export const getTransactionSetConfigsForPartnership = ({
@@ -12,9 +26,12 @@ export const getTransactionSetConfigsForPartnership = ({
   receivingPartnerId,
 }: ResolveTransactionSetConfigInput): Partnership["transactionSets"] => {
   const transactionSetConfigs = partnership.transactionSets.filter(
-    (config) =>
-      config.sendingPartnerId === sendingPartnerId &&
-      config.receivingPartnerId === receivingPartnerId
+    (config) => {
+      return isAckTransactionSet(config) ||
+        (isNonAckTransactionSet(config) &&
+          config.sendingPartnerId === sendingPartnerId &&
+          config.receivingPartnerId === receivingPartnerId)
+    }
   );
 
   if (transactionSetConfigs.length === 0)
@@ -26,7 +43,7 @@ export const getTransactionSetConfigsForPartnership = ({
 };
 
 export const resolveTransactionSetConfig = (
-  transactionSetConfigs: Partnership["transactionSets"],
+  transactionSetConfigs: TransactionSetWithGuideId[],
   guideId: string,
 ): Partnership["transactionSets"][0] => {
   const transactionSetConfig = transactionSetConfigs.find((config) => config.guideId === guideId);
@@ -36,4 +53,37 @@ export const resolveTransactionSetConfig = (
   }
 
   return transactionSetConfig;
-}
+};
+
+export const groupTransactionSetConfigsByType = (
+  transactionSetConfigs: Partnership["transactionSets"]
+): GroupedTransactionSets => {
+  return transactionSetConfigs.reduce((groupedConfigs: GroupedTransactionSets, currentConfig ) => {
+    if (isTransactionSetWithGuideId(currentConfig)) {
+      groupedConfigs.transactionSetConfigsWithGuideIds.push(currentConfig);
+    } else if (isTransactionSetWithoutGuideId(currentConfig)) {
+      groupedConfigs.transactionSetConfigsWithoutGuideIds.push(currentConfig);
+    } else {
+      throw new Error("invalid transaction set configuration encountered");
+    }
+
+    return groupedConfigs
+  }, {
+    transactionSetConfigsWithoutGuideIds: [],
+    transactionSetConfigsWithGuideIds: [],
+  });
+};
+
+export const getAckTransactionConfig = (
+  transactionSetConfigs: TransactionSetWithoutGuideId[]
+): AckTransactionSet => {
+  const ackTransactionSetList = transactionSetConfigs.filter(isAckTransactionSet);
+  const ackTransactionSetCount = ackTransactionSetList.length;
+  if (ackTransactionSetCount !== 1) {
+    throw new Error(
+      `expected exactly 1 acknowledgment transaction set configuration, found: ${ackTransactionSetCount}`
+    );
+  }
+
+  return ackTransactionSetList[0];
+};

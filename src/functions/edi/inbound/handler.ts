@@ -28,15 +28,21 @@ import {
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { prepareMetadata } from "../../../lib/prepareMetadata.js";
-import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import {
+  deliverToDestinations,
+  generateDestinationFilename
+} from "../../../lib/destinations.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
 import {
+  getAckTransactionConfig,
   getTransactionSetConfigsForPartnership,
+  groupTransactionSetConfigsByType,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
 import { deliverAck } from "../../../lib/acks.js";
+import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -105,9 +111,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             receivingPartnerId,
           });
 
-          const guideIdsForPartnership = transactionSetConfigs.map(
-            (config) => config.guideId
-          );
+          const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+
+          // keep track of transaction sets in interchange to determine whether to send ack
+          const transactionSetConfigsForInterchange: TransactionSet[] = [];
+
+          const guideIdsForPartnership =
+            groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
+              (config) => (config).guideId
+            );
 
           for (const functionalGroup of interchange.functionalGroups) {
             // For each Transaction Set:
@@ -140,34 +152,36 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
               // find the transaction set config for partnership that includes guide
               const transactionSetConfig = resolveTransactionSetConfig(
-                transactionSetConfigs,
+                groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
                 guideSummary.guideId
               );
+
+              transactionSetConfigsForInterchange.push(transactionSetConfig);
 
               const ediJson = await processEdi(
                 guideSummary.guideId,
                 edi,
               );
 
-              for (const {
-                destination,
-                mappingId,
-              } of transactionSetConfig.destinations) {
-                console.log(
-                  "processing",
-                  guideSummary.guideId,
-                  mappingId,
-                  destination
-                );
+              const destinationFilename = generateDestinationFilename(
+                interchange.controlNumber.toString(),
+                transactionSet.transactionSetType,
+                "json"
+              );
 
-                await deliverToDestination(destination, ediJson, mappingId);
-              }
+              await deliverToDestinations(transactionSetConfig.destinations, ediJson, destinationFilename);
             }
           }
 
-          // if enabled, send ack for interchange
-          if (partnership.ack?.enabled === true) {
-            await deliverAck(partnership.ack, metadata, sendingPartnerId, receivingPartnerId);
+          // if any of the transaction sets included an ack configuration, send ack for interchange
+          const transactionSetConfigWithAck = transactionSetConfigsForInterchange.find(
+            (config) => "acknowledgmentConfig" in config
+          );
+          if (transactionSetConfigWithAck) {
+            const ackTransactionSetConfig = getAckTransactionConfig(
+              groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
+            );
+            await deliverAck(ackTransactionSetConfig, metadata, sendingPartnerId, receivingPartnerId);
           }
         }
 

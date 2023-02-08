@@ -2,16 +2,19 @@ import * as x12 from "@stedi/x12-tools/node.js";
 
 import { EDIMetadata } from "./prepareMetadata.js";
 import { generateControlNumber } from "./generateControlNumber.js";
-import { deliverToDestination } from "./deliverToDestination.js";
-import { EnabledAck } from "./types/PartnerRouting.js";
-import { trackProgress } from "./progressTracking";
+import {
+  deliverToDestinations,
+  DeliveryResult,
+  generateDestinationFilename
+} from "./destinations.js";
+import { AckTransactionSet } from "./types/PartnerRouting.js";
 
 export const deliverAck = async (
-  ack: EnabledAck,
+  ackTransactionSet: AckTransactionSet,
   metadata: EDIMetadata,
   sendingPartnerId: string,
   receivingPartnerId: string
-): Promise<void> => {
+): Promise<DeliveryResult[]> => {
   // Generate control numbers for outbound 997
   const isaControlNumber = await generateControlNumber({
     segment: "ISA",
@@ -31,15 +34,6 @@ export const deliverAck = async (
     throw new Error(`failed to generate 997 for interchange: ${metadata.interchange.controlNumber}`);
   }
 
-  ack.destination.path = `${ack.destination.path}/${isaControlNumber}-997.edi`;
-  await trackProgress("delivering 997 ack to destination", {
-    interchange: metadata.interchange,
-    ackControlNumbers: {
-      isaControlNumber,
-      gsControlNumber
-    },
-    destination: ack.destination,
-  });
-
-  await deliverToDestination(ack.destination, ackEdi);
+  const destinationFilename = generateDestinationFilename(isaControlNumber, "997", "edi");
+  return await deliverToDestinations(ackTransactionSet.destinations, ackEdi, destinationFilename);
 };

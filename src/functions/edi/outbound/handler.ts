@@ -10,6 +10,7 @@ import {
 } from "../../../lib/execution.js";
 import {
   deliverToDestination,
+  DeliverToDestinationInput,
   generateDestinationFilename
 } from "../../../lib/destinations.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
@@ -140,7 +141,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           );
 
           const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
-          return await deliverToDestination(destination, translation, undefined, destinationFilename);
+          const deliverToDestinationInput: DeliverToDestinationInput = {
+            destination,
+            payload: translation,
+            destinationFilename,
+          };
+          return await deliverToDestination(deliverToDestinationInput);
         }
       )
     );

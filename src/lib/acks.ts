@@ -3,6 +3,7 @@ import * as x12 from "@stedi/x12-tools/node.js";
 import { EDIMetadata } from "./prepareMetadata.js";
 import { generateControlNumber } from "./generateControlNumber.js";
 import {
+  DeliverToDestinationListInput,
   deliverToDestinations,
   DeliveryResult,
   generateDestinationFilename
@@ -35,5 +36,10 @@ export const deliverAck = async (
   }
 
   const destinationFilename = generateDestinationFilename(isaControlNumber, "997", "edi");
-  return await deliverToDestinations(ackTransactionSet.destinations, ackEdi, destinationFilename);
+  const deliverToDestinationsInput: DeliverToDestinationListInput = {
+    destinations: ackTransactionSet.destinations,
+    payload: ackEdi,
+    destinationFilename,
+  };
+  return await deliverToDestinations(deliverToDestinationsInput);
 };

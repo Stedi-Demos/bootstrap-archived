@@ -29,6 +29,7 @@ import {
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { prepareMetadata } from "../../../lib/prepareMetadata.js";
 import {
+  DeliverToDestinationListInput,
   deliverToDestinations,
   generateDestinationFilename
 } from "../../../lib/destinations.js";
@@ -169,7 +170,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 "json"
               );
 
-              await deliverToDestinations(transactionSetConfig.destinations, ediJson, destinationFilename);
+              const deliverToDestinationsInput: DeliverToDestinationListInput = {
+                destinations: transactionSetConfig.destinations,
+                payload: ediJson,
+                destinationFilename,
+              };
+              await deliverToDestinations(deliverToDestinationsInput);
             }
           }
 

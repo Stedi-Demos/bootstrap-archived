@@ -16,23 +16,33 @@ export type DeliveryResult = {
   payload: any;
 }
 
-export const deliverToDestination = async (
+export type DeliverToDestinationInput = {
   destination: Destination["destination"],
   payload: object | string,
   mappingId?: string,
   destinationFilename?: string,
-): Promise<DeliveryResult> => {
-  const result: DeliveryResult = { type: destination.type, payload: {} };
+};
 
-  const destinationPayload = mappingId !== undefined
-    ? await invokeMapping(mappingId, payload)
-    : payload;
+export type DeliverToDestinationListInput = {
+  destinations: Destination[];
+  payload: object | string;
+  destinationFilename?: string;
+};
+
+export const deliverToDestination = async (
+  input: DeliverToDestinationInput,
+): Promise<DeliveryResult> => {
+  const result: DeliveryResult = { type: input.destination.type, payload: {} };
+
+  const destinationPayload = input.mappingId !== undefined
+    ? await invokeMapping(input.mappingId, input.payload)
+    : input.payload;
 
   const body = typeof destinationPayload === "object"
     ? JSON.stringify(destinationPayload)
     : destinationPayload;
 
-  switch (destination.type) {
+  switch (input.destination.type) {
     case "webhook":
       const params: RequestInit = {
         method: "POST",
@@ -42,21 +52,21 @@ export const deliverToDestination = async (
         body,
       };
       result.payload = params;
-      const response = await fetch(destination.url, params);
+      const response = await fetch(input.destination.url, params);
       if (!response.ok) {
         throw new Error(
-          `delivery to ${destination.url} failed: ${response.statusText} (status code: ${response.status})`
+          `delivery to ${input.destination.url} failed: ${response.statusText} (status code: ${response.status})`
         );
       }
 
       break;
 
     case "bucket":
-      const key = destinationFilename
-        ? `${destination.path}/${destinationFilename}`
-        : destination.path;
+      const key = input.destinationFilename
+        ? `${input.destination.path}/${input.destinationFilename}`
+        : input.destination.path;
       const putCommandArgs: PutObjectCommandInput = {
-        bucketName: destination.bucketName,
+        bucketName: input.destination.bucketName,
         key,
         body,
       };
@@ -72,15 +82,19 @@ export const deliverToDestination = async (
 };
 
 export const deliverToDestinations = async (
-  destinations: Destination[],
-  payload: object | string,
-  destinationFilename?: string,
+  input: DeliverToDestinationListInput,
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
-    destinations.map(
+    input.destinations.map(
       async ({ destination, mappingId }) => {
         console.log(`delivering to destination: ${JSON.stringify(destination)}`);
-        return await deliverToDestination(destination, payload, mappingId, destinationFilename);
+        const deliverToDestinationInput: DeliverToDestinationInput = {
+          destination,
+          payload: input.payload,
+          mappingId,
+          destinationFilename: input.destinationFilename,
+        }
+        return await deliverToDestination(deliverToDestinationInput);
       }
     )
   );

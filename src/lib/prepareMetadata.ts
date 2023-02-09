@@ -1,3 +1,5 @@
+import { UsageIndicatorCode, UsageIndicatorCodeSchema } from "./types/PartnerRouting.js";
+
 export type EDIMetadata = {
   interchange: Interchange;
   edi: string;
@@ -12,6 +14,7 @@ type Interchange = {
     element: string;
     segment: string;
   };
+  usageIndicatorCode: UsageIndicatorCode;
   segments: {
     ISA: string;
     IEA?: string;
@@ -66,9 +69,8 @@ export const prepareMetadata = (ediDocument: string): EDIMetadata[] => {
           );
 
         currentInterchange = {
-          ...extractIsaIds(elements),
+          ...extractIsaMetadata(elements),
           functionalGroups: [],
-          controlNumber: parseInt(elements[12]),
           delimiters: {
             element: elementDelimiter,
             segment: segmentDelimiter,
@@ -186,9 +188,14 @@ export const extractDelimiters = (
   return { segmentDelimiter, elementDelimiter };
 };
 
-const extractIsaIds = (
+const extractIsaMetadata = (
   elements: string[]
-): { senderId: string; receiverId: string } => {
+): {
+  senderId: string;
+  receiverId: string,
+  controlNumber: number,
+  usageIndicatorCode: UsageIndicatorCode
+} => {
   if (elements.length !== 17) {
     throw new Error("invalid ISA segment: not enough elements detected");
   }
@@ -196,6 +203,8 @@ const extractIsaIds = (
   return {
     senderId: `${elements[5].trim()}/${elements[6].trim()}`,
     receiverId: `${elements[7].trim()}/${elements[8].trim()}`,
+    controlNumber: parseInt(elements[12]),
+    usageIndicatorCode: UsageIndicatorCodeSchema.parse(elements[15]),
   };
 };
 

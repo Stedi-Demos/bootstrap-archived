@@ -28,14 +28,22 @@ import {
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import { prepareMetadata } from "../../../lib/prepareMetadata.js";
-import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import {
+  DeliverToDestinationListInput,
+  deliverToDestinations,
+  generateDestinationFilename
+} from "../../../lib/destinations.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
 import {
+  getAckTransactionConfig,
   getTransactionSetConfigsForPartnership,
+  groupTransactionSetConfigsByType,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
+import { deliverAck } from "../../../lib/acks.js";
+import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -78,9 +86,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
       try {
         // parse EDI and determine what it contains
-        const metadata = prepareMetadata(fileContents);
+        const metadataList = prepareMetadata(fileContents);
 
-        for (const { interchange } of metadata) {
+        for (const metadata of metadataList) {
+          const interchange = metadata.interchange;
+
           // resolve the partnerIds for the sending and receiving partners
           const sendingPartnerId = await resolvePartnerIdFromISAId(
             interchange.senderId
@@ -102,9 +112,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             receivingPartnerId,
           });
 
-          const guideIdsForPartnership = transactionSetConfigs.map(
-            (config) => config.guideId
-          );
+          const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+
+          // keep track of transaction sets in interchange to determine whether to send ack
+          const transactionSetConfigsForInterchange: TransactionSet[] = [];
+
+          const guideIdsForPartnership =
+            groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
+              (config) => (config).guideId
+            );
 
           for (const functionalGroup of interchange.functionalGroups) {
             // For each Transaction Set:
@@ -137,29 +153,41 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
               // find the transaction set config for partnership that includes guide
               const transactionSetConfig = resolveTransactionSetConfig(
-                transactionSetConfigs,
+                groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
                 guideSummary.guideId
               );
+
+              transactionSetConfigsForInterchange.push(transactionSetConfig);
 
               const ediJson = await processEdi(
                 guideSummary.guideId,
                 edi,
               );
 
-              for (const {
-                destination,
-                mappingId,
-              } of transactionSetConfig.destinations) {
-                console.log(
-                  "processing",
-                  guideSummary.guideId,
-                  mappingId,
-                  destination
-                );
+              const destinationFilename = generateDestinationFilename(
+                interchange.controlNumber.toString(),
+                transactionSet.transactionSetType,
+                "json"
+              );
 
-                await deliverToDestination(destination, ediJson, mappingId);
-              }
+              const deliverToDestinationsInput: DeliverToDestinationListInput = {
+                destinations: transactionSetConfig.destinations,
+                payload: ediJson,
+                destinationFilename,
+              };
+              await deliverToDestinations(deliverToDestinationsInput);
             }
+          }
+
+          // if any of the transaction sets included an ack configuration, send ack for interchange
+          const transactionSetConfigWithAck = transactionSetConfigsForInterchange.find(
+            (config) => "acknowledgmentConfig" in config
+          );
+          if (transactionSetConfigWithAck) {
+            const ackTransactionSetConfig = getAckTransactionConfig(
+              groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
+            );
+            await deliverAck(ackTransactionSetConfig, metadata, sendingPartnerId, receivingPartnerId);
           }
         }
 

@@ -6,6 +6,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@stedi/sdk-client-buckets";
+import * as x12 from "@stedi/x12-tools/node.js";
 
 import { processEdi } from "../../../lib/processEdi.js";
 import {
@@ -27,15 +28,22 @@ import {
   ProcessingResults,
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
-import { prepareMetadata } from "../../../lib/prepareMetadata.js";
-import { deliverToDestination } from "../../../lib/deliverToDestination.js";
+import {
+  DeliverToDestinationListInput,
+  deliverToDestinations,
+  generateDestinationFilename
+} from "../../../lib/destinations.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
 import {
+  getAckTransactionConfig,
   getTransactionSetConfigsForPartnership,
+  groupTransactionSetConfigsByType,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
+import { AckDeliveryInput, deliverAck } from "../../../lib/acks.js";
+import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
@@ -78,16 +86,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
       try {
         // parse EDI and determine what it contains
-        const metadata = prepareMetadata(fileContents);
+        const metadata = x12.metadata(fileContents);
 
-        for (const { interchange } of metadata) {
+        for (const interchange of metadata.interchanges) {
+          const { senderId, receiverId, delimiters, interchangeSegments } = extractInterchangeData(interchange);
+
           // resolve the partnerIds for the sending and receiving partners
-          const sendingPartnerId = await resolvePartnerIdFromISAId(
-            interchange.senderId
-          );
-          const receivingPartnerId = await resolvePartnerIdFromISAId(
-            interchange.receiverId
-          );
+          const sendingPartnerId = await resolvePartnerIdFromISAId(senderId);
+          const receivingPartnerId = await resolvePartnerIdFromISAId(receiverId);
 
           // load the Partnership for the sending and receiving partners
           const partnership = await loadPartnership(
@@ -102,11 +108,19 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             receivingPartnerId,
           });
 
-          const guideIdsForPartnership = transactionSetConfigs.map(
-            (config) => config.guideId
-          );
+          const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+
+          // keep track of transaction sets in interchange to determine whether to send ack
+          const transactionSetConfigsForInterchange: TransactionSet[] = [];
+
+          const guideIdsForPartnership =
+            groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
+              (config) => (config).guideId
+            );
 
           for (const functionalGroup of interchange.functionalGroups) {
+            const functionalGroupSegments = extractFunctionalGroupData(functionalGroup);
+
             // For each Transaction Set:
             // - look up the guideId
             // - find the corresponding transaction set config from the partnership
@@ -115,51 +129,78 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             //   - optionally invokes the mapping if one is included in config
             //   - sends the result to the destination
             for (const transactionSet of functionalGroup.transactionSets) {
+              const { id: transactionSetId } = extractTransactionSetData(transactionSet);
+
               // load the guide for the transaction set
               const guideSummary = await resolveGuide({
                 guideIdsForPartnership,
-                transactionSetType: transactionSet.transactionSetType,
+                transactionSetType: transactionSetId,
               });
 
-              const transactionSetContents = transactionSet.segments.join(
-                interchange.delimiters.segment
+              const transactionSetContents = fileContents.slice(
+                transactionSet.span.start,
+                transactionSet.span.end
               );
 
               const documentContents = [
-                interchange.segments.ISA,
-                functionalGroup.segments.GS,
+                interchangeSegments.isa,
+                functionalGroupSegments.gs,
                 transactionSetContents,
-                functionalGroup.segments.GE,
-                interchange.segments.IEA,
+                functionalGroupSegments.ge,
+                interchangeSegments.iea,
               ];
 
-              const edi = documentContents.join(interchange.delimiters.segment);
+              const edi = documentContents.join(delimiters.segment);
 
               // find the transaction set config for partnership that includes guide
               const transactionSetConfig = resolveTransactionSetConfig(
-                transactionSetConfigs,
+                groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
                 guideSummary.guideId
               );
+
+              transactionSetConfigsForInterchange.push(transactionSetConfig);
 
               const ediJson = await processEdi(
                 guideSummary.guideId,
                 edi,
               );
 
-              for (const {
-                destination,
-                mappingId,
-              } of transactionSetConfig.destinations) {
-                console.log(
-                  "processing",
-                  guideSummary.guideId,
-                  mappingId,
-                  destination
-                );
+              const filenamePrefix = interchange?.envelope?.controlNumber
+                ? interchange.envelope.controlNumber
+                : Date.now();
 
-                await deliverToDestination(destination, ediJson, mappingId);
-              }
+              const destinationFilename = generateDestinationFilename(
+                filenamePrefix.toString(),
+                transactionSetId,
+                "json"
+              );
+
+              const deliverToDestinationsInput: DeliverToDestinationListInput = {
+                destinations: transactionSetConfig.destinations,
+                payload: ediJson,
+                destinationFilename,
+              };
+              await deliverToDestinations(deliverToDestinationsInput);
             }
+          }
+
+          // if any of the transaction sets included an ack configuration, send ack for interchange
+          const transactionSetConfigWithAck = transactionSetConfigsForInterchange.find(
+            (config) => "acknowledgmentConfig" in config
+          );
+          if (transactionSetConfigWithAck) {
+            const ackTransactionSetConfig = getAckTransactionConfig(
+              groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
+            );
+            // note: sendingPartnerId and receivingPartnerId are flip-flopped from interchange being ack'd
+            const ackDeliveryInput: AckDeliveryInput = {
+              ackTransactionSet: ackTransactionSetConfig,
+              interchange,
+              edi: fileContents.slice(interchange.span.start, interchange.span.end),
+              sendingPartnerId: receivingPartnerId,
+              receivingPartnerId: sendingPartnerId,
+            };
+            await deliverAck(ackDeliveryInput);
           }
         }
 
@@ -250,3 +291,54 @@ const groupEventKeys = (
 // Object key components are URI-encoded (with `+` used for encoding spaces)
 const decodeObjectKey = (objectKey: string): string =>
   decodeURIComponent(objectKey.replace(/\+/g, " "));
+
+const extractInterchangeData = (
+  interchange: x12.Interchange
+): {
+  senderId: string,
+  receiverId: string,
+  delimiters: x12.Delimiters,
+  interchangeSegments: x12.InterchangeSegments,
+} => {
+  if (!interchange.envelope) {
+    throw new Error("invalid interchange: unable to extract envelope");
+  }
+
+  if (!interchange.envelope?.senderId || !interchange.envelope?.receiverId) {
+    throw new Error("invalid interchange: unable to extract interchange ids");
+  }
+
+  if (!interchange.delimiters) {
+    throw new Error("invalid interchange: unable to extract delimiters");
+  }
+
+  const senderId = `${interchange.envelope.senderQualifier}/${interchange.envelope.senderId.trim()}`;
+  const receiverId = `${interchange.envelope.receiverQualifier}/${interchange.envelope.receiverId.trim()}`;
+
+  return {
+    senderId,
+    receiverId,
+    delimiters: interchange.delimiters,
+    interchangeSegments: interchange.envelope.segments,
+  };
+};
+
+const extractFunctionalGroupData = (
+  functionalGroup: x12.FunctionalGroup
+): x12.FunctionalGroupSegments => {
+  if (!functionalGroup.envelope?.segments) {
+    throw new Error("invalid functional group: unable to extract functional group segments");
+  }
+
+  return functionalGroup.envelope.segments;
+};
+
+const extractTransactionSetData = (
+  transactionSet: x12.TransactionSet
+): { id: string; } => {
+  if (!transactionSet.id) {
+    throw new Error("invalid transaction set: unable to extract identifier");
+  }
+
+  return { id: transactionSet.id };
+};

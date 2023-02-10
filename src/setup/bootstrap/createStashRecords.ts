@@ -16,6 +16,9 @@ export const createSampleStashRecords = async ({
 }: CreateSampleStashRecordsInput) => {
   const stashClient = buildStashClient();
 
+  const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
+  const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
+
   const partnership: Partnership = {
     transactionSets: [],
   };
@@ -28,8 +31,8 @@ export const createSampleStashRecords = async ({
       {
         destination: {
           type: "bucket",
-          bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
-          path: "trading_partners/ANOTHERMERCH/outbound",
+          bucketName: sftpBucketName,
+          path: outboundBucketPath,
         },
       },
     ],
@@ -50,9 +53,28 @@ export const createSampleStashRecords = async ({
         },
       },
     ],
+    acknowledgmentConfig: {
+      acknowledgmentType: "997",
+    },
     receivingPartnerId: "this-is-me",
     sendingPartnerId: "another-merchant",
     usageIndicatorCode: "T",
+  });
+
+  // outbound 997s to ANOTHERMERCH
+  partnership.transactionSets.push({
+    description: "Outbound 997 Acknowledgments",
+    destinations: [
+      {
+        destination: {
+          bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
+          path: "trading_partners/ANOTHERMERCH/outbound",
+          type: "bucket"
+        }
+      }
+    ],
+    transactionSetIdentifier: "997",
+    usageIndicatorCode: "T"
   });
 
   // write to Stash

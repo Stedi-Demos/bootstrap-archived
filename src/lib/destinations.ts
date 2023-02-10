@@ -122,11 +122,11 @@ export const deliverToDestinations = async (
 };
 
 export const generateDestinationFilename = (
-  isaControlNumber: string,
+  prefix: string,
   transactionSetType: string,
   extension?: string,
 ): string => {
-  const baseFilename = `${isaControlNumber}-${transactionSetType}`;
+  const baseFilename = `${prefix}-${transactionSetType}`;
   return extension
     ? `${baseFilename}.${extension}`
     : baseFilename;

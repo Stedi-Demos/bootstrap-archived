@@ -42,7 +42,7 @@ import {
   groupTransactionSetConfigsByType,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
-import { deliverAck } from "../../../lib/acks.js";
+import { AckDeliveryInput, deliverAck } from "../../../lib/acks.js";
 import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 
 // Buckets client is shared across handler and execution tracking logic
@@ -187,7 +187,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             const ackTransactionSetConfig = getAckTransactionConfig(
               groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
             );
-            await deliverAck(ackTransactionSetConfig, metadata, sendingPartnerId, receivingPartnerId);
+            // note: sendingPartnerId and receivingPartnerId are flip-flopped from interchange being ack'd
+            const ackDeliveryInput: AckDeliveryInput = {
+              ackTransactionSet: ackTransactionSetConfig,
+              metadata,
+              sendingPartnerId: receivingPartnerId,
+              receivingPartnerId: sendingPartnerId,
+            };
+            await deliverAck(ackDeliveryInput);
           }
         }
 

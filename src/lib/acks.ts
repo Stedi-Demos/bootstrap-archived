@@ -10,12 +10,16 @@ import {
 } from "./destinations.js";
 import { AckTransactionSet } from "./types/PartnerRouting.js";
 
-export const deliverAck = async (
-  ackTransactionSet: AckTransactionSet,
-  metadata: EDIMetadata,
-  sendingPartnerId: string,
-  receivingPartnerId: string
-): Promise<DeliveryResult[]> => {
+export type AckDeliveryInput = {
+  ackTransactionSet: AckTransactionSet;
+  metadata: EDIMetadata;
+  sendingPartnerId: string;
+  receivingPartnerId: string;
+};
+
+export const deliverAck = async (input: AckDeliveryInput): Promise<DeliveryResult[]> => {
+  const { ackTransactionSet, metadata, sendingPartnerId, receivingPartnerId } = input;
+
   // Generate control numbers for outbound 997
   const isaControlNumber = await generateControlNumber({
     segment: "ISA",

@@ -6,16 +6,14 @@ test("should return undefined for empty object", (t) => {
   t.is(removeEmptyObjects(input), undefined);
 });
 
-test("should return undefined for nested empty object", (t) => {
+test("should return undefined for object with only a nested empty object", (t) => {
   const input = {
     a: {},
   };
-  t.deepEqual(removeEmptyObjects(input), {
-    a: undefined,
-  });
+  t.deepEqual(removeEmptyObjects(input), undefined);
 });
 
-test("should return undefined for deeply nested empty object", (t) => {
+test("should return undefined for object with only a deeply nested empty object", (t) => {
   const input = {
     a: {
       b: {
@@ -23,16 +21,10 @@ test("should return undefined for deeply nested empty object", (t) => {
       }
     },
   };
-  t.deepEqual(removeEmptyObjects(input), {
-    a: {
-      b: {
-        c: undefined,
-      }
-    }
-  });
+  t.deepEqual(removeEmptyObjects(input), undefined);
 });
 
-test("should _only_ convert empty nested objects to undefined", (t) => {
+test("should _only_ remove empty nested objects", (t) => {
   const input = {
     a: {
       b1: "c1",
@@ -44,7 +36,6 @@ test("should _only_ convert empty nested objects to undefined", (t) => {
   t.deepEqual(removeEmptyObjects(input), {
     a: {
       b1: "c1",
-      b2: undefined,
       b3: true,
       b4:4,
     }
@@ -70,7 +61,7 @@ test("should remove empty array items", (t) => {
   ]);
 });
 
-test("should map nested empty array objects to undefined", (t) => {
+test("should remove nested empty array objects from array", (t) => {
   const input: any[] = [
     {
       a: "b1",
@@ -89,15 +80,6 @@ test("should map nested empty array objects to undefined", (t) => {
     {
       a: "b1",
     },
-    {
-      nested: {
-        array: {
-          empty: {
-            value: undefined,
-          }
-        }
-      }
-    }
   ]);
 });
 
@@ -171,11 +153,9 @@ test("should recursively remove all nested empty objects", (t) => {
 
   t.deepEqual(output, {
     a: "something",
-    b: undefined,
     c: [],
     d: {
       foo: "value",
-      bar: undefined,
       baz: {
         qux: 1,
       },
@@ -185,29 +165,12 @@ test("should recursively remove all nested empty objects", (t) => {
       {
         notEmpty: true,
       },
-      {
-        nested: {
-          array: {
-            empty: {
-              value: undefined,
-            }
-          }
-        }
-      },
     ],
     f: [],
     g: null,
     h: {
       someDate,
       nestedNull: null,
-    },
-    i: undefined,
-    deeply: {
-      nested: {
-        empty: {
-          value: undefined,
-        }
-      }
     },
   });
 });

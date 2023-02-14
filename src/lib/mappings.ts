@@ -26,8 +26,7 @@ export const invokeMapping = async (mappingId: string, payload: any): Promise<an
   }
 
   // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
-  removeEmptyObjects(mapResult.content);
-  return mapResult.content;
+  return removeEmptyObjects(mapResult.content);
 };
 
 export const removeEmptyObjects = (input: any): any => {

@@ -21,6 +21,7 @@ import {
 import { RemotePollingResults } from "./types.js";
 import { RemotePoller } from "./pollers/remotePoller.js";
 import { FtpPoller } from "./pollers/ftpPoller.js";
+import { SftpPoller } from "./pollers/sftpPoller.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
 const ftpConfigStashKey = "bootstrap|remote-poller-config";
@@ -34,12 +35,8 @@ const getRemotePoller = async (remotePollerConfig: RemotePollerConfig): Promise<
   switch(remotePollerConfig.connectionDetails.protocol) {
     case "ftp":
       return await FtpPoller.getPoller(remotePollerConfig.connectionDetails)
-    // case "sftp":
-    //   return new SftpPoller(remotePollerConfig);
-    default:
-      throw new Error(
-        `unsupported connection protocol: ${remotePollerConfig.connectionDetails.protocol}`
-      );
+    case "sftp":
+      return await SftpPoller.getPoller(remotePollerConfig.connectionDetails);
   }
 };
 
@@ -145,7 +142,7 @@ const pollRemoteServer = async (
         name: file.name,
         reason: `remote timestamp (${remoteFileTimestamp}) is not newer than last poll timestamp (${lastPollTimestamp})`,
       });
-      break;
+      continue;
     }
 
     await remotePoller.downloadFile(remotePollerConfig.destination, file);

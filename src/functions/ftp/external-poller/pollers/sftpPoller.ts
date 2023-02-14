@@ -1,7 +1,5 @@
 import path from "path";
-import * as ftp from "basic-ftp";
-import fs from "node:fs";
-import { Client } from "basic-ftp";
+import sftp from "ssh2-sftp-client";
 
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
@@ -11,20 +9,37 @@ import { DestinationBucket } from "../../../../lib/types/PartnerRouting.js";
 import { ConnectionDetails } from "../../../../lib/types/RemotePollerConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 
-export class FtpPoller extends RemotePoller {
-  readonly client: Client;
+export class SftpPoller extends RemotePoller {
+  readonly client: sftp;
 
   private constructor() {
     super();
-    this.client = new ftp.Client();
+    this.client = new sftp();
   }
 
   async connect(connectionDetails: ConnectionDetails): Promise<void> {
-    await this.client.access(connectionDetails.config);
+    await this.client.connect(connectionDetails.config);
   }
 
   async disconnect(): Promise<void> {
-    this.client.close();
+    await this.client.end();
+  }
+
+  async downloadFile(destination: DestinationBucket, file: FileDetails): Promise<void> {
+    const fileContents = await this.client.get(this.getFullFilePath(file));
+
+    const destinationKey = `${destination.path}/${file.name}`;
+    await bucketClient().send(
+      new PutObjectCommand({
+        bucketName: destination.bucketName,
+        key: destinationKey,
+        body: fileContents,
+      })
+    );
+  }
+
+  async deleteFile(file: FileDetails): Promise<void> {
+    await this.client.delete(this.getFullFilePath(file));
   }
 
   async getRemoteFileDetails(remotePath = "/", remoteFiles?: string[]): Promise<RemoteFileDetails> {
@@ -32,49 +47,21 @@ export class FtpPoller extends RemotePoller {
     return remoteFiles && remoteFiles.length > 0
       ? await this.getSpecifiedFileDetails(normalizedRemotePath, remoteFiles)
       : await this.getAllFileDetailsForPath(normalizedRemotePath);
-
   }
 
-  async downloadFile(destination: DestinationBucket, file: FileDetails): Promise<void> {
-    const localTmpFilePath = `/tmp/${file.name}`;
-    await this.client.downloadTo(localTmpFilePath, this.getFullFilePath(file));
-
-    const destinationKey = `${destination.path}/${file.name}`;
-    await bucketClient().send(
-      new PutObjectCommand({
-        bucketName: destination.bucketName,
-        key: destinationKey,
-        body: fs.createReadStream(localTmpFilePath),
-      })
-    );
-
-    // clean up temporary local file
-    fs.rmSync(localTmpFilePath);
-  }
-
-  async deleteFile(file: FileDetails): Promise<void> {
-    await this.client.remove(this.getFullFilePath(file));
-  }
-
-  private async getSpecifiedFileDetails(remotePath: string, remoteFiles: string[]): Promise<RemoteFileDetails> {
+  private async getSpecifiedFileDetails( remotePath: string, remoteFiles: string[]): Promise<RemoteFileDetails> {
     const filesToProcess: FileDetails[] = [];
     const processingErrors: ProcessingError[] = [];
 
     for await (const file of remoteFiles) {
       const remoteFilePath = `${remotePath}/${file}`;
-      const listResult = await this.client.list(remoteFilePath);
-      if (listResult.length !== 1) {
-        processingErrors.push({
-          path: remoteFilePath,
-          errorMessage: `expected exactly one match for list of single file ${remoteFilePath}`,
-        });
-        break;
-      }
+      const fileStats: sftp.FileStats = await this.client.stat(remoteFilePath);
 
-      listResult[0].isFile
+      fileStats.isFile
         ? filesToProcess.push({
           path: remotePath,
-          ...this.extractFileDetails(listResult[0])
+          name: file,
+          lastModifiedTime: fileStats.modifyTime,
         })
         : // handle non-file as processing error since file was specifically requested
         processingErrors.push({
@@ -87,13 +74,13 @@ export class FtpPoller extends RemotePoller {
       filesToProcess,
       processingErrors,
     };
-  }
+  };
 
   private async getAllFileDetailsForPath(remotePath: string): Promise<RemoteFileDetails> {
-    const directoryContents = await this.client.list(remotePath);
+    const directoryContents: sftp.FileInfo[] = await this.client.list(remotePath);
     return directoryContents.reduce(
       (remoteFileDetails: RemoteFileDetails, currentFile) => {
-        currentFile.isFile
+        currentFile.type === "-"
           ? remoteFileDetails.filesToProcess.push({
             path: remotePath,
             ...this.extractFileDetails(currentFile),
@@ -108,18 +95,19 @@ export class FtpPoller extends RemotePoller {
       },
       { filesToProcess: [], skippedItems: [] }
     );
-  }
+  };
 
-  private extractFileDetails(file: ftp.FileInfo): Omit<FileDetails, "path"> {
+  private extractFileDetails(file: sftp.FileInfo): Omit<FileDetails, "path"> {
     return {
       name: file.name,
-      lastModifiedTime: file.modifiedAt?.getTime() || 0,
+      lastModifiedTime: file.modifyTime,
     }
   }
-
   static getPoller = async (connectionDetails: ConnectionDetails): Promise<RemotePoller> => {
-    const poller = new FtpPoller();
+    const poller = new SftpPoller();
     await poller.connect(connectionDetails);
     return poller;
   };
 }
+
+

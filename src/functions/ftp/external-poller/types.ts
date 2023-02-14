@@ -1,12 +1,17 @@
-import * as ftp from "basic-ftp";
-
 export type SkippedItem = {
   path: string;
+  name: string;
   reason: string;
 };
 
+export type FileDetails = {
+  path: string;
+  name: string;
+  lastModifiedTime: number;
+};
+
 export type RemoteFileDetails = {
-  filesToProcess: ftp.FileInfo[];
+  filesToProcess: FileDetails[];
   processingErrors?: ProcessingError[];
   skippedItems?: SkippedItem[];
 };
@@ -16,8 +21,9 @@ export type ProcessingError = {
   errorMessage: string;
 };
 
-export type FtpPollingResults = {
-  processedFiles: string[];
+export type RemotePollingResults = {
+  processedFiles: FileDetails[];
   skippedItems: SkippedItem[];
   processingErrors: ProcessingError[];
 };
+

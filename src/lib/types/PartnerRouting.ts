@@ -13,11 +13,13 @@ const DestinationWebhookSchema = z.strictObject({
   url: z.string(),
 });
 
-const DestinationBucketSchema = z.strictObject({
+export const DestinationBucketSchema = z.strictObject({
   type: z.literal("bucket"),
   bucketName: z.string(),
   path: z.string(),
 });
+
+export type DestinationBucket = z.infer<typeof DestinationBucketSchema>;
 
 const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),

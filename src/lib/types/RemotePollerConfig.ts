@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DestinationBucketSchema } from "./PartnerRouting";
 
 const FtpConfigSchema = z.strictObject({
   host: z.string(),
@@ -18,7 +19,7 @@ const SftpConfigSchema = z.strictObject({
   password: z.string(),
 });
 
-const ConnectionDetails = z.discriminatedUnion("protocol", [
+const ConnectionDetailsSchema = z.discriminatedUnion("protocol", [
   z.strictObject({
     protocol: z.literal("ftp"),
     config: FtpConfigSchema,
@@ -29,12 +30,14 @@ const ConnectionDetails = z.discriminatedUnion("protocol", [
   }),
 ]);
 
-export const FtpPollerConfigSchema = z.strictObject({
-  connectionDetails: ConnectionDetails,
+export type ConnectionDetails = z.infer<typeof ConnectionDetailsSchema>;
+
+export const RemotePollerConfigSchema = z.strictObject({
+  connectionDetails: ConnectionDetailsSchema,
   remotePath: z.string().default("/"),
   // can be used to poll for specific files (default is to retrieve all files)
   remoteFiles: z.array(z.string()).optional(),
-  destinationPath: z.string(),
+  destination: DestinationBucketSchema,
   deleteAfterProcessing: z.boolean().default(false),
   lastPollTime: z
   .string()
@@ -44,8 +47,8 @@ export const FtpPollerConfigSchema = z.strictObject({
   ),
 });
 
-export type FtpPollerConfig = z.infer<typeof FtpPollerConfigSchema>;
+export type RemotePollerConfig = z.infer<typeof RemotePollerConfigSchema>;
 
-export const FtpPollerConfigMap = z.record(FtpPollerConfigSchema);
+export const RemotePollerConfigMapSchema = z.record(RemotePollerConfigSchema);
 
-export type FtpPollerConfigMap = z.infer<typeof FtpPollerConfigMap>;
+export type RemotePollerConfigMap = z.infer<typeof RemotePollerConfigMapSchema>;

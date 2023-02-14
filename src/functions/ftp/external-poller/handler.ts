@@ -14,30 +14,38 @@ import {
   recordNewExecution
 } from "../../../lib/execution.js";
 import {
-  FtpPollerConfig,
-  FtpPollerConfigMap,
-} from "../../../lib/types/FtpPollerConfig.js";
-import { FtpPollingResults } from "./types.js";
-import { pollFtp } from "./protocols/ftp.js";
+  RemotePollerConfig,
+  RemotePollerConfigMap,
+  RemotePollerConfigMapSchema,
+} from "../../../lib/types/RemotePollerConfig.js";
+import { RemotePollingResults } from "./types.js";
+import { RemotePoller } from "./pollers/remotePoller.js";
+import { FtpPoller } from "./pollers/ftpPoller.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
-const ftpConfigStashKey = "bootstrap|ftp-poller-config";
+const ftpConfigStashKey = "bootstrap|remote-poller-config";
 
 const stashClient = new StashClient({
   region: "us",
   apiKey: requiredEnvVar("STEDI_API_KEY"),
 });
 
-const pollerHandlerMap: {
-  [index: string]: (ftpConfig: FtpPollerConfig) => Promise<FtpPollingResults>;
-} = {
-  ftp: pollFtp,
-  // sftp: pollSftp can easily be added if/when needed
+const getRemotePoller = async (remotePollerConfig: RemotePollerConfig): Promise<RemotePoller> => {
+  switch(remotePollerConfig.connectionDetails.protocol) {
+    case "ftp":
+      return await FtpPoller.getPoller(remotePollerConfig.connectionDetails)
+    // case "sftp":
+    //   return new SftpPoller(remotePollerConfig);
+    default:
+      throw new Error(
+        `unsupported connection protocol: ${remotePollerConfig.connectionDetails.protocol}`
+      );
+  }
 };
 
 export const handler = async (
-  ftpConfigId: string
-): Promise<FtpPollingResults | FailureResponse> => {
+  configId: string
+): Promise<RemotePollingResults | FailureResponse> => {
   const executionTime = new Date().toISOString();
   const executionId = generateExecutionId({ executionTime });
 
@@ -56,41 +64,28 @@ export const handler = async (
     );
 
     // `FtpPollerConfigMap.parse` handles failed stash lookup as well (value is undefined)
-    const ftpConfigMap: FtpPollerConfigMap = FtpPollerConfigMap.parse(
+    const remotePollerConfigMap: RemotePollerConfigMap = RemotePollerConfigMapSchema.parse(
       stashResponse.value
     );
-    const ftpConfig: FtpPollerConfig = ftpConfigMap[ftpConfigId];
+    const pollerConfig: RemotePollerConfig = remotePollerConfigMap[configId];
 
-    if (!ftpConfig) {
+    if (!pollerConfig) {
       return failedExecution(
         executionId,
-        new Error(`config not found for key: ${ftpConfigId}`)
+        new Error(`config not found for key: ${configId}`)
       );
     }
 
-    if (
-      !Object.keys(pollerHandlerMap).includes(
-        ftpConfig.connectionDetails.protocol
-      )
-    ) {
-      const error = new Error(
-        `unsupported connection protocol: ${ftpConfig.connectionDetails.protocol}`
-      );
-      return failedExecution(executionId, error);
-    }
-
-    console.log("polling ftp", {
+    console.log(`polling ${pollerConfig.connectionDetails.protocol}`, {
       executionId,
       payload: JSON.stringify({
-        ftpConfigKey: ftpConfigId,
-        hostname: ftpConfig.connectionDetails.config.host,
-        remotePath: ftpConfig.remotePath,
+        configKey: configId,
+        hostname: pollerConfig.connectionDetails.config.host,
+        remotePath: pollerConfig.remotePath,
       }),
     });
 
-    const results = await pollerHandlerMap[
-      ftpConfig.connectionDetails.protocol
-      ](ftpConfig);
+    const results = await pollRemoteServer(pollerConfig);
 
     if (results.processingErrors.length > 0) {
       return failedExecution(
@@ -101,10 +96,10 @@ export const handler = async (
     }
 
     // update `lastPollTime` for this ftp config
-    ftpConfig.lastPollTime = new Date();
+    pollerConfig.lastPollTime = new Date();
     const value = {
-      ...(ftpConfigMap as object),
-      [ftpConfigId]: { ...(ftpConfig as object) },
+      ...(remotePollerConfigMap as object),
+      [configId]: { ...(pollerConfig as object) },
     };
 
     await stashClient.send(
@@ -122,4 +117,42 @@ export const handler = async (
       e instanceof Error ? e : new Error(`unknown error: ${serializeError(e)}`);
     return failedExecution(executionId, error);
   }
+};
+
+const pollRemoteServer = async (
+  remotePollerConfig: RemotePollerConfig
+): Promise<RemotePollingResults> => {
+  const remotePoller = await getRemotePoller(remotePollerConfig);
+  const fileDetails = await remotePoller.getRemoteFileDetails(
+    remotePollerConfig.remotePath,
+    remotePollerConfig.remoteFiles
+  );
+
+  const ftpPollingResults: RemotePollingResults = {
+    processedFiles: [],
+    skippedItems: fileDetails.skippedItems || [],
+    processingErrors: fileDetails.processingErrors || [],
+  };
+
+  for await (const file of fileDetails.filesToProcess) {
+    // if last poll time is not set, use `0` (epoch)
+    // if remote file modifiedAt is not set, use current time
+    const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() || 0;
+    const remoteFileTimestamp = file.lastModifiedTime;
+    if (remoteFileTimestamp < lastPollTimestamp) {
+      ftpPollingResults.skippedItems.push({
+        path: file.path,
+        name: file.name,
+        reason: `remote timestamp (${remoteFileTimestamp}) is not newer than last poll timestamp (${lastPollTimestamp})`,
+      });
+      break;
+    }
+
+    await remotePoller.downloadFile(remotePollerConfig.destination, file);
+    remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
+    ftpPollingResults.processedFiles.push(file);
+  }
+
+  await remotePoller.disconnect();
+  return ftpPollingResults;
 };

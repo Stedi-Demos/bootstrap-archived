@@ -30,6 +30,7 @@ export const compile = async (
       js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
     },
     mainFields: ["module", "main"],
+    external: ["ssh2", "@stedi/x12-tools"],
   });
 
   if (debug) {
@@ -40,12 +41,13 @@ export const compile = async (
 };
 
 const pkg = {
-  name: "rt-function-deps",
+  name: "bootstrap-function-deps",
   version: "1.0.0",
   description:
     "This package contains the dependencies needed at runtime, that cannot be bundled",
   dependencies: {
-    // "ssh2-sftp-client": "^8.1.0",
+    "@stedi/x12-tools": "^1.0.0",
+    "ssh2-sftp-client": "^9.0.4",
   },
 };
 

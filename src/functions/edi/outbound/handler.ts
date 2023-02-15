@@ -10,14 +10,16 @@ import {
 } from "../../../lib/execution.js";
 import {
   deliverToDestination,
-  DeliveryResult,
-} from "../../../lib/deliverToDestination.js";
+  DeliverToDestinationInput,
+  generateDestinationFilename
+} from "../../../lib/destinations.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
 import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
 import {
   getTransactionSetConfigsForPartnership,
+  groupTransactionSetConfigsByType,
   resolveTransactionSetConfig,
 } from "../../../lib/transactionSetConfigs.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
@@ -59,9 +61,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       receivingPartnerId,
     });
 
+    const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+
     // load the guide for the transaction set
     const guideSummary = await resolveGuide({
-      guideIdsForPartnership: transactionSetConfigs.map(
+      guideIdsForPartnership: groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
         (config) => config.guideId
       ),
       transactionSetType,
@@ -69,7 +73,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
     // find the transaction set config for partnership that includes guide
     const transactionSetConfig = resolveTransactionSetConfig(
-      transactionSetConfigs,
+      groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
       guideSummary.guideId
     );
 
@@ -115,6 +119,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       },
     };
 
+    // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
+    //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
       transactionSetConfig.destinations.map(
         async ({ destination, mappingId }) => {
@@ -134,10 +140,13 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             envelope
           );
 
-          if (destination.type === "bucket")
-            destination.path = `${destination.path}/${isaControlNumber}-${transactionSetType}.edi`;
-
-          return await deliverToDestination(destination, translation);
+          const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
+          const deliverToDestinationInput: DeliverToDestinationInput = {
+            destination,
+            payload: translation,
+            destinationFilename,
+          };
+          return await deliverToDestination(deliverToDestinationInput);
         }
       )
     );
@@ -225,10 +234,10 @@ const validateTransactionSetControlNumbers = (guideJson: any) => {
       t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
     );
     if (controlNumberValue !== expectedControlNumber) {
-      console.log(JSON.stringify({ transactionSet: t }));
-      throw new Error(
-        `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`
-      );
+      const message =
+        `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;
+      console.log(message);
+      throw new Error(message);
     }
 
     expectedControlNumber++;

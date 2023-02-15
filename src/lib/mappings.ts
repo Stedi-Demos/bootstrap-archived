@@ -26,8 +26,7 @@ export const invokeMapping = async (mappingId: string, payload: any): Promise<an
   }
 
   // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
-  removeEmptyObjects(mapResult.content);
-  return mapResult.content;
+  return removeEmptyObjects(mapResult.content);
 };
 
 export const removeEmptyObjects = (input: any): any => {
@@ -49,9 +48,13 @@ export const removeEmptyObjects = (input: any): any => {
   }
 
   // otherwise, loop through all properties of the object and recursively remove empty objects
-  const filteredObjectEntries = Object.entries(input).map(
-    ([key, value]) => [key, removeEmptyObjects(value)]
-  );
+  const filteredObjectEntries = Object.entries(input).reduce((entries: [string, any][], [key, value]) => {
+    const filteredValue = removeEmptyObjects(value);
+    return filteredValue !== undefined
+      // use nested array notation `[[key, value]]` to concat key/value tuple to array
+      ? entries.concat([[key, filteredValue]])
+      : entries;
+  }, []);
 
   // if there are any non-empty entries after filtering, reconstruct the object,
   // otherwise remove the object from the tree

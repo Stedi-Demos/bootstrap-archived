@@ -11,6 +11,11 @@ export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 const DestinationWebhookSchema = z.strictObject({
   type: z.literal("webhook"),
   url: z.string(),
+  headers: z.record(
+    // `Content-Type` header override is not allowed
+    z.string().regex(/^(?!content-type).+$/i),
+    z.string()
+  ).optional(),
 });
 
 export const DestinationBucketSchema = z.strictObject({

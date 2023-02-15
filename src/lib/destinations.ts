@@ -48,6 +48,7 @@ export const deliverToDestination = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...input.destination.headers,
         },
         body,
       };

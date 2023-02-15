@@ -111,6 +111,8 @@ export const PartnershipSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
 });
 
+export type PartnershipInput = z.input<typeof PartnershipSchema>;
+
 export type Partnership = z.infer<typeof PartnershipSchema>;
 
 export const ISAPartnerIdLookupSchema = z.strictObject({

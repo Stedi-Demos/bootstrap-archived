@@ -45,7 +45,7 @@ export const deliverToDestination = async (
   switch (input.destination.type) {
     case "webhook":
       const params: RequestInit = {
-        method: "POST",
+        method: input.destination.verb,
         headers: {
           "Content-Type": "application/json",
           ...input.destination.headers,

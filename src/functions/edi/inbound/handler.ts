@@ -6,7 +6,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@stedi/sdk-client-buckets";
-import * as x12 from "@stedi/x12-tools/node.js";
+import * as x12 from "@stedi/x12-tools";
 
 import { processEdi } from "../../../lib/processEdi.js";
 import {

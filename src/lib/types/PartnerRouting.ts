@@ -11,6 +11,16 @@ export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 const DestinationWebhookSchema = z.strictObject({
   type: z.literal("webhook"),
   url: z.string(),
+  verb: z.enum([
+    "PATCH",
+    "POST",
+    "PUT",
+  ]).default("POST"),
+  headers: z.record(
+    // `Content-Type` header override is not allowed
+    z.string().regex(/^(?!content-type).+$/i),
+    z.string()
+  ).optional(),
 });
 
 export const DestinationBucketSchema = z.strictObject({
@@ -100,6 +110,8 @@ export type TransactionSet = z.infer<typeof TransactionSetSchema>;
 export const PartnershipSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
 });
+
+export type PartnershipInput = z.input<typeof PartnershipSchema>;
 
 export type Partnership = z.infer<typeof PartnershipSchema>;
 

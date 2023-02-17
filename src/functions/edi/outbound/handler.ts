@@ -124,8 +124,6 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     const deliveryResults = await Promise.allSettled(
       transactionSetConfig.destinations.map(
         async ({ destination, mappingId }) => {
-          console.log(destination);
-
           const guideJson =
             mappingId !== undefined
               ? await invokeMapping(mappingId, outboundEvent.payload)

@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { SftpConfigSchema } from "./RemoteConnectionConfig.js";
+
 const DestinationWebhookSchema = z.strictObject({
   type: z.literal("webhook"),
   url: z.string(),
@@ -14,10 +16,17 @@ const DestinationWebhookSchema = z.strictObject({
     z.string()
   ).optional(),
 });
+
 export const DestinationBucketSchema = z.strictObject({
   type: z.literal("bucket"),
   bucketName: z.string(),
   path: z.string(),
+});
+
+export const DestinationSftpSchema = z.strictObject({
+  type: z.literal("sftp"),
+  connectionDetails: SftpConfigSchema,
+  remotePath: z.string().default("/"),
 });
 
 export type DestinationBucket = z.infer<typeof DestinationBucketSchema>;
@@ -27,6 +36,7 @@ export const DestinationSchema = z.strictObject({
   destination: z.discriminatedUnion("type", [
     DestinationWebhookSchema,
     DestinationBucketSchema,
+    DestinationSftpSchema,
   ]),
 });
 

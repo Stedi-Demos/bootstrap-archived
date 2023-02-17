@@ -13,7 +13,7 @@ const FtpConfigSchema = z.strictObject({
   }),
 });
 
-const SftpConfigSchema = z.strictObject({
+export const SftpConfigSchema = z.strictObject({
   host: z.string(),
   port: z.number().default(22),
   username: z.string(),

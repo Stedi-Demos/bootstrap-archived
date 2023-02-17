@@ -17,7 +17,7 @@ import {
   RemotePollerConfig,
   RemotePollerConfigMap,
   RemotePollerConfigMapSchema,
-} from "../../../lib/types/RemotePollerConfig.js";
+} from "../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePollingResults } from "./types.js";
 import { RemotePoller } from "./pollers/remotePoller.js";
 import { FtpPoller } from "./pollers/ftpPoller.js";

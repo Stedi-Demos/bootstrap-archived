@@ -1,4 +1,5 @@
 import fetch, { RequestInit } from "node-fetch";
+import sftp from "ssh2-sftp-client";
 
 import {
   PutObjectCommand,
@@ -7,7 +8,7 @@ import {
 
 import { bucketClient } from "./buckets.js";
 import { invokeMapping } from "./mappings.js";
-import { Destination } from "./types/PartnerRouting.js";
+import { Destination } from "./types/Destination.js";
 
 const bucketsClient = bucketClient();
 
@@ -75,6 +76,23 @@ export const deliverToDestination = async (
       await bucketsClient.send(new PutObjectCommand(putCommandArgs));
 
       break;
+
+    case "sftp":
+      const filename = input.destinationFilename || `payload-${Date.now()}.out`;
+      const remotePath = `${input.destination.remotePath}/${filename}`;
+      const { host, username } = input.destination.connectionDetails;
+      const sftpClient = new sftp();
+      await sftpClient.connect(input.destination.connectionDetails);
+      await sftpClient.put(Buffer.from(body), remotePath);
+      await sftpClient.end();
+      result.payload = {
+        host,
+        username,
+        remotePath,
+        contents: body,
+      };
+      break;
+
     default:
       throw new Error("unsupported destination type");
   }
@@ -88,7 +106,7 @@ export const deliverToDestinations = async (
   const deliveryResults = await Promise.allSettled(
     input.destinations.map(
       async ({ destination, mappingId }) => {
-        console.log(`delivering to destination: ${JSON.stringify(destination)}`);
+        console.log(`delivering to ${destination.type} destination`);
         const deliverToDestinationInput: DeliverToDestinationInput = {
           destination,
           payload: input.payload,

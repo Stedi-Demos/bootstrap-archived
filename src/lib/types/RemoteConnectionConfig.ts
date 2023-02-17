@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { DestinationBucketSchema } from "./PartnerRouting";
+
+import { DestinationBucketSchema } from "./Destination.js";
 
 const FtpConfigSchema = z.strictObject({
   host: z.string(),
@@ -12,7 +13,7 @@ const FtpConfigSchema = z.strictObject({
   }),
 });
 
-const SftpConfigSchema = z.strictObject({
+export const SftpConfigSchema = z.strictObject({
   host: z.string(),
   port: z.number().default(22),
   username: z.string(),

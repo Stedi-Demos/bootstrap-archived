@@ -7,7 +7,7 @@ import {
 
 import { bucketClient } from "./buckets.js";
 import { invokeMapping } from "./mappings.js";
-import { Destination } from "./types/PartnerRouting.js";
+import { Destination } from "./types/Destination.js";
 
 const bucketsClient = bucketClient();
 

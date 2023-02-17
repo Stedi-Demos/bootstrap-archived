@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { DestinationSchema } from "./Destination.js";
+
 export const UsageIndicatorCodeSchema = z.enum([
   "P",
   "T",
@@ -7,39 +9,6 @@ export const UsageIndicatorCodeSchema = z.enum([
 ]);
 
 export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
-
-const DestinationWebhookSchema = z.strictObject({
-  type: z.literal("webhook"),
-  url: z.string(),
-  verb: z.enum([
-    "PATCH",
-    "POST",
-    "PUT",
-  ]).default("POST"),
-  headers: z.record(
-    // `Content-Type` header override is not allowed
-    z.string().regex(/^(?!content-type).+$/i),
-    z.string()
-  ).optional(),
-});
-
-export const DestinationBucketSchema = z.strictObject({
-  type: z.literal("bucket"),
-  bucketName: z.string(),
-  path: z.string(),
-});
-
-export type DestinationBucket = z.infer<typeof DestinationBucketSchema>;
-
-const DestinationSchema = z.strictObject({
-  mappingId: z.string().optional(),
-  destination: z.discriminatedUnion("type", [
-    DestinationWebhookSchema,
-    DestinationBucketSchema,
-  ]),
-});
-
-export type Destination = z.infer<typeof DestinationSchema>;
 
 const BaseTransactionSetSchema = z.strictObject({
   description: z.string().optional(),

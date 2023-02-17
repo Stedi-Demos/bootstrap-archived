@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { DestinationBucketSchema } from "./PartnerRouting";
+
+import { DestinationBucketSchema } from "./PartnerRouting.js";
 
 const FtpConfigSchema = z.strictObject({
   host: z.string(),

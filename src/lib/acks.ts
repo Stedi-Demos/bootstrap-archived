@@ -1,4 +1,4 @@
-import * as x12 from "@stedi/x12-tools/node.js";
+import * as x12 from "@stedi/x12-tools";
 
 import { generateControlNumber } from "./generateControlNumber.js";
 import {
@@ -8,11 +8,10 @@ import {
   generateDestinationFilename
 } from "./destinations.js";
 import { AckTransactionSet, UsageIndicatorCodeSchema } from "./types/PartnerRouting.js";
-import { Interchange } from "@stedi/x12-tools/node.js";
 
 export type AckDeliveryInput = {
   ackTransactionSet: AckTransactionSet;
-  interchange: Interchange;
+  interchange: x12.Interchange;
   edi: string;
   sendingPartnerId: string;
   receivingPartnerId: string;

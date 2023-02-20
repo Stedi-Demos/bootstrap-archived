@@ -5,8 +5,8 @@ import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
 import { bucketClient } from "../../../../lib/buckets.js";
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
-import { DestinationBucket } from "../../../../lib/types/PartnerRouting.js";
-import { ConnectionDetails } from "../../../../lib/types/RemotePollerConfig.js";
+import { DestinationBucket } from "../../../../lib/types/Destination.js";
+import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 
 export class SftpPoller extends RemotePoller {

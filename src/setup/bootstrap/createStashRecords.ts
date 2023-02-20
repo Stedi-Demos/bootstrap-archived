@@ -1,7 +1,7 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
-import { Partnership } from "../../lib/types/PartnerRouting.js";
+import { PartnershipInput } from "../../lib/types/PartnerRouting.js";
 import { stashClient as buildStashClient } from "../../lib/stash.js";
 import { savePartnership } from "../../lib/savePartnership.js";
 
@@ -19,7 +19,7 @@ export const createSampleStashRecords = async ({
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
 
-  const partnership: Partnership = {
+  const partnership: PartnershipInput = {
     transactionSets: [],
   };
 

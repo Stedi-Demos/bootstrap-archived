@@ -12,7 +12,7 @@ import {
   deliverToDestination,
   DeliverToDestinationInput,
   generateDestinationFilename
-} from "../../../lib/destinations.js";
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";

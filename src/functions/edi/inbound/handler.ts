@@ -32,7 +32,7 @@ import {
   DeliverToDestinationListInput,
   deliverToDestinations,
   generateDestinationFilename
-} from "../../../lib/destinations.js";
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";

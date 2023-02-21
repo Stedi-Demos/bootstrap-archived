@@ -6,7 +6,7 @@ import {
   deliverToDestinations,
   DeliveryResult,
   generateDestinationFilename
-} from "./destinations.js";
+} from "./deliveryManager.js";
 import { AckTransactionSet, UsageIndicatorCodeSchema } from "./types/PartnerRouting.js";
 
 export type AckDeliveryInput = {

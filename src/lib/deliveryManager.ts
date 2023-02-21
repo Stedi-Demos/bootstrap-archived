@@ -1,16 +1,8 @@
-import fetch, { RequestInit } from "node-fetch";
-import sftp from "ssh2-sftp-client";
-
-import {
-  PutObjectCommand,
-  PutObjectCommandInput,
-} from "@stedi/sdk-client-buckets";
-
-import { bucketClient } from "./buckets.js";
 import { invokeMapping } from "./mappings.js";
 import { Destination } from "./types/Destination.js";
-
-const bucketsClient = bucketClient();
+import * as bucket from "./destinations/bucket.js";
+import * as sftp from "./destinations/sftp.js";
+import * as webhook from "./destinations/webhook.js";
 
 export type DeliveryResult = {
   type: Destination["destination"]["type"];
@@ -30,11 +22,25 @@ export type DeliverToDestinationListInput = {
   destinationFilename?: string;
 };
 
+export type DeliveryFnForDestinationTypeInput = {
+  destination: Destination["destination"];
+  body: any;
+  destinationFilename?: string;
+};
+
+const deliveryFnForDestinationType: {
+  [type in Destination["destination"]["type"]]: (
+    input: DeliveryFnForDestinationTypeInput
+  ) => Promise<any>;
+} = {
+  "bucket": bucket.deliverToDestination,
+  "sftp": sftp.deliverToDestination,
+  "webhook": webhook.deliverToDestination,
+};
+
 export const deliverToDestination = async (
   input: DeliverToDestinationInput,
 ): Promise<DeliveryResult> => {
-  const result: DeliveryResult = { type: input.destination.type, payload: {} };
-
   const destinationPayload = input.mappingId !== undefined
     ? await invokeMapping(input.mappingId, input.payload)
     : input.payload;
@@ -43,61 +49,18 @@ export const deliverToDestination = async (
     ? JSON.stringify(destinationPayload)
     : destinationPayload;
 
-  switch (input.destination.type) {
-    case "webhook":
-      const params: RequestInit = {
-        method: input.destination.verb,
-        headers: {
-          "Content-Type": "application/json",
-          ...input.destination.headers,
-        },
-        body,
-      };
-      result.payload = params;
-      const response = await fetch(input.destination.url, params);
-      if (!response.ok) {
-        throw new Error(
-          `delivery to ${input.destination.url} failed: ${response.statusText} (status code: ${response.status})`
-        );
-      }
+  const deliveryFnInput: DeliveryFnForDestinationTypeInput = {
+    destination: input.destination,
+    body,
+    destinationFilename: input.destinationFilename,
+  };
 
-      break;
+  const payload = await deliveryFnForDestinationType[input.destination.type](deliveryFnInput);
 
-    case "bucket":
-      const key = input.destinationFilename
-        ? `${input.destination.path}/${input.destinationFilename}`
-        : input.destination.path;
-      const putCommandArgs: PutObjectCommandInput = {
-        bucketName: input.destination.bucketName,
-        key,
-        body,
-      };
-      result.payload = putCommandArgs;
-      await bucketsClient.send(new PutObjectCommand(putCommandArgs));
-
-      break;
-
-    case "sftp":
-      const filename = input.destinationFilename || `payload-${Date.now()}.out`;
-      const remotePath = `${input.destination.remotePath}/${filename}`;
-      const { host, username } = input.destination.connectionDetails;
-      const sftpClient = new sftp();
-      await sftpClient.connect(input.destination.connectionDetails);
-      await sftpClient.put(Buffer.from(body), remotePath);
-      await sftpClient.end();
-      result.payload = {
-        host,
-        username,
-        remotePath,
-        contents: body,
-      };
-      break;
-
-    default:
-      throw new Error("unsupported destination type");
-  }
-
-  return result;
+  return {
+    type: input.destination.type,
+    payload,
+  };
 };
 
 export const deliverToDestinations = async (

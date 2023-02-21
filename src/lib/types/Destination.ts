@@ -2,14 +2,18 @@ import z from "zod";
 
 import { SftpConfigSchema } from "./RemoteConnectionConfig.js";
 
+const WebhookVerbSchema = z.enum([
+  "PATCH",
+  "POST",
+  "PUT",
+]);
+
+export type WebhookVerb = z.infer<typeof WebhookVerbSchema>;
+
 const DestinationWebhookSchema = z.strictObject({
   type: z.literal("webhook"),
   url: z.string(),
-  verb: z.enum([
-    "PATCH",
-    "POST",
-    "PUT",
-  ]).default("POST"),
+  verb: WebhookVerbSchema.default("POST"),
   headers: z.record(
     // `Content-Type` header override is not allowed
     z.string().regex(/^(?!content-type).+$/i),
@@ -23,13 +27,13 @@ export const DestinationBucketSchema = z.strictObject({
   path: z.string(),
 });
 
+export type DestinationBucket = z.infer<typeof DestinationBucketSchema>;
+
 export const DestinationSftpSchema = z.strictObject({
   type: z.literal("sftp"),
   connectionDetails: SftpConfigSchema,
   remotePath: z.string().default("/"),
 });
-
-export type DestinationBucket = z.infer<typeof DestinationBucketSchema>;
 
 export const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),

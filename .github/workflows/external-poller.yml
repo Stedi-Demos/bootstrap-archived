@@ -1,0 +1,52 @@
+name: Scheduled External SFTP Poller
+
+on:
+  schedule:
+    # run every 15 mins (starting from 10 after each hour)
+    - cron: "10/15 * * * *"
+
+jobs:
+  run_sftp_poller:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.7"
+      - run: npm ci
+      - run: npm run execute ftp-external-poller FMXCHEPT
+        env:
+          STEDI_API_KEY: ${{secrets.STEDI_API_KEY}}
+          DESTINATION_WEBHOOK_URL: ${{secrets.DESTINATION_WEBHOOK_URL}}
+          EXECUTIONS_BUCKET_NAME: ${{secrets.EXECUTIONS_BUCKET_NAME }}
+          SFTP_BUCKET_NAME: ${{secrets.SFTP_BUCKET_NAME }}
+      # notify via slack if any failures are encountered
+      - if: ${{ failure() }}
+        name: "send failure alert via slack"
+        id: slack
+        uses: slackapi/slack-github-action@936158bbe252e9a6062e793ea4609642c966e302 # tag=v1.21.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":alert: Scheduled SFTP poller failed :alert:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|:point_right: Github Actions failure>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

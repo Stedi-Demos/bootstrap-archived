@@ -17,8 +17,21 @@ export class SftpPoller extends RemotePoller {
     this.client = new sftp();
   }
 
-  async connect(connectionDetails: ConnectionDetails): Promise<void> {
-    await this.client.connect(connectionDetails.config);
+  async connect(connectionDetails: any): Promise<void> {
+    const options: sftp.ConnectOptions = {
+        host: connectionDetails.config.host,
+        port: connectionDetails.config.port,
+        username: connectionDetails.config.username,
+        password: connectionDetails.config.password,
+        readyTimeout: 10_000,
+        algorithms: {
+            serverHostKey: ['ssh-rsa'],
+            cipher: ['aes128-ctr'],
+            kex: ['diffie-hellman-group14-sha1']
+        },
+    };
+
+    await this.client.connect(options);
   }
 
   async disconnect(): Promise<void> {

@@ -1,0 +1,13 @@
+name: Say Hi Every 5 minutes
+
+on:
+  schedule:
+    # run every 5 mins
+    - cron: "*/5 * * * *"
+
+jobs:
+  first-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: first-step
+        run: echo "Hi"

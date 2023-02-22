@@ -1,5 +1,8 @@
+import { serializeError } from "serialize-error";
+
 import { invokeMapping } from "./mappings.js";
 import { Destination } from "./types/Destination.js";
+import { ErrorWithContext } from "./errorWithContext.js";
 import * as bucket from "./destinations/bucket.js";
 import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
@@ -82,26 +85,35 @@ export const processDeliveries = async (
     )
   );
 
-  const deliveryResultsByStatus = deliveryResults.reduce(
-    (
-      groupedResults: Record<"fulfilled" | "rejected", any[]>,
-      { status, ...rest }
-    ) => {
-      groupedResults[status].push(rest);
-      return groupedResults;
-    },
-    { fulfilled: [], rejected: [] }
-  );
-
+  const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
   const rejectedCount = deliveryResultsByStatus.rejected.length;
   if (rejectedCount > 0) {
-    console.log(`some deliveries were not successful: ${JSON.stringify(deliveryResultsByStatus)}`);
-    throw new Error(
-      `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`
+    throw new ErrorWithContext(
+      `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
+      deliveryResultsByStatus,
     );
   }
 
   return deliveryResultsByStatus.fulfilled.map((r) => r.value);
+};
+
+export const groupDeliveryResults = (
+  deliveryResults: PromiseSettledResult<DeliveryResult>[]
+): Record<"fulfilled" | "rejected", any[]> => {
+  return deliveryResults.reduce(
+    (
+      groupedResults: Record<"fulfilled" | "rejected", any[]>,
+      { status, ...rest }
+    ) => {
+      // for rejected promises, serialize the reason
+      const result = status === "rejected"
+        ? { reason: serializeError(rest) }
+        : { value: rest }
+      groupedResults[status].push(result);
+      return groupedResults;
+    },
+    { fulfilled: [], rejected: [] }
+  );
 };
 
 export const generateDestinationFilename = (

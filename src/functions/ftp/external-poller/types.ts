@@ -1,3 +1,5 @@
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+
 export type SkippedItem = {
   path: string;
   name: string;
@@ -18,7 +20,7 @@ export type RemoteFileDetails = {
 
 export type ProcessingError = {
   path: string;
-  errorMessage: string;
+  error: ErrorWithContext;
 };
 
 export type RemotePollingResults = {

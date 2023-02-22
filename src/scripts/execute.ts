@@ -37,9 +37,13 @@ void (async () => {
 
     let result: any;
     try {
-      result = JSON.parse(response);
+      // if response payload is present, try to parse as JSON
+      result = response
+        ? JSON.parse(response)
+        : undefined;
     } catch (e) {
-      result = response.toString();
+      // if response is not JSON, leave it as-is
+      result = response;
     }
 
     console.log("Result:");

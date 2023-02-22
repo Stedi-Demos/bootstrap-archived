@@ -38,7 +38,7 @@ export const functionClient = (): FunctionsClient => {
 export const invokeFunction = async (
   functionName: string,
   input: any
-): Promise<any> => {
+): Promise<string | undefined> => {
   const result = await functionClient().send(
     new InvokeFunctionCommand({
       functionName,

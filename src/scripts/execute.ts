@@ -1,4 +1,4 @@
-import { invokeFunction, invokeFunctionAsync } from "../support/functions.js";
+import { invokeFunction, invokeFunctionAsync } from "../lib/functions.js";
 
 // if input was provided, parse as object or string, otherwise return undefined
 const processFunctionInput = (input?: string) => {

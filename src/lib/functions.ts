@@ -13,7 +13,7 @@ import {
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 
 type FunctionInvocationId = string;
 

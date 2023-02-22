@@ -28,7 +28,7 @@ export type ProcessDeliveriesInput = {
 
 export type DeliverToDestinationInput = {
   destination: Destination["destination"];
-  body: any;
+  destinationPayload: any;
   destinationFilename?: string;
 };
 
@@ -50,13 +50,10 @@ export const processSingleDelivery = async (
     ? await invokeMapping(input.mappingId, input.payload)
     : input.payload;
 
-  const body = typeof destinationPayload === "object"
-    ? JSON.stringify(destinationPayload)
-    : destinationPayload;
 
   const deliverToDestinationInput: DeliverToDestinationInput = {
     destination: input.destination,
-    body,
+    destinationPayload,
     destinationFilename: input.destinationFilename,
   };
 
@@ -127,4 +124,10 @@ export const generateDestinationFilename = (
   return extension
     ? `${baseFilename}.${extension}`
     : baseFilename;
+};
+
+export const payloadAsString = (destinationPayload: any): string => {
+  return typeof destinationPayload === "object"
+    ? JSON.stringify(destinationPayload)
+    : destinationPayload;
 };

@@ -1,6 +1,6 @@
 import sftp from "ssh2-sftp-client";
 
-import { DeliverToDestinationInput } from "../deliveryManager.js";
+import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
 
 type SftpDeliveryResult = {
   host: string;
@@ -19,16 +19,17 @@ export const deliverToDestination = async (
   const filename = input.destinationFilename || `payload-${Date.now()}.out`;
   const remotePath = `${input.destination.remotePath}/${filename}`;
   const { host, username } = input.destination.connectionDetails;
+  const fileContents = payloadAsString(input.destinationPayload);
 
   const sftpClient = new sftp();
   await sftpClient.connect(input.destination.connectionDetails);
-  await sftpClient.put(Buffer.from(input.body), remotePath);
+  await sftpClient.put(Buffer.from(fileContents), remotePath);
   await sftpClient.end();
 
   return {
     host,
     username,
     remotePath,
-    contents: input.body,
+    contents: fileContents,
   };
 };

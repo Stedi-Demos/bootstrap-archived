@@ -1,7 +1,7 @@
 import { PutObjectCommand, PutObjectCommandInput } from "@stedi/sdk-client-buckets";
 
 import { bucketClient } from "../buckets.js";
-import { DeliverToDestinationInput } from "../deliveryManager.js";
+import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
@@ -16,7 +16,7 @@ export const deliverToDestination = async (
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,
-    body: input.body,
+    body: payloadAsString(input.destinationPayload),
   };
 
   await bucketClient().send(new PutObjectCommand(putCommandArgs));

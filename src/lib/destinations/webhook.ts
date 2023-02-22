@@ -1,7 +1,7 @@
 import fetch, { RequestInit } from "node-fetch";
 
 import { WebhookVerb } from "../types/Destination.js";
-import { DeliverToDestinationInput } from "../deliveryManager.js";
+import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
 
 type WebhookDeliveryResult = {
   method: WebhookVerb;
@@ -23,7 +23,7 @@ export const deliverToDestination = async (
       "Content-Type": "application/json",
       ...input.destination.headers,
     },
-    body: input.body,
+    body: payloadAsString(input.destinationPayload),
   };
 
   const response = await fetch(input.destination.url, params);

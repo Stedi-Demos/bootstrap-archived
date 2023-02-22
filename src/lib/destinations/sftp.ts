@@ -1,6 +1,6 @@
 import sftp from "ssh2-sftp-client";
 
-import { DeliveryFnForDestinationTypeInput } from "../deliveryManager.js";
+import { DeliverToDestinationInput } from "../deliveryManager.js";
 
 type SftpDeliveryResult = {
   host: string;
@@ -10,7 +10,7 @@ type SftpDeliveryResult = {
 };
 
 export const deliverToDestination = async (
-  input: DeliveryFnForDestinationTypeInput
+  input: DeliverToDestinationInput
 ): Promise<SftpDeliveryResult> => {
   if(input.destination.type !== "sftp") {
     throw new Error("invalid destination type (must be sftp)");

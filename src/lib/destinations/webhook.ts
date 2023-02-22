@@ -1,7 +1,7 @@
 import fetch, { RequestInit } from "node-fetch";
 
 import { WebhookVerb } from "../types/Destination.js";
-import { DeliveryFnForDestinationTypeInput } from "../deliveryManager.js";
+import { DeliverToDestinationInput } from "../deliveryManager.js";
 
 type WebhookDeliveryResult = {
   method: WebhookVerb;
@@ -10,7 +10,7 @@ type WebhookDeliveryResult = {
 };
 
 export const deliverToDestination = async (
-  input: DeliveryFnForDestinationTypeInput
+  input: DeliverToDestinationInput
 ): Promise<WebhookDeliveryResult> => {
   if(input.destination.type !== "webhook") {
     throw new Error("invalid destination type (must be webhook)");

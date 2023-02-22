@@ -2,8 +2,8 @@ import * as x12 from "@stedi/x12-tools";
 
 import { generateControlNumber } from "./generateControlNumber.js";
 import {
-  DeliverToDestinationListInput,
-  deliverToDestinations,
+  ProcessDeliveriesInput,
+  processDeliveries,
   DeliveryResult,
   generateDestinationFilename
 } from "./deliveryManager.js";
@@ -42,10 +42,10 @@ export const deliverAck = async (input: AckDeliveryInput): Promise<DeliveryResul
   }
 
   const destinationFilename = generateDestinationFilename(isaControlNumber, "997", "edi");
-  const deliverToDestinationsInput: DeliverToDestinationListInput = {
+  const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: ackTransactionSet.destinations,
     payload: ackEdi,
     destinationFilename,
   };
-  return await deliverToDestinations(deliverToDestinationsInput);
+  return await processDeliveries(processDeliveriesInput);
 };

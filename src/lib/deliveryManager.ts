@@ -9,20 +9,20 @@ export type DeliveryResult = {
   payload: any;
 }
 
-export type DeliverToDestinationInput = {
+export type ProcessSingleDeliveryInput = {
   destination: Destination["destination"],
   payload: object | string,
   mappingId?: string,
   destinationFilename?: string,
 };
 
-export type DeliverToDestinationListInput = {
+export type ProcessDeliveriesInput = {
   destinations: Destination[];
   payload: object | string;
   destinationFilename?: string;
 };
 
-export type DeliveryFnForDestinationTypeInput = {
+export type DeliverToDestinationInput = {
   destination: Destination["destination"];
   body: any;
   destinationFilename?: string;
@@ -30,7 +30,7 @@ export type DeliveryFnForDestinationTypeInput = {
 
 const deliveryFnForDestinationType: {
   [type in Destination["destination"]["type"]]: (
-    input: DeliveryFnForDestinationTypeInput
+    input: DeliverToDestinationInput
   ) => Promise<any>;
 } = {
   "bucket": bucket.deliverToDestination,
@@ -38,8 +38,8 @@ const deliveryFnForDestinationType: {
   "webhook": webhook.deliverToDestination,
 };
 
-export const deliverToDestination = async (
-  input: DeliverToDestinationInput,
+export const processSingleDelivery = async (
+  input: ProcessSingleDeliveryInput,
 ): Promise<DeliveryResult> => {
   const destinationPayload = input.mappingId !== undefined
     ? await invokeMapping(input.mappingId, input.payload)
@@ -49,13 +49,14 @@ export const deliverToDestination = async (
     ? JSON.stringify(destinationPayload)
     : destinationPayload;
 
-  const deliveryFnInput: DeliveryFnForDestinationTypeInput = {
+  const deliverToDestinationInput: DeliverToDestinationInput = {
     destination: input.destination,
     body,
     destinationFilename: input.destinationFilename,
   };
 
-  const payload = await deliveryFnForDestinationType[input.destination.type](deliveryFnInput);
+  const payload =
+    await deliveryFnForDestinationType[input.destination.type](deliverToDestinationInput);
 
   return {
     type: input.destination.type,
@@ -63,20 +64,20 @@ export const deliverToDestination = async (
   };
 };
 
-export const deliverToDestinations = async (
-  input: DeliverToDestinationListInput,
+export const processDeliveries = async (
+  input: ProcessDeliveriesInput,
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
     input.destinations.map(
       async ({ destination, mappingId }) => {
         console.log(`delivering to ${destination.type} destination`);
-        const deliverToDestinationInput: DeliverToDestinationInput = {
+        const deliverToDestinationInput: ProcessSingleDeliveryInput = {
           destination,
           payload: input.payload,
           mappingId,
           destinationFilename: input.destinationFilename,
         }
-        return await deliverToDestination(deliverToDestinationInput);
+        return await processSingleDelivery(deliverToDestinationInput);
       }
     )
   );

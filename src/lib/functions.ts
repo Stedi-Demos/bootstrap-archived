@@ -1,5 +1,3 @@
-import { TextEncoder } from "util";
-
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import {
   CreateFunctionCommand,
@@ -42,7 +40,7 @@ export const invokeFunction = async (
   const result = await functionClient().send(
     new InvokeFunctionCommand({
       functionName,
-      requestPayload: new TextEncoder().encode(JSON.stringify(input)),
+      requestPayload: Buffer.from(JSON.stringify(input)),
     })
   );
 
@@ -56,7 +54,7 @@ export const invokeFunctionAsync = async (
   input?: any
 ): Promise<FunctionInvocationId> => {
   const requestPayload = input
-    ? new TextEncoder().encode(JSON.stringify(input))
+    ? Buffer.from(JSON.stringify(input))
     : undefined;
 
   const { functionInvocationId } = await functionClient().send(

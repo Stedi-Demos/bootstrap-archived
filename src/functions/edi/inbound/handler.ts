@@ -29,10 +29,10 @@ import {
 } from "./types.js";
 import { trackProgress } from "../../../lib/progressTracking.js";
 import {
-  DeliverToDestinationListInput,
-  deliverToDestinations,
+  ProcessDeliveriesInput,
+  processDeliveries,
   generateDestinationFilename
-} from "../../../lib/destinations.js";
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
@@ -175,12 +175,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 "json"
               );
 
-              const deliverToDestinationsInput: DeliverToDestinationListInput = {
+              const processDeliveriesInput: ProcessDeliveriesInput = {
                 destinations: transactionSetConfig.destinations,
                 payload: ediJson,
                 destinationFilename,
               };
-              await deliverToDestinations(deliverToDestinationsInput);
+              await processDeliveries(processDeliveriesInput);
             }
           }
 

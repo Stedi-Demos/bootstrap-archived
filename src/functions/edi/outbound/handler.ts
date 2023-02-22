@@ -9,10 +9,10 @@ import {
   recordNewExecution,
 } from "../../../lib/execution.js";
 import {
-  deliverToDestination,
-  DeliverToDestinationInput,
+  processSingleDelivery,
+  ProcessSingleDeliveryInput,
   generateDestinationFilename
-} from "../../../lib/destinations.js";
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
@@ -139,12 +139,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           );
 
           const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
-          const deliverToDestinationInput: DeliverToDestinationInput = {
+          const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
             destinationFilename,
           };
-          return await deliverToDestination(deliverToDestinationInput);
+          return await processSingleDelivery(deliverToDestinationInput);
         }
       )
     );

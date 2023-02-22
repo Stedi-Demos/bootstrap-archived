@@ -146,9 +146,17 @@ const pollRemoteServer = async (
       continue;
     }
 
-    await remotePoller.downloadFile(remotePollerConfig.destination, file);
-    remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
-    ftpPollingResults.processedFiles.push(file);
+    try {
+      await remotePoller.downloadFile(remotePollerConfig.destination, file);
+      remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
+      ftpPollingResults.processedFiles.push(file);
+    } catch (e) {
+      const error = ErrorWithContext.fromUnknown(e);
+      ftpPollingResults.processingErrors.push({
+        path: `${file.path}/${file.name}`,
+        error,
+      });
+    }
   }
 
   await remotePoller.disconnect();

@@ -1,3 +1,5 @@
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+
 export type FilteredKey = {
   key: string;
   reason: string;
@@ -15,7 +17,7 @@ export type GroupedEventKeys = {
 
 type ProcessingError = {
   key: string;
-  error: Error;
+  error: ErrorWithContext;
 };
 
 export type ProcessingResults = {

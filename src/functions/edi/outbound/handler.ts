@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { serializeError } from "serialize-error";
 
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
 import {
@@ -11,7 +10,8 @@ import {
 import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
-  generateDestinationFilename
+  generateDestinationFilename,
+  groupDeliveryResults
 } from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
@@ -28,6 +28,7 @@ import {
   OutboundEvent,
   OutboundEventSchema,
 } from "../../../lib/types/OutboundEvent.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
@@ -149,25 +150,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       )
     );
 
-    const deliveryResultsByStatus = deliveryResults.reduce(
-      (
-        groupedResults: Record<"fulfilled" | "rejected", any[]>,
-        { status, ...rest }
-      ) => {
-        groupedResults[status].push(rest);
-        return groupedResults;
-      },
-      { fulfilled: [], rejected: [] }
-    );
-
+    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(
         executionId,
-        new Error(
-          `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`
+        new ErrorWithContext(
+          `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
+          deliveryResultsByStatus,
         ),
-        deliveryResultsByStatus
       );
     }
 
@@ -178,9 +169,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
     };
   } catch (e) {
-    const error =
-      e instanceof Error ? e : new Error(`unknown error: ${serializeError(e)}`);
-    return failedExecution(executionId, error);
+    const errorWithContext = ErrorWithContext.fromUnknown(e);
+    return failedExecution(executionId, errorWithContext);
   }
 };
 

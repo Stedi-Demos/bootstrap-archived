@@ -11,7 +11,7 @@ import {
 
 import { bucketClient } from "./buckets.js";
 import { requiredEnvVar } from "./environment.js";
-import { trackProgress } from "./progressTracking.js";
+import { ErrorWithContext } from "./errorWithContext.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
@@ -69,19 +69,20 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
   return { inputResult, previousFailure };
 };
 
-export const failedExecution = async (executionId: string, error: Error, context?: any): Promise<FailureResponse> => {
-  const rawError = serializeError(error)
-  const failureRecord = await markExecutionAsFailed(executionId, rawError, context);
-  const statusCode = (error as any)?.["$metadata"]?.httpStatusCode || 500;
+export const failedExecution = async (
+  executionId: string,
+  errorWithContext: ErrorWithContext
+): Promise<FailureResponse> => {
+  const rawError = serializeError(errorWithContext)
+  const failureRecord = await markExecutionAsFailed(executionId, rawError);
+  const statusCode = (errorWithContext as any)?.["$metadata"]?.httpStatusCode || 500;
   const message = "execution failed";
-  await trackProgress(message, { error: rawError });
   return { statusCode, message, failureRecord, error: rawError }
 }
 
 const markExecutionAsFailed = async (
   executionId: string,
   error: ErrorObject,
-  context?: any,
 ): Promise<FailureRecord> => {
   const client = await executionsBucketClient();
   const key = `functions/${functionName()}/${executionId}/failure.json`;
@@ -89,7 +90,7 @@ const markExecutionAsFailed = async (
     new PutObjectCommand({
       bucketName,
       key,
-      body: new TextEncoder().encode(JSON.stringify({ error, context })),
+      body: new TextEncoder().encode(JSON.stringify(error)),
     })
   );
 
@@ -104,7 +105,7 @@ export const generateExecutionId = (event: any) => hash({
   event,
 });
 
-export const functionName = () => requiredEnvVar("STEDI_FUNCTION_NAME");
+const functionName = () => requiredEnvVar("STEDI_FUNCTION_NAME");
 
 const executionsBucketClient = async (): Promise<BucketsClient> => {
   if(_executionsBucketClient === undefined) {

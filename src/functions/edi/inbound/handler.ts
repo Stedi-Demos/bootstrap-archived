@@ -1,6 +1,5 @@
 import consumers from "stream/consumers";
 import { Readable } from "stream";
-import { serializeError } from "serialize-error";
 
 import {
   DeleteObjectCommand,
@@ -11,7 +10,6 @@ import * as x12 from "@stedi/x12-tools";
 import { processEdi } from "../../../lib/processEdi.js";
 import {
   failedExecution,
-  functionName,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
@@ -27,7 +25,6 @@ import {
   KeyToProcess,
   ProcessingResults,
 } from "./types.js";
-import { trackProgress } from "../../../lib/progressTracking.js";
 import {
   ProcessDeliveriesInput,
   processDeliveries,
@@ -44,16 +41,13 @@ import {
 } from "../../../lib/transactionSetConfigs.js";
 import { AckDeliveryInput, deliverAck } from "../../../lib/acks.js";
 import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const bucketsClient = bucketClient();
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
-  await trackProgress(`starting ${functionName()}`, {
-    input: event,
-    executionId,
-  });
 
   try {
     await recordNewExecution(executionId, event);
@@ -65,7 +59,6 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // - filteredKeys:  keys that won't be processed (notifications for folders or objects not in an `inbound` directory)
     // - keysToProcess: keys for objects in an `inbound` directory, which will be processed by the handler
     const groupedEventKeys = groupEventKeys(bucketNotificationEvent.Records);
-    await trackProgress("grouped event keys", groupedEventKeys);
 
     // empty structure to hold the results of each key that is processed
     const results: ProcessingResults = {
@@ -208,14 +201,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
         results.processedKeys.push(keyToProcess.key);
       } catch (e) {
-        const error =
-          e instanceof Error
-            ? e
-            : new Error(`unknown error: ${serializeError(e)}`);
-        await trackProgress("error processing document", {
-          key: keyToProcess.key,
-          error: serializeError(error),
-        });
+        const error = ErrorWithContext.fromUnknown(e);
         results.processingErrors.push({
           key: keyToProcess.key,
           error,
@@ -232,17 +218,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         errorCount > 1 ? "s" : ""
       }`;
       const message = `encountered ${errorCountMessage} while attempting to process ${keyCountMessage}`;
-      return failedExecution(executionId, new Error(message), results);
+      return failedExecution(executionId, new ErrorWithContext(message, results));
     }
 
     await markExecutionAsSuccessful(executionId);
-    await trackProgress("results", results);
 
     return results;
   } catch (e) {
-    const error =
-      e instanceof Error ? e : new Error(`unknown error: ${JSON.stringify(e)}`);
-    await trackProgress("handler error", { error: serializeError(error) });
+    const error = ErrorWithContext.fromUnknown(e);
 
     // Note, if an infinite Function execution loop is detected by `executionsBucketClient()`
     // the failed execution will not be uploaded to the executions bucket

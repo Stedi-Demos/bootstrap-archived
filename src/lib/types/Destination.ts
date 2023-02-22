@@ -35,12 +35,18 @@ export const DestinationSftpSchema = z.strictObject({
   remotePath: z.string().default("/"),
 });
 
+const DestinationFunctionSchema = z.strictObject({
+  type: z.literal("function"),
+  functionName: z.string(),
+});
+
 export const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),
   destination: z.discriminatedUnion("type", [
-    DestinationWebhookSchema,
     DestinationBucketSchema,
+    DestinationFunctionSchema,
     DestinationSftpSchema,
+    DestinationWebhookSchema,
   ]),
 });
 

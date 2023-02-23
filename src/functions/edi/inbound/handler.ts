@@ -142,6 +142,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
               const guideSummary = await resolveGuide({
                 guideIdsForPartnership,
                 transactionSetType: transactionSetId,
+                release: functionalGroup.envelope?.release,
               });
 
               const transactionSetContents = fileContents.slice(

@@ -13,8 +13,8 @@
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
     "execute": "ts-node-esm ./src/scripts/execute.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
-    "test": "ava",
-    "coverage": "c8 ava"
+    "test": "DOTENV_CONFIG_PATH=.env.test DOTENV_CONFIG_DEBUG=true ava",
+    "coverage": "DOTENV_CONFIG_PATH=.env.test c8 ava"
   },
   "author": "",
   "license": "ISC",
@@ -63,12 +63,6 @@
         "src/": "dist/"
       },
       "compile": "tsc"
-    },
-    "environmentVariables": {
-      "STEDI_API_KEY": "fake",
-      "FTP_BUCKET_NAME": "test-ftp-bucket",
-      "EXECUTIONS_BUCKET_NAME": "executions-bucket",
-      "STEDI_FUNCTION_NAME": "test-function"
     }
   },
   "volta": {

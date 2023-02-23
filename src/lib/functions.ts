@@ -1,5 +1,3 @@
-import { TextEncoder } from "util";
-
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import {
   CreateFunctionCommand,
@@ -13,7 +11,7 @@ import {
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 
 type FunctionInvocationId = string;
 
@@ -38,11 +36,11 @@ export const functionClient = (): FunctionsClient => {
 export const invokeFunction = async (
   functionName: string,
   input: any
-): Promise<any> => {
+): Promise<string | undefined> => {
   const result = await functionClient().send(
     new InvokeFunctionCommand({
       functionName,
-      requestPayload: new TextEncoder().encode(JSON.stringify(input)),
+      requestPayload: Buffer.from(JSON.stringify(input)),
     })
   );
 
@@ -56,7 +54,7 @@ export const invokeFunctionAsync = async (
   input?: any
 ): Promise<FunctionInvocationId> => {
   const requestPayload = input
-    ? new TextEncoder().encode(JSON.stringify(input))
+    ? Buffer.from(JSON.stringify(input))
     : undefined;
 
   const { functionInvocationId } = await functionClient().send(

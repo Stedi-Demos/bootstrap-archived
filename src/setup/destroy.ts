@@ -12,7 +12,7 @@ import {
   DeleteKeyspaceCommand,
   GetValueCommand,
 } from "@stedi/sdk-client-stash";
-import { functionClient } from "../support/functions.js";
+import { functionClient } from "../lib/functions.js";
 import { DeleteFunctionCommand } from "@stedi/sdk-client-functions";
 import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";

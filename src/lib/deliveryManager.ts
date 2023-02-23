@@ -4,6 +4,7 @@ import { invokeMapping } from "./mappings.js";
 import { Destination } from "./types/Destination.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 import * as bucket from "./destinations/bucket.js";
+import * as fn from "./destinations/function.js";
 import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
 
@@ -27,7 +28,7 @@ export type ProcessDeliveriesInput = {
 
 export type DeliverToDestinationInput = {
   destination: Destination["destination"];
-  body: any;
+  destinationPayload: any;
   destinationFilename?: string;
 };
 
@@ -37,6 +38,7 @@ const deliveryFnForDestinationType: {
   ) => Promise<any>;
 } = {
   "bucket": bucket.deliverToDestination,
+  "function": fn.deliverToDestination,
   "sftp": sftp.deliverToDestination,
   "webhook": webhook.deliverToDestination,
 };
@@ -48,13 +50,10 @@ export const processSingleDelivery = async (
     ? await invokeMapping(input.mappingId, input.payload)
     : input.payload;
 
-  const body = typeof destinationPayload === "object"
-    ? JSON.stringify(destinationPayload)
-    : destinationPayload;
 
   const deliverToDestinationInput: DeliverToDestinationInput = {
     destination: input.destination,
-    body,
+    destinationPayload,
     destinationFilename: input.destinationFilename,
   };
 
@@ -125,4 +124,10 @@ export const generateDestinationFilename = (
   return extension
     ? `${baseFilename}.${extension}`
     : baseFilename;
+};
+
+export const payloadAsString = (destinationPayload: any): string => {
+  return typeof destinationPayload === "object"
+    ? JSON.stringify(destinationPayload)
+    : destinationPayload;
 };

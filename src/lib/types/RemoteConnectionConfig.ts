@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { DestinationBucketSchema } from "./Destination.js";
+import { DestinationBucketSchema, SftpConfigSchema } from "./Destination.js";
 
 const FtpConfigSchema = z.strictObject({
   host: z.string(),
@@ -11,13 +11,6 @@ const FtpConfigSchema = z.strictObject({
   secureOptions: z.object({
     rejectUnauthorized: z.boolean(),
   }),
-});
-
-export const SftpConfigSchema = z.strictObject({
-  host: z.string(),
-  port: z.number().default(22),
-  username: z.string(),
-  password: z.string(),
 });
 
 const ConnectionDetailsSchema = z.discriminatedUnion("protocol", [
@@ -41,11 +34,11 @@ export const RemotePollerConfigSchema = z.strictObject({
   destination: DestinationBucketSchema,
   deleteAfterProcessing: z.boolean().default(false),
   lastPollTime: z
-  .string()
-  .optional()
-  .transform((lastPollTime) =>
-    lastPollTime ? new Date(lastPollTime) : undefined
-  ),
+    .string()
+    .optional()
+    .transform((lastPollTime) =>
+      lastPollTime ? new Date(lastPollTime) : undefined
+    ),
 });
 
 export type RemotePollerConfig = z.infer<typeof RemotePollerConfigSchema>;

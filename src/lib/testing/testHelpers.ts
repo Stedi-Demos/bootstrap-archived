@@ -5,9 +5,9 @@ import {
 } from "@stedi/sdk-client-buckets";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
-import { requiredEnvVar } from "../environment.js";
+import { translateClient } from "../translateV3.js";
 
-const executionsBucket = requiredEnvVar("EXECUTIONS_BUCKET_NAME") ?? "";
+const executionsBucket = process.env["EXECUTIONS_BUCKET_NAME"] ?? "";
 
 /**
  * Creates a mocked Stedi BucketsClient
@@ -37,4 +37,8 @@ export const mockExecutionTracking = (mockedClient = mockBucketClient()) => {
  */
 export const mockStashClient = () => {
   return mockClient(StashClient);
+};
+
+export const mockTranslateClient = () => {
+  return mockClient(translateClient());
 };

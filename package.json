@@ -65,6 +65,7 @@
       "compile": "tsc"
     },
     "environmentVariables": {
+      "STEDI_API_KEY": "fake",
       "FTP_BUCKET_NAME": "test-ftp-bucket",
       "EXECUTIONS_BUCKET_NAME": "executions-bucket",
       "STEDI_FUNCTION_NAME": "test-function"

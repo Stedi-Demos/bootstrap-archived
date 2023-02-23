@@ -8,6 +8,7 @@ import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
 import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
+import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
 
 export class SftpPoller extends RemotePoller {
   readonly client: sftp;
@@ -25,7 +26,10 @@ export class SftpPoller extends RemotePoller {
     await this.client.end();
   }
 
-  async downloadFile(destination: DestinationBucket, file: FileDetails): Promise<void> {
+  async downloadFile(
+    destination: DestinationBucket,
+    file: FileDetails
+  ): Promise<void> {
     const fileContents = await this.client.get(this.getFullFilePath(file));
 
     const destinationKey = `${destination.path}/${file.name}`;
@@ -42,14 +46,20 @@ export class SftpPoller extends RemotePoller {
     await this.client.delete(this.getFullFilePath(file));
   }
 
-  async getRemoteFileDetails(remotePath = "/", remoteFiles?: string[]): Promise<RemoteFileDetails> {
+  async getRemoteFileDetails(
+    remotePath = "/",
+    remoteFiles?: string[]
+  ): Promise<RemoteFileDetails> {
     const normalizedRemotePath = path.normalize(remotePath);
     return remoteFiles && remoteFiles.length > 0
       ? await this.getSpecifiedFileDetails(normalizedRemotePath, remoteFiles)
       : await this.getAllFileDetailsForPath(normalizedRemotePath);
   }
 
-  private async getSpecifiedFileDetails( remotePath: string, remoteFiles: string[]): Promise<RemoteFileDetails> {
+  private async getSpecifiedFileDetails(
+    remotePath: string,
+    remoteFiles: string[]
+  ): Promise<RemoteFileDetails> {
     const filesToProcess: FileDetails[] = [];
     const processingErrors: ProcessingError[] = [];
 
@@ -59,55 +69,62 @@ export class SftpPoller extends RemotePoller {
 
       fileStats.isFile
         ? filesToProcess.push({
-          path: remotePath,
-          name: file,
-          lastModifiedTime: fileStats.modifyTime,
-        })
+            path: remotePath,
+            name: file,
+            lastModifiedTime: fileStats.modifyTime,
+          })
         : // handle non-file as processing error since file was specifically requested
-        processingErrors.push({
-          path: remoteFilePath,
-          errorMessage: `requested remote file ${file}, but it is not a file`,
-        });
+          processingErrors.push({
+            path: remoteFilePath,
+            error: new ErrorWithContext(
+              `Requested remote file, but it is not a file`,
+              { file }
+            ),
+          });
     }
 
     return {
       filesToProcess,
       processingErrors,
     };
-  };
+  }
 
-  private async getAllFileDetailsForPath(remotePath: string): Promise<RemoteFileDetails> {
-    const directoryContents: sftp.FileInfo[] = await this.client.list(remotePath);
+  private async getAllFileDetailsForPath(
+    remotePath: string
+  ): Promise<RemoteFileDetails> {
+    const directoryContents: sftp.FileInfo[] = await this.client.list(
+      remotePath
+    );
     return directoryContents.reduce(
       (remoteFileDetails: RemoteFileDetails, currentFile) => {
         currentFile.type === "-"
           ? remoteFileDetails.filesToProcess.push({
-            path: remotePath,
-            ...this.extractFileDetails(currentFile),
-          })
+              path: remotePath,
+              ...this.extractFileDetails(currentFile),
+            })
           : remoteFileDetails.skippedItems?.push({
-            path: remotePath,
-            name: currentFile.name,
-            reason: "not a file",
-          });
+              path: remotePath,
+              name: currentFile.name,
+              reason: "not a file",
+            });
 
         return remoteFileDetails;
       },
       { filesToProcess: [], skippedItems: [] }
     );
-  };
+  }
 
   private extractFileDetails(file: sftp.FileInfo): Omit<FileDetails, "path"> {
     return {
       name: file.name,
       lastModifiedTime: file.modifyTime,
-    }
+    };
   }
-  static getPoller = async (connectionDetails: ConnectionDetails): Promise<RemotePoller> => {
+  static getPoller = async (
+    connectionDetails: ConnectionDetails
+  ): Promise<RemotePoller> => {
     const poller = new SftpPoller();
     await poller.connect(connectionDetails);
     return poller;
   };
 }
-
-

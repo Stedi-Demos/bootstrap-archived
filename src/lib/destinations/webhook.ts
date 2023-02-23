@@ -1,7 +1,10 @@
 import fetch, { RequestInit } from "node-fetch";
 
 import { WebhookVerb } from "../types/Destination.js";
-import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
+import {
+  DeliverToDestinationInput,
+  payloadAsString,
+} from "../deliveryManager.js";
 
 type WebhookDeliveryResult = {
   method: WebhookVerb;
@@ -12,7 +15,7 @@ type WebhookDeliveryResult = {
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
 ): Promise<WebhookDeliveryResult> => {
-  if(input.destination.type !== "webhook") {
+  if (input.destination.type !== "webhook") {
     throw new Error("invalid destination type (must be webhook)");
   }
 
@@ -27,6 +30,7 @@ export const deliverToDestination = async (
   };
 
   const response = await fetch(input.destination.url, params);
+
   if (!response.ok) {
     throw new Error(
       `delivery to ${input.destination.url} failed: ${response.statusText} (status code: ${response.status})`

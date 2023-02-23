@@ -65,7 +65,13 @@
       "compile": "tsc"
     },
     "environmentVariables": {
-      "EXECUTIONS_BUCKET_NAME": "TEST-BUCKET"
+      "FTP_BUCKET_NAME": "test-ftp-bucket",
+      "EXECUTIONS_BUCKET_NAME": "executions-bucket",
+      "STEDI_FUNCTION_NAME": "test-function"
     }
+  },
+  "volta": {
+    "node": "16.19.1",
+    "npm": "9.5.1"
   }
 }

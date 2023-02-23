@@ -74,6 +74,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       const getObjectResponse = await bucketsClient.send(
         new GetObjectCommand(keyToProcess)
       );
+
       const fileContents = await consumers.text(
         getObjectResponse.body as Readable
       );
@@ -194,10 +195,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             transactionSetConfigsForInterchange.find(
               (config) => "acknowledgmentConfig" in config
             );
+
           if (transactionSetConfigWithAck) {
             const ackTransactionSetConfig = getAckTransactionConfig(
               groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
             );
+
             // note: sendingPartnerId and receivingPartnerId are flip-flopped from interchange being ack'd
             const ackDeliveryInput: AckDeliveryInput = {
               ackTransactionSet: ackTransactionSetConfig,

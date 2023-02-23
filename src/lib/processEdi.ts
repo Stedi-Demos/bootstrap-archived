@@ -2,7 +2,7 @@ import { translateEdiToJson } from "./translateV3.js";
 
 export const processEdi = async (
   guideId: string,
-  ediDocument: string,
+  ediDocument: string
 ): Promise<any> => {
   const translation = await translateEdiToJson(ediDocument, guideId);
 

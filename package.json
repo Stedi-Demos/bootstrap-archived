@@ -13,8 +13,8 @@
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
     "execute": "ts-node-esm ./src/scripts/execute.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
-    "test": "DOTENV_CONFIG_PATH=.env.test DOTENV_CONFIG_DEBUG=true ava",
-    "coverage": "DOTENV_CONFIG_PATH=.env.test c8 ava"
+    "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",
+    "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava"
   },
   "author": "",
   "license": "ISC",

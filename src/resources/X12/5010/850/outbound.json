@@ -2,8 +2,7 @@
   "metadata": {
     "sendingPartnerId": "this-is-me",
     "receivingPartnerId": "another-merchant",
-    "release": "optional-x12-release",
-    "transactionSet": "optional-x12-transaction-set"
+    "release": "005010"
   },
   "payload": {
     "heading": {

@@ -53,7 +53,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     );
 
     // get the transaction set from Guide JSON or event metadata
-    const transactionSetType = determineTransactionSetType(event);
+    const transactionSetType = determineTransactionSetType(outboundEvent);
+    const release = determineRelease(outboundEvent);
 
     // get transaction set configs for partnership
     const transactionSetConfigs = getTransactionSetConfigsForPartnership({
@@ -70,7 +71,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         (config) => config.guideId
       ),
       transactionSetType,
+      release,
     });
+
+    if (release && guideSummary.release !== release) {
+      throw new Error(
+        `No guide exists for the specified release: ${release}, found guide with release: ${guideSummary.release}`
+      );
+    }
 
     // find the transaction set config for partnership that includes guide
     const transactionSetConfig = resolveTransactionSetConfig(
@@ -180,6 +188,8 @@ const determineTransactionSetType = (event: OutboundEvent): string => {
     extractTransactionSetTypeFromGuideJson(event.payload)
   );
 };
+
+const determineRelease = (event: OutboundEvent): string | undefined => event.metadata.release;
 
 const normalizeGuideJson = (guideJson: any): any[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },

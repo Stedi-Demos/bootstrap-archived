@@ -86,7 +86,7 @@ test("translates, delivers & acks an incoming X12 file", async (t) => {
             destinations: [
               {
                 destination: {
-                  bucketName: "ab33fa45-c67a-4653-bf5a-0bb85a90b332-sftp",
+                  bucketName: "test-ftp-bucket",
                   path: "trading_partners/ANOTHERMERCH/outbound",
                   type: "bucket",
                 },

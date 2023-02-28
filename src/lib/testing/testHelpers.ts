@@ -2,7 +2,10 @@ import {
   BucketsClient,
   DeleteObjectCommand,
   PutObjectCommand,
+  ReadBucketCommand,
 } from "@stedi/sdk-client-buckets";
+import { EDITranslateClient } from "@stedi/sdk-client-edi-translate";
+import { GuidesClient } from "@stedi/sdk-client-guides";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
 import { translateClient } from "../translateV3.js";
@@ -24,10 +27,16 @@ export const mockBucketClient = () => {
 export const mockExecutionTracking = (mockedClient = mockBucketClient()) => {
   // mock bucket calls for execution tracking
   return mockedClient
-    .on(PutObjectCommand, { bucketName: executionsBucket })
-    .resolves({})
-    .on(DeleteObjectCommand, { bucketName: executionsBucket })
-    .resolves({});
+    .on(PutObjectCommand, { bucketName: executionsBucket }) // execution creation
+    .resolvesOnce({})
+    .on(DeleteObjectCommand, { bucketName: executionsBucket }) // execution cleanup
+    .resolvesOnce({})
+    .on(ReadBucketCommand, { bucketName: executionsBucket }) // infinite loop check
+    .resolvesOnce({
+      notifications: {
+        functions: [],
+      },
+    });
 };
 
 /**
@@ -39,6 +48,20 @@ export const mockStashClient = () => {
   return mockClient(StashClient);
 };
 
+/**
+ * Creates a mocked Stedi TranslateClient
+ *
+ * @returns a mocked TranslateClient
+ */
 export const mockTranslateClient = () => {
-  return mockClient(translateClient());
+  return mockClient(EDITranslateClient);
+};
+
+/**
+ * Creates a mocked Stedi GuidesClient
+ *
+ * @returns a mocked GuidesClient
+ */
+export const mockGuideClient = () => {
+  return mockClient(GuidesClient);
 };

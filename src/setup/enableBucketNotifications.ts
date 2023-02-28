@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-
 import {
   ReadBucketCommand,
   UpdateBucketCommand,
@@ -9,8 +7,6 @@ import {
 import { bucketClient } from "../lib/buckets.js";
 import { requiredEnvVar } from "../lib/environment.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
-
-dotenv.config({ override: true });
 
 (async () => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
@@ -32,17 +28,20 @@ dotenv.config({ override: true });
   const existingBucketConfig = await bucketClient().send(
     new ReadBucketCommand({
       bucketName: sftpBucketName,
-    }),
+    })
   );
 
   const currentNotificationFunctionCount =
     existingBucketConfig?.notifications?.functions?.length || 0;
 
   if (currentNotificationFunctionCount !== 0) {
-    const notificationFunctionNames = existingBucketConfig?.notifications?.functions?.map(
-      (fn) => fn.functionName
+    const notificationFunctionNames =
+      existingBucketConfig?.notifications?.functions?.map(
+        (fn) => fn.functionName
+      );
+    const bucketNotificationListOutput = JSON.stringify(
+      notificationFunctionNames
     );
-    const bucketNotificationListOutput = JSON.stringify(notificationFunctionNames);
     console.log(
       `Bucket notifications already enabled for ${sftpBucketName}: ${bucketNotificationListOutput}. Skipping.`
     );

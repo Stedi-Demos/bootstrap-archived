@@ -15,8 +15,6 @@ import { bucketClient } from "../lib/buckets.js";
 import { updateDotEnvFile } from "../support/utils.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
-dotenv.config({ override: true });
-
 (async () => {
   console.log("Configuring buckets...");
 

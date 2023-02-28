@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config({ override: true });
 import { CreateX12ProfileCommand } from "@stedi/sdk-client-partners";
 import { partnersClient as buildPartnersClient } from "../../lib/partners.js";
 import { stashClient as buildStashClient } from "../../lib/stash.js";

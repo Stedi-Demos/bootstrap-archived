@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config({ override: true });
 import { ensureGuideExists } from "../support/guide.js";
 import { createSampleStashRecords } from "./bootstrap/createStashRecords.js";
 import { StashStorage } from "../lib/migration/stashStorage.js";

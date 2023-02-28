@@ -1,5 +1,5 @@
 import { GetGuideCommand } from "@stedi/sdk-client-guides";
-import { guidesClient as buildGuideClient } from "../support/guide";
+import { guidesClient as buildGuideClient } from "../support/guide.js";
 
 const guidesClient = buildGuideClient();
 

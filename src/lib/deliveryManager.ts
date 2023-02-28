@@ -11,13 +11,13 @@ import * as webhook from "./destinations/webhook.js";
 export type DeliveryResult = {
   type: Destination["destination"]["type"];
   payload: any;
-}
+};
 
 export type ProcessSingleDeliveryInput = {
-  destination: Destination["destination"],
-  payload: object | string,
-  mappingId?: string,
-  destinationFilename?: string,
+  destination: Destination["destination"];
+  payload: object | string;
+  mappingId?: string;
+  destinationFilename?: string;
 };
 
 export type ProcessDeliveriesInput = {
@@ -37,19 +37,19 @@ const deliveryFnForDestinationType: {
     input: DeliverToDestinationInput
   ) => Promise<any>;
 } = {
-  "bucket": bucket.deliverToDestination,
-  "function": fn.deliverToDestination,
-  "sftp": sftp.deliverToDestination,
-  "webhook": webhook.deliverToDestination,
+  bucket: bucket.deliverToDestination,
+  function: fn.deliverToDestination,
+  sftp: sftp.deliverToDestination,
+  webhook: webhook.deliverToDestination,
 };
 
 export const processSingleDelivery = async (
-  input: ProcessSingleDeliveryInput,
+  input: ProcessSingleDeliveryInput
 ): Promise<DeliveryResult> => {
-  const destinationPayload = input.mappingId !== undefined
-    ? await invokeMapping(input.mappingId, input.payload)
-    : input.payload;
-
+  const destinationPayload =
+    input.mappingId !== undefined
+      ? await invokeMapping(input.mappingId, input.payload)
+      : input.payload;
 
   const deliverToDestinationInput: DeliverToDestinationInput = {
     destination: input.destination,
@@ -57,8 +57,9 @@ export const processSingleDelivery = async (
     destinationFilename: input.destinationFilename,
   };
 
-  const payload =
-    await deliveryFnForDestinationType[input.destination.type](deliverToDestinationInput);
+  const payload = await deliveryFnForDestinationType[input.destination.type](
+    deliverToDestinationInput
+  );
 
   return {
     type: input.destination.type,
@@ -67,21 +68,19 @@ export const processSingleDelivery = async (
 };
 
 export const processDeliveries = async (
-  input: ProcessDeliveriesInput,
+  input: ProcessDeliveriesInput
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
-    input.destinations.map(
-      async ({ destination, mappingId }) => {
-        console.log(`delivering to ${destination.type} destination`);
-        const deliverToDestinationInput: ProcessSingleDeliveryInput = {
-          destination,
-          payload: input.payload,
-          mappingId,
-          destinationFilename: input.destinationFilename,
-        }
-        return await processSingleDelivery(deliverToDestinationInput);
-      }
-    )
+    input.destinations.map(async ({ destination, mappingId }) => {
+      console.log(`delivering to ${destination.type} destination`);
+      const deliverToDestinationInput: ProcessSingleDeliveryInput = {
+        destination,
+        payload: input.payload,
+        mappingId,
+        destinationFilename: input.destinationFilename,
+      };
+      return await processSingleDelivery(deliverToDestinationInput);
+    })
   );
 
   const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
@@ -89,7 +88,7 @@ export const processDeliveries = async (
   if (rejectedCount > 0) {
     throw new ErrorWithContext(
       `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
-      deliveryResultsByStatus,
+      deliveryResultsByStatus
     );
   }
 
@@ -105,9 +104,10 @@ export const groupDeliveryResults = (
       { status, ...rest }
     ) => {
       // for rejected promises, serialize the reason
-      const result = status === "rejected"
-        ? { reason: serializeError(rest) }
-        : { value: rest }
+      const result =
+        status === "rejected"
+          ? { reason: serializeError(rest) }
+          : { value: rest };
       groupedResults[status].push(result);
       return groupedResults;
     },
@@ -118,12 +118,10 @@ export const groupDeliveryResults = (
 export const generateDestinationFilename = (
   prefix: string,
   transactionSetType: string,
-  extension?: string,
+  extension?: string
 ): string => {
   const baseFilename = `${prefix}-${transactionSetType}`;
-  return extension
-    ? `${baseFilename}.${extension}`
-    : baseFilename;
+  return extension ? `${baseFilename}.${extension}` : baseFilename;
 };
 
 export const payloadAsString = (destinationPayload: any): string => {

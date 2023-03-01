@@ -218,7 +218,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
         // ensure archival is complete
         await archivalRequest;
-        // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
+        // Delete the processed file (could also archive elsewhere if desired)
         await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
         results.processedKeys.push(keyToProcess.key);
       } catch (e) {
@@ -273,10 +273,14 @@ const groupEventKeys = (
         return collectedKeys;
       }
       const splitKey = eventKey.split("/");
-      if (splitKey.length < 2 || splitKey[splitKey.length - 2] !== "inbound") {
+      if (
+        splitKey.length < 2 ||
+        !splitKey[splitKey.length - 2].match(/^(inbound|processed)$/)
+      ) {
         filteredKeys.push({
           key: eventKey,
-          reason: "key does not match an item in an `inbound` directory",
+          reason:
+            "key does not match an item in an `inbound` or `processed` directory",
         });
         return collectedKeys;
       }

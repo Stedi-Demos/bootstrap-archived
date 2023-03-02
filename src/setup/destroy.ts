@@ -107,7 +107,18 @@ const partners = partnersClient();
   const functionPaths = getFunctionPaths();
   for (const path of functionPaths) {
     const functionName = functionNameFromPath(path);
-    await functions.send(new DeleteFunctionCommand({ functionName }));
+    try {
+      await functions.send(new DeleteFunctionCommand({ functionName }));
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        error.name === "ResourceConflictException"
+      )
+        console.log("Function already deleted");
+      else throw error;
+    }
   }
 
   console.log("Done");

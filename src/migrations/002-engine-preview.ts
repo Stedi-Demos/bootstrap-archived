@@ -17,6 +17,9 @@ const stash = stashClient();
 const partners = partnersClient();
 
 export const up = async () => {
+  console.log(
+    "============================= migration 2 ---------------------"
+  );
   const migratedStashProfileKeys: string[] = [];
 
   await loadAllConfigValues(); // load all stash records once

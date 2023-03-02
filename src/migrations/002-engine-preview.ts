@@ -20,7 +20,11 @@ import {
   GetGuideCommand,
   GetGuideCommandOutput,
 } from "@stedi/sdk-client-guides";
-import { gu } from "date-fns/locale";
+import {
+  PartnerProfile,
+  Partnership,
+  TransactionSetWithGuideId,
+} from "../lib/types/Depreacted.js";
 
 const stash = stashClient();
 const partners = partnersClient();
@@ -39,7 +43,7 @@ export const up = async () => {
   const stashPartnerships = allStashPartnerships();
 
   for (const stashPartnership of stashPartnerships) {
-    const destinationsId = stashPartnership.id.replace(
+    const destinationsId = stashPartnership.id!.replace(
       "partnership|",
       "destinations|"
     );
@@ -48,14 +52,21 @@ export const up = async () => {
     delete stashPartnership.id;
     saveDestinations(destinationsId, stashPartnership);
 
+    const txnSetWithProfile = stashPartnership.transactionSets.find(
+      (txnSet) => "sendingPartnerId" in txnSet
+    ) as TransactionSetWithGuideId;
+
+    if (txnSetWithProfile === undefined)
+      throw new Error("Failed to find transactionSet with profiles");
+
     // get "sending" profile from Stash
     const sendingStashProfile = findStashProfile(
-      stashPartnership.transactionSets[0].sendingPartnerId
+      txnSetWithProfile.sendingPartnerId
     );
 
     // prepare "local" profile in Partners API
     const localProfile: CreateX12ProfileCommandInput = {
-      profileId: stashPartnership.transactionSets[0].sendingPartnerId,
+      profileId: txnSetWithProfile.sendingPartnerId,
       profileType: "local",
       interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
       interchangeId: sendingStashProfile.partnerInterchangeId.padStart(15, " "),
@@ -64,11 +75,11 @@ export const up = async () => {
 
     // get "receiving" profile from Stash
     const receivingStashProfile = findStashProfile(
-      stashPartnership.transactionSets[0].receivingPartnerId
+      txnSetWithProfile.receivingPartnerId
     );
     // prepare "partner" profile in Partners API
     const partnerProfile: CreateX12ProfileCommandInput = {
-      profileId: stashPartnership.transactionSets[0].receivingPartnerId,
+      profileId: txnSetWithProfile.receivingPartnerId,
       profileType: "partner",
       interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
       interchangeId: receivingStashProfile.partnerInterchangeId.padStart(
@@ -102,10 +113,11 @@ export const up = async () => {
     );
 
     for (const transactionSet of stashPartnership.transactionSets) {
-      const guideId = transactionSet.guideId; // NO DRFT_ OR LIVE_ PREFIX
-
+      let guideId: string | undefined;
       let guideTarget: GetGuideCommandOutput["target"];
-      if (guideId !== undefined) {
+
+      if ("guideId" in transactionSet) {
+        guideId = transactionSet.guideId; // NO DRFT_ OR LIVE_ PREFIX
         const guide = await guides.send(
           new GetGuideCommand({ id: `DRFT_${guideId}` })
         );
@@ -116,25 +128,28 @@ export const up = async () => {
       } else {
         console.dir(transactionSet, { depth: null });
 
-        if (transactionSet.transactionSetIdentifier === undefined)
+        if (!("transactionSetIdentifier" in transactionSet))
           throw new Error("Unknown transactionSet configuration");
 
-        if (transactionSet.transactionSetIdentifier === "997") {
-          // ack config
-          console.log("ack config", transactionSet);
-        } else {
+        if ("release" in transactionSet) {
           // base guides
           guideTarget = {
             standard: "x12",
             release: transactionSet.release,
             transactionSet: transactionSet.transactionSetIdentifier,
           };
+        } else {
+          // ack config
+          console.log("ack config", transactionSet);
         }
       }
 
       if (guideTarget === undefined) continue; // no transaction rule is needed
 
-      if (transactionSet.sendingPartnerId == localProfile.profileId) {
+      if (
+        "sendingPartnerId" in transactionSet &&
+        transactionSet.sendingPartnerId == localProfile.profileId
+      ) {
         // Outbound
         await partners.send(
           new CreateOutboundX12TransactionCommand({
@@ -163,7 +178,7 @@ export const up = async () => {
       }
     }
 
-    migratedStashPartnershipKeys.push(stashPartnershipKey);
+    migratedStashPartnershipKeys.push(stashPartnershipKey as string);
   }
 
   /// CLEANUP AFTER ALL SUCCESSFUL MIGRATION
@@ -212,13 +227,21 @@ const loadAllConfigValues = async () => {
   if (items !== undefined) allConfigValues = items;
 };
 
-const allStashPartnerships = (): any[] => {
+type PartnershipWithId = Partnership & { id?: string };
+const allStashPartnerships = (): PartnershipWithId[] => {
   return allConfigValues
     .filter((item) => item.key?.toLowerCase().startsWith("partnership|"))
-    .map((item) => cloneDeep({ id: item.key, ...(item.value as object) }));
+    .map((item) =>
+      cloneDeep({
+        id: item.key,
+        ...(item.value as Partnership),
+      })
+    );
 };
 
-const findStashProfile = (id: string): any => {
+const findStashProfile = (id?: string): PartnerProfile => {
+  if (id === undefined) throw new Error("Profile ID is undefined");
+
   const profile = allConfigValues.find(
     (item) => item.key?.toLowerCase() === `profile|${id}`
   );
@@ -230,5 +253,5 @@ const findStashProfile = (id: string): any => {
   )
     throw new Error(`Profile not found or invalid: ${id}`);
 
-  return cloneDeep({ ...profile.value, id: profile.key });
+  return cloneDeep({ ...profile.value, id: profile.key }) as PartnerProfile;
 };

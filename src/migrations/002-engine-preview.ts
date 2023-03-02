@@ -7,15 +7,21 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { stashClient as stashClient } from "../lib/clients/stash.js";
 import { saveDestinations } from "../lib/saveDestinations.js";
 import {
+  CreateInboundX12TransactionCommand,
+  CreateOutboundX12TransactionCommand,
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../lib/clients/partners.js";
 import { cloneDeep } from "lodash-es";
+import { guidesClient } from "../lib/clients/guides.js";
+import { GetGuideCommand } from "@stedi/sdk-client-guides";
+import { gu } from "date-fns/locale";
 
 const stash = stashClient();
 const partners = partnersClient();
+const guides = guidesClient();
 
 export const up = async () => {
   console.log(
@@ -92,9 +98,40 @@ export const up = async () => {
       })
     );
 
-    console.dir(partnership, { depth: null });
-
     for (const transactionSet of stashPartnership.transactionSets) {
+      const guide = await guides.send(
+        new GetGuideCommand({ id: transactionSet.guideId })
+      );
+      if (guide.target?.standard !== "x12") throw new Error("guide is not X12");
+
+      if (transactionSet.sendingPartnerId == localProfile.profileId) {
+        // Outbound
+
+        await partners.send(
+          new CreateOutboundX12TransactionCommand({
+            partnershipId: partnership.partnershipId,
+            timeZone: "UTC",
+            release: guide.target.release,
+            transactionSetIdentifier: guide.target.transactionSet,
+            guideId: guide.id,
+          })
+        );
+      } else {
+        // Inbound
+        await partners.send(
+          new CreateInboundX12TransactionCommand({
+            partnershipId: partnership.partnershipId,
+            release: guide.target.release,
+            transactionSetIdentifier: guide.target.transactionSet,
+            guideId: guide.id,
+            functionalAcknowledgmentConfig: {
+              acknowledgmentType: "997",
+              generate: "ALWAYS",
+              groupBy: "ONE_PER_INTERCHANGE",
+            },
+          })
+        );
+      }
     }
 
     migratedStashPartnershipKeys.push(stashPartnershipKey);

@@ -1,5 +1,4 @@
 import {
-  As2Client,
   StartFileTransferCommand,
   StartFileTransferCommandInput,
 } from "@stedi/sdk-client-as2";
@@ -25,10 +24,7 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be as2)");
   }
 
-  const key = input.destinationFilename
-    ? `${input.destination.path}/${input.destinationFilename}`
-    : input.destination.path;
-
+  const key = `${input.destination.path}/${input.destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

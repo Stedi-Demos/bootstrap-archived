@@ -17,9 +17,7 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be bucket)");
   }
 
-  const key = input.destinationFilename
-    ? `${input.destination.path}/${input.destinationFilename}`
-    : input.destination.path;
+  const key = `${input.destination.path}/${input.destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

@@ -18,19 +18,19 @@ export type ProcessSingleDeliveryInput = {
   destination: Destination["destination"];
   payload: object | string;
   mappingId?: string;
-  destinationFilename?: string;
+  destinationFilename: string;
 };
 
 export type ProcessDeliveriesInput = {
   destinations: Destination[];
   payload: object | string;
-  destinationFilename?: string;
+  destinationFilename: string;
 };
 
 export type DeliverToDestinationInput = {
   destination: Destination["destination"];
   destinationPayload: any;
-  destinationFilename?: string;
+  destinationFilename: string;
 };
 
 const deliveryFnForDestinationType: {

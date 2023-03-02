@@ -3,6 +3,7 @@ import { serializeError } from "serialize-error";
 import { invokeMapping } from "./mappings.js";
 import { Destination } from "./types/Destination.js";
 import { ErrorWithContext } from "./errorWithContext.js";
+import * as as2 from "./destinations/as2.js";
 import * as bucket from "./destinations/bucket.js";
 import * as fn from "./destinations/function.js";
 import * as sftp from "./destinations/sftp.js";
@@ -37,6 +38,7 @@ const deliveryFnForDestinationType: {
     input: DeliverToDestinationInput
   ) => Promise<any>;
 } = {
+  as2: as2.deliverToDestination,
   bucket: bucket.deliverToDestination,
   function: fn.deliverToDestination,
   sftp: sftp.deliverToDestination,

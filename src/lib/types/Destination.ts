@@ -44,9 +44,15 @@ const DestinationFunctionSchema = z.strictObject({
   additionalInput: z.any().optional(),
 });
 
+const DestinationAs2Schema = DestinationBucketSchema.extend({
+  type: z.literal("as2"),
+  connectorId: z.string(),
+});
+
 export const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),
   destination: z.discriminatedUnion("type", [
+    DestinationAs2Schema,
     DestinationBucketSchema,
     DestinationFunctionSchema,
     DestinationSftpSchema,

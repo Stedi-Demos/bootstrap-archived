@@ -87,20 +87,29 @@ const partners = partnersClient();
 
   // Delete Stash keyspaces
   console.log("Deleting Stash Keyspaces");
-  await stash.send(
-    new DeleteKeyspaceCommand({ keyspaceName: PARTNERS_KEYSPACE_NAME })
-  );
-  await stash.send(
-    new DeleteKeyspaceCommand({
-      keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-    })
-  );
-
-  await stashClient().send(
-    new DeleteKeyspaceCommand({
-      keyspaceName: INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-    })
-  );
+  const keyspaces = [
+    PARTNERS_KEYSPACE_NAME,
+    OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+    INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+  ];
+  for (const keyspaceName of keyspaces) {
+    try {
+      await stashClient().send(
+        new DeleteKeyspaceCommand({
+          keyspaceName,
+        })
+      );
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        error.name === "ResourceNotFoundException"
+      )
+        console.log("Keyspace already deleted");
+      else throw error;
+    }
+  }
 
   // Delete Functions
   console.log("Deleting Functions");

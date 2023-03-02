@@ -100,8 +100,9 @@ export const up = async () => {
 
     for (const transactionSet of stashPartnership.transactionSets) {
       const guide = await guides.send(
-        new GetGuideCommand({ id: transactionSet.guideId })
+        new GetGuideCommand({ id: `DRFT_${transactionSet.guideId}` })
       );
+      console.log(guide);
       if (guide.target?.standard !== "x12") throw new Error("guide is not X12");
 
       if (transactionSet.sendingPartnerId == localProfile.profileId) {

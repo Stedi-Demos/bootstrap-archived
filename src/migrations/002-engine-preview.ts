@@ -1,6 +1,7 @@
 import {
   DeleteValueCommand,
   ListValuesCommand,
+  SetValueCommand,
   ValueOutput,
 } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
@@ -183,7 +184,16 @@ export const up = async () => {
         );
       }
 
-      console.dir(rule, { depth: null });
+      await stash.send(
+        new SetValueCommand({
+          keyspaceName: PARTNERS_KEYSPACE_NAME,
+          key: `destinations|${rule.transactionId}`,
+          value: {
+            description: transactionSet.description!,
+            destinations: transactionSet.destinations,
+          },
+        })
+      );
     }
 
     migratedStashPartnershipKeys.push(stashPartnershipKey as string);

@@ -17,8 +17,12 @@ const stash = stashClient();
 const partners = partnersClient();
 
 export const up = async () => {
+  const migratedStashProfileKeys: string[] = [];
+
+  await loadAllConfigValues(); // load all stash records once
+
   // create  Destinations from Partnerships
-  const stashPartnerships = await allStashPartnerships();
+  const stashPartnerships = allStashPartnerships();
 
   for (const stashPartnership of stashPartnerships) {
     const destinationsId = stashPartnership.id.replace(
@@ -27,23 +31,46 @@ export const up = async () => {
     );
 
     delete stashPartnership.id;
-
     saveDestinations(destinationsId, stashPartnership);
+
+    // get "sending" profile from Stash
+    const sendingStashProfile = findStashProfile(
+      stashPartnership.sendingProfileId
+    );
+    // create "local" profile in Partners API
+    const localProfile: CreateX12ProfileCommandInput = {
+      profileId: sendingStashProfile.id,
+      profileType: "local",
+      interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
+      interchangeId: sendingStashProfile.partnerInterchangeId.padStart(15, " "),
+      applicationId: sendingStashProfile.partnerApplicationId,
+    };
+    await partners.send(new CreateX12ProfileCommand(localProfile));
+    migratedStashProfileKeys.push(sendingStashProfile.id);
+
+    // get "receiving" profile from Stash
+    const receivingStashProfile = findStashProfile(
+      stashPartnership.sendingProfileId
+    );
+    // create "partner" profile in Partners API
+    const partnerProfile: CreateX12ProfileCommandInput = {
+      profileId: receivingStashProfile.id,
+      profileType: "partner",
+      interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
+      interchangeId: receivingStashProfile.partnerInterchangeId.padStart(
+        15,
+        " "
+      ),
+      applicationId: receivingStashProfile.partnerApplicationId,
+    };
+    await partners.send(new CreateX12ProfileCommand(partnerProfile));
+    migratedStashProfileKeys.push(receivingStashProfile.id);
+
+    for (const transactionSet of stashPartnership.transactionSets) {
+    }
   }
 
   // move profiles from stash to Partners API
-  const stashProfiles = await allStashProfiles();
-  for (const stashProfile of stashProfiles) {
-    const profile: CreateX12ProfileCommandInput = {
-      profileId: stashProfile.id,
-      profileType: "partner",
-      interchangeQualifier: stashProfile.partnerInterchangeQualifier,
-      interchangeId: stashProfile.partnerInterchangeId.padStart(15, " "),
-      applicationId: stashProfile.partnerApplicationId,
-    };
-
-    await partners.send(new CreateX12ProfileCommand(profile));
-  }
 
   /// CLEANUP AFTER ALL SUCCESSFUL MIGRATION
 
@@ -58,11 +85,11 @@ export const up = async () => {
   }
 
   // delete profiles from Stash
-  for (const stashProfile of stashProfiles) {
+  for (const migratedStashProfileKey of migratedStashProfileKeys) {
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: stashProfile.id,
+        key: migratedStashProfileKey,
       })
     );
   }
@@ -80,14 +107,23 @@ const loadAllConfigValues = async () => {
   if (items !== undefined) allConfigValues = items;
 };
 
-const allStashPartnerships = async (): Promise<any[]> => {
+const allStashPartnerships = (): any[] => {
   return allConfigValues
     .filter((item) => item.key?.toLowerCase().startsWith("partnership|"))
     .map((item) => cloneDeep({ id: item.key, ...(item.value as object) }));
 };
 
-const allStashProfiles = async (): Promise<any[]> => {
-  return allConfigValues
-    .filter((item) => item.key?.toLowerCase().startsWith("profiles|"))
-    .map((item) => cloneDeep({ id: item.key, ...(item.value as object) }));
+const findStashProfile = (id: string): any => {
+  const profile = allConfigValues.find(
+    (item) => item.key?.toLowerCase() === `profiles|${id}`
+  );
+
+  if (
+    profile === undefined ||
+    profile.value === undefined ||
+    typeof profile.value !== "object"
+  )
+    throw new Error(`Profile not found or invalid: ${id}`);
+
+  return cloneDeep({ ...profile.value, id: profile.key });
 };

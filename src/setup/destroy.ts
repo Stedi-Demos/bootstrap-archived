@@ -104,7 +104,7 @@ const partners = partnersClient();
         typeof error === "object" &&
         error !== null &&
         "name" in error &&
-        error.name === "ResourceNotFoundException"
+        error.name === "KeyspaceNotFoundError"
       )
         console.log("Keyspace already deleted");
       else throw error;

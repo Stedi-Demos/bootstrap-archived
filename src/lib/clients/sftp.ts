@@ -10,8 +10,7 @@ export const sftpClient = () => {
     };
 
     if (process.env["USE_PREVIEW"] !== undefined)
-      config.endpoint =
-        "https://api.sftp.us.preproduction.stedi.com/2022-04-01";
+      config.stage = "preproduction";
 
     _sftpClient = new SftpClient(config);
   }

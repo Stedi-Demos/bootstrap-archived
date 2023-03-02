@@ -5,12 +5,14 @@ import { Client } from "basic-ftp";
 
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
-import { bucketClient } from "../../../../lib/clients/buckets.js";
+import { bucketsClient } from "../../../../lib/clients/buckets.js";
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
 import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
+
+const buckets = bucketsClient();
 
 export class FtpPoller extends RemotePoller {
   readonly client: Client;
@@ -46,7 +48,7 @@ export class FtpPoller extends RemotePoller {
     await this.client.downloadTo(localTmpFilePath, this.getFullFilePath(file));
 
     const destinationKey = `${destination.path}/${file.name}`;
-    await bucketClient().send(
+    await buckets.send(
       new PutObjectCommand({
         bucketName: destination.bucketName,
         key: destinationKey,

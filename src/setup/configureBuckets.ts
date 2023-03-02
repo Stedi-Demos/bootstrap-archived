@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-
+import { CreateUserCommand, DeleteUserCommand } from "@stedi/sdk-client-sftp";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -7,14 +7,13 @@ import {
   PutObjectCommand,
 } from "@stedi/sdk-client-buckets";
 
-import { bucketClient } from "../lib/clients/buckets.js";
 import { updateDotEnvFile } from "../support/utils.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
-import { CreateUserCommand, DeleteUserCommand } from "@stedi/sdk-client-sftp";
+import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
 
 (async () => {
-  const buckets = bucketClient();
+  const buckets = bucketsClient();
   const sftp = sftpClient();
 
   console.log("Configuring buckets...");

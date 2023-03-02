@@ -8,10 +8,9 @@ import {
   PutObjectCommand,
   ReadBucketCommand,
 } from "@stedi/sdk-client-buckets";
-
-import { bucketClient } from "./clients/buckets.js";
 import { requiredEnvVar } from "./environment.js";
 import { ErrorWithContext } from "./errorWithContext.js";
+import { bucketsClient } from "./clients/buckets.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
@@ -116,7 +115,7 @@ const functionName = () => requiredEnvVar("STEDI_FUNCTION_NAME");
 
 const executionsBucketClient = async (): Promise<BucketsClient> => {
   if (_executionsBucketClient === undefined) {
-    _executionsBucketClient = bucketClient();
+    _executionsBucketClient = bucketsClient();
   }
 
   if (!_infiniteLoopCheckPassed) {

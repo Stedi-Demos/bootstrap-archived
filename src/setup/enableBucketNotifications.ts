@@ -3,10 +3,11 @@ import {
   UpdateBucketCommand,
   UpdateBucketInput,
 } from "@stedi/sdk-client-buckets";
-
-import { bucketClient } from "../lib/clients/buckets.js";
+import { bucketsClient } from "../lib/clients/buckets.js";
 import { requiredEnvVar } from "../lib/environment.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
+
+const buckets = bucketsClient();
 
 (async () => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
@@ -25,7 +26,7 @@ import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 
   const functionName = functionNameFromPath(functionPaths[0]);
 
-  const existingBucketConfig = await bucketClient().send(
+  const existingBucketConfig = await buckets.send(
     new ReadBucketCommand({
       bucketName: sftpBucketName,
     })
@@ -55,9 +56,7 @@ import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
     },
   };
 
-  await bucketClient().send(
-    new UpdateBucketCommand(enableBucketNotificationsArgs)
-  );
+  await buckets.send(new UpdateBucketCommand(enableBucketNotificationsArgs));
 
   console.log(`\nDone.`);
   console.log(

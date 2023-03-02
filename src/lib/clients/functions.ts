@@ -7,7 +7,7 @@ import { DEFAULT_SDK_CLIENT_PROPS } from "../constants.js";
 
 let _functionsClient: FunctionsClient;
 
-export const functionClient = (): FunctionsClient => {
+export const functionsClient = (): FunctionsClient => {
   if (_functionsClient === undefined) {
     const config: FunctionsClientConfig = {
       ...DEFAULT_SDK_CLIENT_PROPS,

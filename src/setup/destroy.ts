@@ -1,6 +1,4 @@
 import { DeleteBucketCommand } from "@stedi/sdk-client-buckets";
-import { bucketClient, emptyBucket } from "../lib/clients/buckets.js";
-import { stashClient } from "../lib/clients/stash.js";
 import { DeleteGuideCommand } from "@stedi/sdk-client-guides";
 import {
   PARTNERS_KEYSPACE_NAME,
@@ -11,21 +9,19 @@ import {
   DeleteKeyspaceCommand,
   GetValueCommand,
 } from "@stedi/sdk-client-stash";
-import { functionClient } from "../lib/functions.js";
 import { DeleteFunctionCommand } from "@stedi/sdk-client-functions";
 import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
-import { partnersClient } from "../lib/clients/partners.js";
-import {
-  DeleteX12PartnershipCommand,
-  DeleteX12ProfileCommand,
-  ListX12PartnershipsCommand,
-  ListX12ProfilesCommand,
-} from "@stedi/sdk-client-partners";
+import { stashClient } from "../lib/clients/stash.js";
+import { bucketsClient } from "../lib/clients/buckets.js";
 import { guidesClient } from "../lib/clients/guides.js";
+import { functionsClient } from "../lib/clients/functions.js";
+import { emptyBucket } from "../lib/buckets.js";
 
+const stash = stashClient();
+const buckets = bucketsClient();
+const functions = functionsClient();
 const guides = guidesClient();
-const partners = partnersClient();
 
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
@@ -61,7 +57,7 @@ const partners = partnersClient();
   }
 
   // get metadata from stash
-  const bootstrapMetadata = await stashClient().send(
+  const bootstrapMetadata = await stash.send(
     new GetValueCommand({
       keyspaceName: "partners-configuration",
       key: "bootstrap|metadata",
@@ -83,10 +79,10 @@ const partners = partnersClient();
 
   // Delete Stash keyspaces
   console.log("Deleting Stash Keyspaces");
-  await stashClient().send(
+  await stash.send(
     new DeleteKeyspaceCommand({ keyspaceName: PARTNERS_KEYSPACE_NAME })
   );
-  await stashClient().send(
+  await stash.send(
     new DeleteKeyspaceCommand({
       keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
     })
@@ -103,14 +99,13 @@ const partners = partnersClient();
   const functionPaths = getFunctionPaths();
   for (const path of functionPaths) {
     const functionName = functionNameFromPath(path);
-    await functionClient().send(new DeleteFunctionCommand({ functionName }));
+    await functions.send(new DeleteFunctionCommand({ functionName }));
   }
 
   console.log("Done");
 })();
 
 async function emptyAndDeleteBucket(bucketName: string) {
-  const client = await bucketClient();
   await emptyBucket(bucketName);
-  await client.send(new DeleteBucketCommand({ bucketName }));
+  await buckets.send(new DeleteBucketCommand({ bucketName }));
 }

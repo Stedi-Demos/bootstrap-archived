@@ -5,8 +5,10 @@ import {
   BootstrapMetadataSchema,
 } from "../lib/types/BootstrapMetadata.js";
 
+const stash = stashClient();
+
 export const getOrInitMetadata = async (): Promise<BootstrapMetadata> => {
-  const bootstrapMetadata = await stashClient().send(
+  const bootstrapMetadata = await stash.send(
     new GetValueCommand({
       keyspaceName: "partners-configuration",
       key: "bootstrap|metadata",
@@ -21,7 +23,7 @@ export const updateResourceMetadata = async (
   resources: BootstrapMetadata["resources"]
 ): Promise<void> => {
   const { resources: existingResources } = await getOrInitMetadata();
-  await stashClient().send(
+  await stash.send(
     new SetValueCommand({
       keyspaceName: "partners-configuration",
       key: "bootstrap|metadata",

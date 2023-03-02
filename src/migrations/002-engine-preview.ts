@@ -7,6 +7,7 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { stashClient as stashClient } from "../lib/clients/stash.js";
 import { saveDestinations } from "../lib/saveDestinations.js";
 import {
+  CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
 } from "@stedi/sdk-client-partners";
@@ -82,13 +83,22 @@ export const up = async () => {
     await partners.send(new CreateX12ProfileCommand(partnerProfile));
     migratedStashProfileKeys.push(partnerProfile.profileId);
 
+    // create partnership
+    const partnership = await partners.send(
+      new CreateX12PartnershipCommand({
+        localProfileId: localProfile.profileId,
+        partnerProfileId: partnerProfile.profileId,
+        partnershipId: `${localProfile.profileId}_${partnerProfile.profileId}`,
+      })
+    );
+
+    console.dir(partnership, { depth: null });
+
     for (const transactionSet of stashPartnership.transactionSets) {
     }
 
     migratedStashPartnershipKeys.push(stashPartnershipKey);
   }
-
-  // move profiles from stash to Partners API
 
   /// CLEANUP AFTER ALL SUCCESSFUL MIGRATION
 
@@ -106,9 +116,7 @@ export const up = async () => {
   for (const migratedStashProfileKey of migratedStashProfileKeys) {
     const profile = findStashProfile(migratedStashProfileKey);
 
-    console.log(
-      `lookup|ISA|${profile.partnerInterchangeQualifier}/${profile.partnerInterchangeId}`
-    );
+    // delete ISA lookup from Stash
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
@@ -116,6 +124,7 @@ export const up = async () => {
       })
     );
 
+    // delete profile from Stash
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,

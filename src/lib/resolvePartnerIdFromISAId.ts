@@ -1,15 +1,15 @@
 import { GetValueCommand } from "@stedi/sdk-client-stash";
+import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { stashClient as buildStashClient } from "./stash.js";
 import { ISAPartnerIdLookupSchema } from "./types/PartnerRouting.js";
 
-const stashClient = buildStashClient();
+const stash = stashClient();
 
 export const resolvePartnerIdFromISAId = async (
   isaId: string
 ): Promise<string> => {
   const key = `lookup|ISA|${isaId}`;
-  const { value } = await stashClient.send(
+  const { value } = await stash.send(
     new GetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key,

@@ -1,33 +1,11 @@
-import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import {
-  BucketsClient,
-  BucketsClientConfig,
   DeleteObjectCommand,
   ListObjectsCommand,
   ObjectListOutput,
 } from "@stedi/sdk-client-buckets";
+import { bucketsClient } from "./clients/buckets.js";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
-
-let _bucketClient: BucketsClient;
-
-export const bucketClient = () => {
-  if (_bucketClient === undefined) {
-    const config: BucketsClientConfig = {
-      ...DEFAULT_SDK_CLIENT_PROPS,
-      maxAttempts: 5,
-      requestHandler: new NodeHttpHandler({
-        connectionTimeout: 5_000,
-      }),
-      // apiKey and endpoint are required in Functions environment for control plane calls
-      endpoint: `https://buckets.cloud.us.stedi.com/2022-05-05`,
-    };
-
-    _bucketClient = new BucketsClient(config);
-  }
-
-  return _bucketClient;
-};
+const buckets = bucketsClient();
 
 const deleteItemsWithPrefix = async (
   bucketName: string,
@@ -40,7 +18,7 @@ const deleteItemsWithPrefix = async (
       : keysToDelete;
   }, []);
   for await (const key of keysToDelete || []) {
-    await bucketClient().send(
+    await buckets.send(
       new DeleteObjectCommand({
         bucketName,
         key,
@@ -51,7 +29,7 @@ const deleteItemsWithPrefix = async (
 
 export const emptyBucket = async (bucketName: string) => {
   const prefix = "";
-  const firstPageOfItems = await bucketClient().send(
+  const firstPageOfItems = await buckets.send(
     new ListObjectsCommand({
       bucketName,
       pageSize: 50,
@@ -61,7 +39,7 @@ export const emptyBucket = async (bucketName: string) => {
   firstPageOfItems.items &&
     (await deleteItemsWithPrefix(bucketName, firstPageOfItems.items, prefix));
   while (nextPageToken) {
-    const bucketItems = await bucketClient().send(
+    const bucketItems = await buckets.send(
       new ListObjectsCommand({
         bucketName,
         pageSize: 50,

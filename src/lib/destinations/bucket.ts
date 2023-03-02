@@ -1,12 +1,19 @@
-import { PutObjectCommand, PutObjectCommandInput } from "@stedi/sdk-client-buckets";
+import {
+  PutObjectCommand,
+  PutObjectCommandInput,
+} from "@stedi/sdk-client-buckets";
+import { bucketsClient } from "../clients/buckets.js";
+import {
+  DeliverToDestinationInput,
+  payloadAsString,
+} from "../deliveryManager.js";
 
-import { bucketClient } from "../buckets.js";
-import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
+const buckets = bucketsClient();
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
 ): Promise<PutObjectCommandInput> => {
-  if(input.destination.type !== "bucket") {
+  if (input.destination.type !== "bucket") {
     throw new Error("invalid destination type (must be bucket)");
   }
 
@@ -19,6 +26,6 @@ export const deliverToDestination = async (
     body: payloadAsString(input.destinationPayload),
   };
 
-  await bucketClient().send(new PutObjectCommand(putCommandArgs));
+  await buckets.send(new PutObjectCommand(putCommandArgs));
   return putCommandArgs;
 };

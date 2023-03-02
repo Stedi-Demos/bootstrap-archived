@@ -1,9 +1,9 @@
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
-import { bucketClient } from "../buckets.js";
+import { bucketsClient } from "../clients/buckets.js";
 import { requiredEnvVar } from "../environment.js";
 import { buildArchivalPath } from "./buildArchivalPath.js";
 
-const buckets = bucketClient();
+const buckets = bucketsClient();
 
 export const archiveFile = async ({
   currentKey,

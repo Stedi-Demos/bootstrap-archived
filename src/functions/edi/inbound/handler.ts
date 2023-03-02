@@ -18,7 +18,7 @@ import {
   Convert,
   Record as BucketNotificationRecord,
 } from "../../../lib/types/BucketNotificationEvent.js";
-import { bucketClient } from "../../../lib/buckets.js";
+import { bucketsClient } from "../../../lib/clients/buckets.js";
 import {
   FilteredKey,
   GroupedEventKeys,
@@ -45,7 +45,7 @@ import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { archiveFile } from "../../../lib/archive/archiveFile.js";
 
 // Buckets client is shared across handler and execution tracking logic
-const bucketsClient = bucketClient();
+const buckets = bucketsClient();
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
@@ -71,7 +71,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // Iterate through each key that represents an object within an `inbound` directory
     for await (const keyToProcess of groupedEventKeys.keysToProcess) {
       // load the object from the bucket
-      const getObjectResponse = await bucketsClient.send(
+      const getObjectResponse = await buckets.send(
         new GetObjectCommand(keyToProcess)
       );
 
@@ -219,7 +219,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         // ensure archival is complete
         await archivalRequest;
         // Delete the processed file (could also archive elsewhere if desired)
-        await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
+        await buckets.send(new DeleteObjectCommand(keyToProcess));
         results.processedKeys.push(keyToProcess.key);
       } catch (e) {
         const error = ErrorWithContext.fromUnknown(e);

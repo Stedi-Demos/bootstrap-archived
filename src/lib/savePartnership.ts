@@ -1,9 +1,9 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
+import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { stashClient as buildStashClient } from "./stash.js";
 import { Partnership, PartnershipSchema } from "./types/PartnerRouting.js";
 
-const stashClient = buildStashClient();
+const stash = stashClient();
 
 export const savePartnership = async (
   id: string,
@@ -16,7 +16,7 @@ export const savePartnership = async (
     throw Error("Partnership does not match allowed schema");
   }
 
-  await stashClient.send(
+  await stash.send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: id,

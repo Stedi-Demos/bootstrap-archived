@@ -8,4 +8,4 @@ npm run configure-storage
 npx ts-node-esm ./src/setup/bootstrap.ts
 git checkout engine
 npm i
-npx ts-node-esm ./src/setup/bootstrap.ts
+npm run migrate

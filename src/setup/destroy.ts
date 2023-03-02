@@ -65,25 +65,25 @@ const partners = partnersClient();
   }
 
   // get metadata from stash
-  // const bootstrapMetadata = await stash.send(
-  //   new GetValueCommand({
-  //     keyspaceName: "partners-configuration",
-  //     key: "bootstrap|metadata",
-  //   })
-  // );
-  // const { resources } = BootstrapMetadataSchema.parse(bootstrapMetadata.value);
+  const bootstrapMetadata = await stash.send(
+    new GetValueCommand({
+      keyspaceName: "partners-configuration",
+      key: "bootstrap|metadata",
+    })
+  );
+  const { resources } = BootstrapMetadataSchema.parse(bootstrapMetadata.value);
 
-  // // Delete Buckets
-  // console.log("Deleting Buckets");
-  // await emptyAndDeleteBucket(resources.SFTP_BUCKET_NAME ?? "");
-  // await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME ?? "");
+  // Delete Buckets
+  console.log("Deleting Buckets");
+  await emptyAndDeleteBucket(resources.SFTP_BUCKET_NAME ?? "");
+  await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME ?? "");
 
-  // // Delete Guides
-  // console.log("Deleting Guides");
-  // for (const guideId of resources.GUIDE_IDS ?? []) {
-  //   await guides.send(new DeleteGuideCommand({ id: `LIVE_${guideId}` }));
-  //   await guides.send(new DeleteGuideCommand({ id: `DRFT_${guideId}` }));
-  // }
+  // Delete Guides
+  console.log("Deleting Guides");
+  for (const guideId of resources.GUIDE_IDS ?? []) {
+    await guides.send(new DeleteGuideCommand({ id: `LIVE_${guideId}` }));
+    await guides.send(new DeleteGuideCommand({ id: `DRFT_${guideId}` }));
+  }
 
   // Delete Stash keyspaces
   console.log("Deleting Stash Keyspaces");

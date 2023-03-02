@@ -22,7 +22,7 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
     migrationStore.logMigration({ name });
   }
 
-  // await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
-  // await createProfiles();
-  // await createSampleStashRecords({ guide850, guide855 });
+  await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
+  await createProfiles();
+  await createSampleStashRecords({ guide850, guide855 });
 })();

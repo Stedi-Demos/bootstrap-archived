@@ -99,8 +99,9 @@ export const up = async () => {
     );
 
     for (const transactionSet of stashPartnership.transactionSets) {
+      const guideId = transactionSet.guideId; // NO DRFT_ OR LIVE_ PREFIX
       const guide = await guides.send(
-        new GetGuideCommand({ id: `DRFT_${transactionSet.guideId}` })
+        new GetGuideCommand({ id: `DRFT_${guideId}` })
       );
       console.log(guide);
       if (guide.target?.standard !== "x12") throw new Error("guide is not X12");
@@ -114,7 +115,7 @@ export const up = async () => {
             timeZone: "UTC",
             release: guide.target.release,
             transactionSetIdentifier: guide.target.transactionSet,
-            guideId: guide.id,
+            guideId,
           })
         );
       } else {
@@ -124,7 +125,7 @@ export const up = async () => {
             partnershipId: partnership.partnershipId,
             release: guide.target.release,
             transactionSetIdentifier: guide.target.transactionSet,
-            guideId: guide.id,
+            guideId,
             functionalAcknowledgmentConfig: {
               acknowledgmentType: "997",
               generate: "ALWAYS",

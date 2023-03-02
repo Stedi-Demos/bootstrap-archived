@@ -16,7 +16,10 @@ import {
 import { partnersClient } from "../lib/clients/partners.js";
 import { cloneDeep } from "lodash-es";
 import { guidesClient } from "../lib/clients/guides.js";
-import { GetGuideCommand } from "@stedi/sdk-client-guides";
+import {
+  GetGuideCommand,
+  GetGuideCommandOutput,
+} from "@stedi/sdk-client-guides";
 import { gu } from "date-fns/locale";
 
 const stash = stashClient();
@@ -100,12 +103,24 @@ export const up = async () => {
 
     for (const transactionSet of stashPartnership.transactionSets) {
       const guideId = transactionSet.guideId; // NO DRFT_ OR LIVE_ PREFIX
-      console.log({ transactionSet });
-      const guide = await guides.send(
-        new GetGuideCommand({ id: `DRFT_${guideId}` })
-      );
-      console.log(guide);
-      if (guide.target?.standard !== "x12") throw new Error("guide is not X12");
+
+      let guideTarget: GetGuideCommandOutput["target"];
+      if (guideId !== undefined) {
+        const guide = await guides.send(
+          new GetGuideCommand({ id: `DRFT_${guideId}` })
+        );
+        console.log(guide);
+        if (guide.target?.standard !== "x12")
+          throw new Error("guide is not X12");
+
+        guideTarget = guide.target;
+      } else {
+        guideTarget = {
+          standard: "x12",
+          release: "005010",
+          transactionSet: "850",
+        };
+      }
 
       if (transactionSet.sendingPartnerId == localProfile.profileId) {
         // Outbound
@@ -114,8 +129,8 @@ export const up = async () => {
           new CreateOutboundX12TransactionCommand({
             partnershipId: partnership.partnershipId,
             timeZone: "UTC",
-            release: guide.target.release,
-            transactionSetIdentifier: guide.target.transactionSet,
+            release: guideTarget.release,
+            transactionSetIdentifier: guideTarget.transactionSet,
             guideId,
           })
         );
@@ -124,8 +139,8 @@ export const up = async () => {
         await partners.send(
           new CreateInboundX12TransactionCommand({
             partnershipId: partnership.partnershipId,
-            release: guide.target.release,
-            transactionSetIdentifier: guide.target.transactionSet,
+            release: guideTarget.release,
+            transactionSetIdentifier: guideTarget.transactionSet,
             guideId,
             functionalAcknowledgmentConfig: {
               acknowledgmentType: "997",

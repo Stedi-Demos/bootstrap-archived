@@ -9,7 +9,9 @@ import { saveDestinations } from "../lib/saveDestinations.js";
 import {
   CreateInboundX12TransactionCommand,
   CreateInboundX12TransactionCommandInput,
+  CreateInboundX12TransactionCommandOutput,
   CreateOutboundX12TransactionCommand,
+  CreateOutboundX12TransactionCommandOutput,
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
@@ -32,9 +34,6 @@ const partners = partnersClient();
 const guides = guidesClient();
 
 export const up = async () => {
-  console.log(
-    "============================= migration 2 ---------------------"
-  );
   const migratedStashPartnershipKeys: string[] = [];
   const migratedStashProfileKeys: string[] = [];
 
@@ -127,8 +126,6 @@ export const up = async () => {
 
         guideTarget = guide.target;
       } else {
-        console.dir(transactionSet, { depth: null });
-
         if (!("transactionSetIdentifier" in transactionSet))
           throw new Error("Unknown transactionSet configuration");
 
@@ -147,12 +144,15 @@ export const up = async () => {
 
       if (guideTarget === undefined) continue; // no transaction rule is needed
 
+      let rule:
+        | CreateOutboundX12TransactionCommandOutput
+        | CreateInboundX12TransactionCommandOutput;
       if (
         "sendingPartnerId" in transactionSet &&
         transactionSet.sendingPartnerId == localProfile.profileId
       ) {
         // Outbound
-        await partners.send(
+        rule = await partners.send(
           new CreateOutboundX12TransactionCommand({
             partnershipId: partnership.partnershipId,
             timeZone: "UTC",
@@ -178,8 +178,12 @@ export const up = async () => {
           };
         }
 
-        await partners.send(new CreateInboundX12TransactionCommand(params));
+        rule = await partners.send(
+          new CreateInboundX12TransactionCommand(params)
+        );
       }
+
+      console.dir(rule, { depth: null });
     }
 
     migratedStashPartnershipKeys.push(stashPartnershipKey as string);

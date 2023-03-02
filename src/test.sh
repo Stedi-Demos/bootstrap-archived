@@ -3,7 +3,7 @@ set -e
 
 git checkout main
 npm ci
-npm run bootstrap
+npx ts-node-esm ./src/setup/bootstrap.ts
 git checkout engine
 npm ci
-npm run bootstrap
+npx ts-node-esm ./src/setup/bootstrap.ts

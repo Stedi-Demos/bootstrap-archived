@@ -20,6 +20,7 @@ export const up = async () => {
   console.log(
     "============================= migration 2 ---------------------"
   );
+  const migratedStashPartnershipKeys: string[] = [];
   const migratedStashProfileKeys: string[] = [];
 
   await loadAllConfigValues(); // load all stash records once
@@ -33,32 +34,31 @@ export const up = async () => {
       "destinations|"
     );
 
+    const stashPartnershipKey = stashPartnership.id;
     delete stashPartnership.id;
     saveDestinations(destinationsId, stashPartnership);
 
     // get "sending" profile from Stash
     const sendingStashProfile = findStashProfile(
-      stashPartnership.sendingProfileId
+      stashPartnership.transactionSets[0].sendingPartnerId
     );
-    console.log({ sendingStashProfile });
-    // create "local" profile in Partners API
+
+    // prepare "local" profile in Partners API
     const localProfile: CreateX12ProfileCommandInput = {
-      profileId: sendingStashProfile.id,
+      profileId: stashPartnership.transactionSets[0].sendingPartnerId,
       profileType: "local",
       interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
       interchangeId: sendingStashProfile.partnerInterchangeId.padStart(15, " "),
       applicationId: sendingStashProfile.partnerApplicationId,
     };
-    await partners.send(new CreateX12ProfileCommand(localProfile));
-    migratedStashProfileKeys.push(sendingStashProfile.id);
 
     // get "receiving" profile from Stash
     const receivingStashProfile = findStashProfile(
-      stashPartnership.sendingProfileId
+      stashPartnership.transactionSets[0].receivingPartnerId
     );
-    // create "partner" profile in Partners API
+    // prepare "partner" profile in Partners API
     const partnerProfile: CreateX12ProfileCommandInput = {
-      profileId: receivingStashProfile.id,
+      profileId: stashPartnership.transactionSets[0].receivingPartnerId,
       profileType: "partner",
       interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
       interchangeId: receivingStashProfile.partnerInterchangeId.padStart(
@@ -67,11 +67,25 @@ export const up = async () => {
       ),
       applicationId: receivingStashProfile.partnerApplicationId,
     };
+
+    if (
+      localProfile.profileId === undefined ||
+      partnerProfile.profileId === undefined
+    )
+      throw new Error("localProfile or partnerProfile is invalid");
+
+    // create local profile in Partners API
+    await partners.send(new CreateX12ProfileCommand(localProfile));
+    migratedStashProfileKeys.push(localProfile.profileId);
+
+    // create partner profile in Partners API
     await partners.send(new CreateX12ProfileCommand(partnerProfile));
-    migratedStashProfileKeys.push(receivingStashProfile.id);
+    migratedStashProfileKeys.push(partnerProfile.profileId);
 
     for (const transactionSet of stashPartnership.transactionSets) {
     }
+
+    migratedStashPartnershipKeys.push(stashPartnershipKey);
   }
 
   // move profiles from stash to Partners API
@@ -79,21 +93,23 @@ export const up = async () => {
   /// CLEANUP AFTER ALL SUCCESSFUL MIGRATION
 
   // delete partnerships from Stash
-  for (const stashPartnership of stashPartnerships) {
+  for (const migratedStashPartnershipKey of migratedStashPartnershipKeys) {
+    console.log(migratedStashPartnershipKey);
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: stashPartnership.id,
+        key: `partnership|${migratedStashPartnershipKey}`,
       })
     );
   }
 
   // delete profiles from Stash
   for (const migratedStashProfileKey of migratedStashProfileKeys) {
+    console.log(migratedStashProfileKey);
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: migratedStashProfileKey,
+        key: `profile|${migratedStashProfileKey}`,
       })
     );
   }
@@ -119,7 +135,7 @@ const allStashPartnerships = (): any[] => {
 
 const findStashProfile = (id: string): any => {
   const profile = allConfigValues.find(
-    (item) => item.key?.toLowerCase() === `profiles|${id}`
+    (item) => item.key?.toLowerCase() === `profile|${id}`
   );
 
   if (

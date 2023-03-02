@@ -132,6 +132,8 @@ export const up = async () => {
         }
       }
 
+      if (guideTarget === undefined) continue; // no transaction rule is needed
+
       if (transactionSet.sendingPartnerId == localProfile.profileId) {
         // Outbound
         await partners.send(

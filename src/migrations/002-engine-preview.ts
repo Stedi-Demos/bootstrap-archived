@@ -109,12 +109,12 @@ export const up = async () => {
         const guide = await guides.send(
           new GetGuideCommand({ id: `DRFT_${guideId}` })
         );
-        console.log(guide);
         if (guide.target?.standard !== "x12")
           throw new Error("guide is not X12");
 
         guideTarget = guide.target;
       } else {
+        console.dir(transactionSet, { depth: null });
         guideTarget = {
           standard: "x12",
           release: "005010",

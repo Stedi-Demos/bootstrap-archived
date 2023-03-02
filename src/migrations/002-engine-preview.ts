@@ -8,6 +8,7 @@ import { stashClient as stashClient } from "../lib/clients/stash.js";
 import { saveDestinations } from "../lib/saveDestinations.js";
 import {
   CreateInboundX12TransactionCommand,
+  CreateInboundX12TransactionCommandInput,
   CreateOutboundX12TransactionCommand,
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
@@ -162,19 +163,22 @@ export const up = async () => {
         );
       } else {
         // Inbound
-        await partners.send(
-          new CreateInboundX12TransactionCommand({
-            partnershipId: partnership.partnershipId,
-            release: guideTarget.release,
-            transactionSetIdentifier: guideTarget.transactionSet,
-            guideId,
-            functionalAcknowledgmentConfig: {
-              acknowledgmentType: "997",
-              generate: "ALWAYS",
-              groupBy: "ONE_PER_INTERCHANGE",
-            },
-          })
-        );
+        const params: CreateInboundX12TransactionCommandInput = {
+          partnershipId: partnership.partnershipId,
+          release: guideTarget.release,
+          transactionSetIdentifier: guideTarget.transactionSet,
+          guideId,
+        };
+
+        if ("acknowledgmentType" in transactionSet) {
+          params.functionalAcknowledgmentConfig = {
+            acknowledgmentType: "997",
+            generate: "ALWAYS",
+            groupBy: "ONE_PER_INTERCHANGE",
+          };
+        }
+
+        await partners.send(new CreateInboundX12TransactionCommand(params));
       }
     }
 

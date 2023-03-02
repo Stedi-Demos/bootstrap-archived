@@ -96,6 +96,7 @@ test("delivery via function invokes Stedi function with both payload and additio
       additionalInput,
     },
     payload,
+    destinationFilename: "unused",
   });
 
   t.deepEqual(functions.calls()[0].args[0].input, {
@@ -167,6 +168,7 @@ test("delivery via webhook sends payload to expected url", async (t) => {
       url,
     },
     payload,
+    destinationFilename: "unused",
   });
 
   t.assert(webhookRequest.isDone(), "delivered payload to destination webhook");

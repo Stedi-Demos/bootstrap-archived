@@ -13,10 +13,6 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
     "src/resources/X12/5010/855/guide.json"
   );
 
-  await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
-  await createProfiles();
-  await createSampleStashRecords({ guide850, guide855 });
-
   // record all migrations as run (as this file always creates the latest state)
   const migrationStore = new StashStorage({});
   const allMigrations = await migrator.migrations({});
@@ -25,4 +21,8 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
     if (appliedMigrations.includes(name)) continue;
     migrationStore.logMigration({ name });
   }
+
+  await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
+  await createProfiles();
+  await createSampleStashRecords({ guide850, guide855 });
 })();

@@ -94,18 +94,28 @@ export const up = async () => {
 
   // delete partnerships from Stash
   for (const migratedStashPartnershipKey of migratedStashPartnershipKeys) {
-    console.log(migratedStashPartnershipKey);
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `partnership|${migratedStashPartnershipKey}`,
+        key: `${migratedStashPartnershipKey}`,
       })
     );
   }
 
   // delete profiles from Stash
   for (const migratedStashProfileKey of migratedStashProfileKeys) {
-    console.log(migratedStashProfileKey);
+    const profile = findStashProfile(migratedStashProfileKey);
+
+    console.log(
+      `lookup|ISA|${profile.partnerInterchangeQualifier}/${profile.partnerInterchangeId}`
+    );
+    await stash.send(
+      new DeleteValueCommand({
+        keyspaceName: PARTNERS_KEYSPACE_NAME,
+        key: `lookup|ISA|${profile.partnerInterchangeQualifier}/${profile.partnerInterchangeId}`,
+      })
+    );
+
     await stash.send(
       new DeleteValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,

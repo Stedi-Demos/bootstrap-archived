@@ -118,7 +118,7 @@ export const up = async () => {
         guideTarget = {
           standard: "x12",
           release: "005010",
-          transactionSet: "850",
+          transactionSet: "856",
         };
       }
 

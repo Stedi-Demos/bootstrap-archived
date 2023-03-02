@@ -143,7 +143,19 @@ export const up = async () => {
         }
       }
 
-      if (guideTarget === undefined) continue; // no transaction rule is needed
+      if (guideTarget === undefined) {
+        await stash.send(
+          new SetValueCommand({
+            keyspaceName: PARTNERS_KEYSPACE_NAME,
+            key: `destinations|acknowledgements`,
+            value: {
+              description: transactionSet.description!,
+              destinations: transactionSet.destinations,
+            },
+          })
+        );
+        continue; // no transaction rule is needed
+      }
 
       let rule:
         | CreateOutboundX12TransactionCommandOutput

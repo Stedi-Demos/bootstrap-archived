@@ -1,5 +1,5 @@
 import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
-import { stashClient } from "../lib/stash.js";
+import { stashClient } from "../lib/clients/stash.js";
 import {
   BootstrapMetadata,
   BootstrapMetadataSchema,

@@ -2,11 +2,7 @@ import z from "zod";
 
 import { DestinationSchema } from "./Destination.js";
 
-export const UsageIndicatorCodeSchema = z.enum([
-  "P",
-  "T",
-  "I",
-]);
+export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
 
 export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 
@@ -59,7 +55,9 @@ const TransactionSetWithoutGuideIdSchema = z.union([
   BaseGuideTransactionSetSchema,
 ]);
 
-export type TransactionSetWithoutGuideId = z.infer<typeof TransactionSetWithoutGuideIdSchema>;
+export type TransactionSetWithoutGuideId = z.infer<
+  typeof TransactionSetWithoutGuideIdSchema
+>;
 
 // transaction sets with `guideId`:
 // - no `release` or `transactionSetIdentifier` (inferred from guide)
@@ -67,7 +65,9 @@ const TransactionSetWithGuideIdSchema = NonAckTransactionSetSchema.extend({
   guideId: z.string(),
 });
 
-export type TransactionSetWithGuideId = z.infer<typeof TransactionSetWithGuideIdSchema>;
+export type TransactionSetWithGuideId = z.infer<
+  typeof TransactionSetWithGuideIdSchema
+>;
 
 const TransactionSetSchema = z.union([
   TransactionSetWithGuideIdSchema,
@@ -76,29 +76,11 @@ const TransactionSetSchema = z.union([
 
 export type TransactionSet = z.infer<typeof TransactionSetSchema>;
 
-export const PartnershipSchema = z.strictObject({
+export const DestinationsSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
 });
 
-export type PartnershipInput = z.input<typeof PartnershipSchema>;
-
-export type Partnership = z.infer<typeof PartnershipSchema>;
-
-export const ISAPartnerIdLookupSchema = z.strictObject({
-  partnerId: z.string(),
-});
-export type ISAPartnerIdLookup = z.infer<typeof ISAPartnerIdLookupSchema>;
-
-export const PartnerProfileSchema = z.strictObject({
-  id: z.string(),
-  partnerName: z.string(),
-  acknowledgmentRequestedCode: z.string(),
-  partnerInterchangeQualifier: z.string(),
-  partnerInterchangeId: z.string(),
-  partnerApplicationId: z.string(),
-});
-
-export type PartnerProfile = z.infer<typeof PartnerProfileSchema>;
+export type Destinations = z.input<typeof DestinationsSchema>;
 
 export const isTransactionSetWithGuideId = (
   transactionSet: TransactionSet
@@ -115,13 +97,17 @@ export const isTransactionSetWithoutGuideId = (
 export const isAckTransactionSet = (
   transactionSet: TransactionSet
 ): transactionSet is AckTransactionSet => {
-  return "transactionSetIdentifier" in transactionSet
-    && transactionSet.transactionSetIdentifier === "997";
+  return (
+    "transactionSetIdentifier" in transactionSet &&
+    transactionSet.transactionSetIdentifier === "997"
+  );
 };
 
 export const isNonAckTransactionSet = (
   transactionSet: TransactionSet
 ): transactionSet is AckTransactionSet => {
-  return "sendingPartnerId" in transactionSet
-    && "receivingPartnerId" in transactionSet;
+  return (
+    "sendingPartnerId" in transactionSet &&
+    "receivingPartnerId" in transactionSet
+  );
 };

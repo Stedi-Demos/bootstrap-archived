@@ -1,8 +1,8 @@
 import { ListValuesCommand } from "@stedi/sdk-client-stash";
 import { keys } from "object-hash";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
-import { savePartnership } from "../lib/savePartnership.js";
-import { stashClient as buildStashClient } from "../lib/stash.js";
+import { savePartnership } from "../lib/saveDestinations.js";
+import { stashClient as buildStashClient } from "../lib/clients/stash.js";
 const stashClient = buildStashClient();
 
 export const up = async () => {

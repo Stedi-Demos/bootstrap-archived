@@ -8,7 +8,7 @@ import {
   OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
   INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
 } from "../../lib/constants.js";
-import { stashClient as buildStashClient } from "../../lib/stash.js";
+import { stashClient as buildStashClient } from "../../lib/clients/stash.js";
 
 const stashClient = buildStashClient();
 

@@ -18,7 +18,7 @@ import {
   Convert,
   Record as BucketNotificationRecord,
 } from "../../../lib/types/BucketNotificationEvent.js";
-import { bucketClient } from "../../../lib/buckets.js";
+import { bucketClient } from "../../../lib/clients/buckets.js";
 import {
   FilteredKey,
   GroupedEventKeys,

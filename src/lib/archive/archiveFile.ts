@@ -1,5 +1,5 @@
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
-import { bucketClient } from "../buckets.js";
+import { bucketClient } from "../clients/buckets.js";
 import { requiredEnvVar } from "../environment.js";
 import { buildArchivalPath } from "./buildArchivalPath.js";
 

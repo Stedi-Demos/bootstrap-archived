@@ -1,6 +1,6 @@
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { stashClient as buildStashClient } from "./stash.js";
+import { stashClient as buildStashClient } from "./clients/stash.js";
 import { PartnershipSchema, Partnership } from "./types/PartnerRouting.js";
 
 const stashClient = buildStashClient();

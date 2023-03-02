@@ -1,7 +1,6 @@
 import { DeleteBucketCommand } from "@stedi/sdk-client-buckets";
-import { bucketClient, emptyBucket } from "../lib/buckets.js";
-import { guidesClient } from "../support/guide.js";
-import { stashClient } from "../lib/stash.js";
+import { bucketClient, emptyBucket } from "../lib/clients/buckets.js";
+import { stashClient } from "../lib/clients/stash.js";
 import { DeleteGuideCommand } from "@stedi/sdk-client-guides";
 import {
   PARTNERS_KEYSPACE_NAME,
@@ -16,9 +15,50 @@ import { functionClient } from "../lib/functions.js";
 import { DeleteFunctionCommand } from "@stedi/sdk-client-functions";
 import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
+import { partnersClient } from "../lib/clients/partners.js";
+import {
+  DeleteX12PartnershipCommand,
+  DeleteX12ProfileCommand,
+  ListX12PartnershipsCommand,
+  ListX12ProfilesCommand,
+} from "@stedi/sdk-client-partners";
+import { guidesClient } from "../lib/clients/guides.js";
+
+const guides = guidesClient();
+const partners = partnersClient();
 
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
+
+  // partnerships
+  console.log("Deleting Partnerships");
+  const { items: partnerships } = await partners.send(
+    new ListX12PartnershipsCommand({})
+  );
+
+  if (partnerships !== undefined && partnerships.length > 0) {
+    for (const partnership of partnerships) {
+      await partners.send(
+        new DeleteX12PartnershipCommand({
+          partnershipId: partnership.partnershipId,
+        })
+      );
+    }
+  }
+
+  // profiles
+  console.log("Deleting Profiles");
+  const { items: profiles } = await partners.send(
+    new ListX12ProfilesCommand({})
+  );
+
+  if (profiles !== undefined && profiles.length > 0) {
+    for (const profile of profiles) {
+      await partners.send(
+        new DeleteX12ProfileCommand({ profileId: profile.profileId })
+      );
+    }
+  }
 
   // get metadata from stash
   const bootstrapMetadata = await stashClient().send(
@@ -37,12 +77,8 @@ import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
   // Delete Guides
   console.log("Deleting Guides");
   for (const guideId of resources.GUIDE_IDS ?? []) {
-    await guidesClient().send(
-      new DeleteGuideCommand({ id: `LIVE_${guideId}` })
-    );
-    await guidesClient().send(
-      new DeleteGuideCommand({ id: `DRFT_${guideId}` })
-    );
+    await guides.send(new DeleteGuideCommand({ id: `LIVE_${guideId}` }));
+    await guides.send(new DeleteGuideCommand({ id: `DRFT_${guideId}` }));
   }
 
   // Delete Stash keyspaces

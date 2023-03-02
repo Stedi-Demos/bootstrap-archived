@@ -1,65 +1,60 @@
-import { CreateX12ProfileCommand } from "@stedi/sdk-client-partners";
-import { partnersClient as buildPartnersClient } from "../../lib/partners.js";
-import { stashClient as buildStashClient } from "../../lib/stash.js";
-import { PartnerProfileSchema } from "../../lib/types/PartnerRouting.js";
-import { SetValueCommand } from "@stedi/sdk-client-stash";
-import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
+import {
+  CreateX12PartnershipCommand,
+  CreateX12ProfileCommand,
+  CreateX12ProfileCommandInput,
+} from "@stedi/sdk-client-partners";
+import { partnersClient } from "../../lib/clients/partners.js";
 
 export const createProfiles = async () => {
-  const profiles = [
-    {
-      id: "this-is-me",
-      partnerName: "Me, Myself and I",
-      partnerInterchangeQualifier: "ZZ",
-      partnerInterchangeId: "THISISME",
-      acknowledgmentRequestedCode: "0",
-      partnerApplicationId: "MYAPPID",
-    },
-    {
-      id: "another-merchant",
-      partnerName: "A.N. & Other Merchants",
-      partnerInterchangeQualifier: "14",
-      partnerInterchangeId: "ANOTHERMERCH",
-      acknowledgmentRequestedCode: "0",
-      partnerApplicationId: "ANOTAPPID",
-    },
-  ];
+  const localProfile: CreateX12ProfileCommandInput = {
+    profileId: "This-Is-Me-Inc",
+    profileType: "local",
+    interchangeQualifier: "ZZ",
+    interchangeId: "       THISISME",
+    applicationId: "MYAPPID",
+  };
+  const remoteProfile: CreateX12ProfileCommandInput = {
+    profileId: "Another-Merchant",
+    profileType: "partner",
+    interchangeQualifier: "14",
+    interchangeId: "   ANOTHERMERCH",
+    applicationId: "ANOTAPPID",
+  };
 
-  if (process.env["USE_BETA"] === "true") {
-    const partnersClient = buildPartnersClient();
-    console.log("[BETA] Creating X12 Trading Partner Profile in Partners API");
+  const partners = partnersClient();
+  console.log("Creating X12 Trading Partner Profile in Partners API");
 
-    for (const profile of profiles) {
-      try {
-        await partnersClient.send(new CreateX12ProfileCommand(profile));
-      } catch (error) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "name" in error &&
-          error.name === "ResourceConflictException"
-        )
-          console.log("Partner profile already exists");
-        else throw error;
-      }
+  for (const profile of [localProfile, remoteProfile]) {
+    try {
+      await partners.send(new CreateX12ProfileCommand(profile));
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        error.name === "ResourceConflictException"
+      )
+        console.log("Partner profile already exists");
+      else throw error;
     }
-  } else {
-    console.log("Creating X12 Trading Partner Profile in Stash");
-    const stashClient = buildStashClient();
+  }
 
-    for (const profile of profiles) {
-      const parseResult = PartnerProfileSchema.safeParse(profile);
-
-      if (!parseResult.success) throw new Error(parseResult.error.message);
-      // throw new Error(`Invalid profile for ${profile.id}`);
-
-      await stashClient.send(
-        new SetValueCommand({
-          keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `profile|${profile.id}`,
-          value: parseResult.data,
-        })
-      );
-    }
+  try {
+    await partners.send(
+      new CreateX12PartnershipCommand({
+        partnershipId: `${localProfile.profileId}_${remoteProfile.profileId}`,
+        localProfileId: localProfile.profileId,
+        partnerProfileId: remoteProfile.profileId,
+      })
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceConflictException"
+    )
+      console.log("Partnership already exists");
+    else throw error;
   }
 };

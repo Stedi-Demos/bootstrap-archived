@@ -1,11 +1,23 @@
-import { As2Client, StartFileTransferCommand, StartFileTransferCommandInput } from "@stedi/sdk-client-as2";
-import { PutObjectCommand, PutObjectCommandInput } from "@stedi/sdk-client-buckets";
+import {
+  As2Client,
+  StartFileTransferCommand,
+  StartFileTransferCommandInput,
+} from "@stedi/sdk-client-as2";
+import {
+  PutObjectCommand,
+  PutObjectCommandInput,
+} from "@stedi/sdk-client-buckets";
+import { as2Client } from "../clients/as2.js";
+import { bucketsClient } from "../clients/buckets.js";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "../constants.js";
-import { bucketClient } from "../buckets.js";
-import { DeliverToDestinationInput, payloadAsString } from "../deliveryManager.js";
+import {
+  DeliverToDestinationInput,
+  payloadAsString,
+} from "../deliveryManager.js";
 
-const as2Client = new As2Client(DEFAULT_SDK_CLIENT_PROPS);
+const as2 = as2Client();
+const buckets = bucketsClient();
+
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
 ): Promise<StartFileTransferCommandInput> => {
@@ -23,14 +35,13 @@ export const deliverToDestination = async (
     body: payloadAsString(input.destinationPayload),
   };
 
-
   const startFileTransferCommandArgs: StartFileTransferCommandInput = {
     connectorId: input.destination.connectorId,
     sendFilePaths: [`/${input.destination.bucketName}/${key}`],
-  }
+  };
 
-  await bucketClient().send(new PutObjectCommand(putCommandArgs));
-  await as2Client.send(new StartFileTransferCommand(startFileTransferCommandArgs));
+  await buckets.send(new PutObjectCommand(putCommandArgs));
+  await as2.send(new StartFileTransferCommand(startFileTransferCommandArgs));
 
   return startFileTransferCommandArgs;
 };

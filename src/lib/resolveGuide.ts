@@ -1,7 +1,7 @@
 import { GetGuideCommand } from "@stedi/sdk-client-guides";
-import { guidesClient as buildGuideClient } from "../support/guide.js";
+import { guidesClient } from "./clients/guides.js";
 
-const guidesClient = buildGuideClient();
+const guides = guidesClient();
 
 type GuideSummary = {
   guideId: string;
@@ -28,7 +28,7 @@ export const resolveGuide = async ({
         : [guideId];
 
     for await (const guideIdToLoad of guideIdsToAttemptToLoad) {
-      const guide = await guidesClient.send(
+      const guide = await guides.send(
         new GetGuideCommand({ id: guideIdToLoad })
       );
 

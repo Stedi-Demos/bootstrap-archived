@@ -17,11 +17,19 @@ import { bucketsClient } from "../lib/clients/buckets.js";
 import { guidesClient } from "../lib/clients/guides.js";
 import { functionsClient } from "../lib/clients/functions.js";
 import { emptyBucket } from "../lib/buckets.js";
+import { partnersClient } from "../lib/clients/partners.js";
+import {
+  DeleteX12PartnershipCommand,
+  DeleteX12ProfileCommand,
+  ListX12PartnershipsCommand,
+  ListX12ProfilesCommand,
+} from "@stedi/sdk-client-partners";
 
 const stash = stashClient();
 const buckets = bucketsClient();
 const functions = functionsClient();
 const guides = guidesClient();
+const partners = partnersClient();
 
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");

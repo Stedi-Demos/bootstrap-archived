@@ -170,7 +170,7 @@ export const up = async () => {
           guideId,
         };
 
-        if ("acknowledgmentType" in transactionSet) {
+        if ("acknowledgmentConfig" in transactionSet) {
           params.functionalAcknowledgmentConfig = {
             acknowledgmentType: "997",
             generate: "ALWAYS",

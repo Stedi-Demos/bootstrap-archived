@@ -115,16 +115,25 @@ export const up = async () => {
         guideTarget = guide.target;
       } else {
         console.dir(transactionSet, { depth: null });
-        guideTarget = {
-          standard: "x12",
-          release: "005010",
-          transactionSet: "856",
-        };
+
+        if (transactionSet.transactionSetIdentifier === undefined)
+          throw new Error("Unknown transactionSet configuration");
+
+        if (transactionSet.transactionSetIdentifier === "997") {
+          // ack config
+          console.log("ack config", transactionSet);
+        } else {
+          // base guides
+          guideTarget = {
+            standard: "x12",
+            release: transactionSet.release,
+            transactionSet: transactionSet.transactionSetIdentifier,
+          };
+        }
       }
 
       if (transactionSet.sendingPartnerId == localProfile.profileId) {
         // Outbound
-
         await partners.send(
           new CreateOutboundX12TransactionCommand({
             partnershipId: partnership.partnershipId,

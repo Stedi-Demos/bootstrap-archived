@@ -3,20 +3,20 @@ import {
   GetKeyspaceCommand,
   GetKeyspaceCommandOutput,
 } from "@stedi/sdk-client-stash";
+import { stashClient } from "../../lib/clients/stash.js";
 import {
   PARTNERS_KEYSPACE_NAME,
   OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
   INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
 } from "../../lib/constants.js";
-import { stashClient as buildStashClient } from "../../lib/stash.js";
 
-const stashClient = buildStashClient();
+const stash = stashClient();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const ensureKeyspace = async (keyspaceName: string) => {
   try {
-    await stashClient.send(
+    await stash.send(
       new CreateKeyspaceCommand({
         keyspaceName,
       })
@@ -48,7 +48,7 @@ const ensureKeyspace = async (keyspaceName: string) => {
   for (const keyspaceName of keyspaceNames) {
     let result: Partial<GetKeyspaceCommandOutput> = { status: "UNKNOWN" };
     for (let i = 0; i < 15; i++) {
-      result = await stashClient.send(new GetKeyspaceCommand({ keyspaceName }));
+      result = await stash.send(new GetKeyspaceCommand({ keyspaceName }));
 
       if (result.status === "ACTIVE") break;
 

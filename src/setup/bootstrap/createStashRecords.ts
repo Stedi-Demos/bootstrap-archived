@@ -2,8 +2,9 @@ import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
 import { PartnershipInput } from "../../lib/types/PartnerRouting.js";
-import { stashClient as buildStashClient } from "../../lib/stash.js";
+
 import { savePartnership } from "../../lib/savePartnership.js";
+import { stashClient } from "../../lib/clients/stash.js";
 
 type CreateSampleStashRecordsInput = {
   guide850: string;
@@ -14,7 +15,7 @@ export const createSampleStashRecords = async ({
   guide850,
   guide855,
 }: CreateSampleStashRecordsInput) => {
-  const stashClient = buildStashClient();
+  const stash = stashClient();
 
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
@@ -69,18 +70,18 @@ export const createSampleStashRecords = async ({
         destination: {
           bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
           path: "trading_partners/ANOTHERMERCH/outbound",
-          type: "bucket"
-        }
-      }
+          type: "bucket",
+        },
+      },
     ],
     transactionSetIdentifier: "997",
-    usageIndicatorCode: "T"
+    usageIndicatorCode: "T",
   });
 
   // write to Stash
   await savePartnership("partnership|this-is-me|another-merchant", partnership);
 
-  await stashClient.send(
+  await stash.send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `lookup|ISA|14/ANOTHERMERCH`,
@@ -89,7 +90,7 @@ export const createSampleStashRecords = async ({
       },
     })
   );
-  await stashClient.send(
+  await stash.send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `lookup|ISA|ZZ/THISISME`,

@@ -3,13 +3,14 @@ import sftp from "ssh2-sftp-client";
 
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
-import { bucketClient } from "../../../../lib/buckets.js";
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
 import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
+import { bucketsClient } from "../../../../lib/clients/buckets.js";
 
+const buckets = bucketsClient();
 export class SftpPoller extends RemotePoller {
   readonly client: sftp;
 
@@ -33,7 +34,7 @@ export class SftpPoller extends RemotePoller {
     const fileContents = await this.client.get(this.getFullFilePath(file));
 
     const destinationKey = `${destination.path}/${file.name}`;
-    await bucketClient().send(
+    await buckets.send(
       new PutObjectCommand({
         bucketName: destination.bucketName,
         key: destinationKey,

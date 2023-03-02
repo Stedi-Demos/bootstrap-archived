@@ -100,6 +100,7 @@ export const up = async () => {
 
     for (const transactionSet of stashPartnership.transactionSets) {
       const guideId = transactionSet.guideId; // NO DRFT_ OR LIVE_ PREFIX
+      console.log({ transactionSet });
       const guide = await guides.send(
         new GetGuideCommand({ id: `DRFT_${guideId}` })
       );

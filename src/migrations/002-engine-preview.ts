@@ -40,6 +40,7 @@ export const up = async () => {
     const sendingStashProfile = findStashProfile(
       stashPartnership.sendingProfileId
     );
+    console.log({ sendingStashProfile });
     // create "local" profile in Partners API
     const localProfile: CreateX12ProfileCommandInput = {
       profileId: sendingStashProfile.id,

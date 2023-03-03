@@ -7,10 +7,12 @@ const FtpConfigSchema = z.strictObject({
   port: z.number().default(21),
   user: z.string(),
   password: z.string(),
-  secure: z.union([z.boolean(), z.literal("implicit")]),
-  secureOptions: z.object({
-    rejectUnauthorized: z.boolean(),
-  }),
+  secure: z.union([z.boolean(), z.literal("implicit")]).optional(),
+  secureOptions: z
+    .object({
+      rejectUnauthorized: z.boolean(),
+    })
+    .optional(),
 });
 
 const ConnectionDetailsSchema = z.discriminatedUnion("protocol", [

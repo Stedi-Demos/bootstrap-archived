@@ -1,7 +1,9 @@
 import { IncrementValueCommand, StashClient } from "@stedi/sdk-client-stash";
-
+import { z } from "zod";
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
-import { UsageIndicatorCode } from "./types/PartnerRouting.js";
+
+export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
+export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 
 const stashClient = new StashClient(DEFAULT_SDK_CLIENT_PROPS);
 

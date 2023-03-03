@@ -1,15 +1,18 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { Destinations, DestinationsSchema } from "./types/PartnerRouting.js";
+import {
+  TransactionSetDestinations,
+  TransactionSetDestinationsSchema,
+} from "./types/Destination.js";
 
 const stash = stashClient();
 
-export const saveDestinations = async (
+export const saveTransactionSetDestinations = async (
   id: string,
   partnership: object
-): Promise<Destinations> => {
-  const parseResult = DestinationsSchema.safeParse(partnership);
+): Promise<TransactionSetDestinations> => {
+  const parseResult = TransactionSetDestinationsSchema.safeParse(partnership);
 
   if (!parseResult.success) {
     console.dir(partnership, { depth: null });

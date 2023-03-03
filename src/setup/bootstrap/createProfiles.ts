@@ -10,14 +10,14 @@ export const createProfiles = async () => {
     profileId: "This-Is-Me-Inc",
     profileType: "local",
     interchangeQualifier: "ZZ",
-    interchangeId: "       THISISME",
+    interchangeId: "THISISME       ",
     applicationId: "MYAPPID",
   };
   const remoteProfile: CreateX12ProfileCommandInput = {
     profileId: "Another-Merchant",
     profileType: "partner",
     interchangeQualifier: "14",
-    interchangeId: "   ANOTHERMERCH",
+    interchangeId: "ANOTHERMERCH   ",
     applicationId: "ANOTAPPID",
   };
 

@@ -6,7 +6,7 @@ import {
 } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { stashClient as stashClient } from "../lib/clients/stash.js";
-import { saveDestinations } from "../lib/saveDestinations.js";
+import { saveTransactionSetDestinations } from "../lib/saveDestinations.js";
 import {
   CreateInboundX12TransactionCommand,
   CreateInboundX12TransactionCommandInput,
@@ -51,7 +51,7 @@ export const up = async () => {
 
     const stashPartnershipKey = stashPartnership.id;
     delete stashPartnership.id;
-    saveDestinations(destinationsId, stashPartnership);
+    saveTransactionSetDestinations(destinationsId, stashPartnership);
 
     const txnSetWithProfile = stashPartnership.transactionSets.find(
       (txnSet) => "sendingPartnerId" in txnSet
@@ -70,7 +70,7 @@ export const up = async () => {
       profileId: txnSetWithProfile.sendingPartnerId,
       profileType: "local",
       interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
-      interchangeId: sendingStashProfile.partnerInterchangeId.padStart(15, " "),
+      interchangeId: sendingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: sendingStashProfile.partnerApplicationId,
     };
 
@@ -83,10 +83,7 @@ export const up = async () => {
       profileId: txnSetWithProfile.receivingPartnerId,
       profileType: "partner",
       interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
-      interchangeId: receivingStashProfile.partnerInterchangeId.padStart(
-        15,
-        " "
-      ),
+      interchangeId: receivingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: receivingStashProfile.partnerApplicationId,
     };
 
@@ -139,22 +136,19 @@ export const up = async () => {
           };
         } else {
           // ack config
-          console.log("ack config", transactionSet);
+          await stash.send(
+            new SetValueCommand({
+              keyspaceName: PARTNERS_KEYSPACE_NAME,
+              key: `destinations|acknowledgements`,
+              value: {
+                description: transactionSet.description!,
+                destinations: transactionSet.destinations,
+              },
+            })
+          );
+          // no transaction rule is needed so skip below
+          continue;
         }
-      }
-
-      if (guideTarget === undefined) {
-        await stash.send(
-          new SetValueCommand({
-            keyspaceName: PARTNERS_KEYSPACE_NAME,
-            key: `destinations|acknowledgements`,
-            value: {
-              description: transactionSet.description!,
-              destinations: transactionSet.destinations,
-            },
-          })
-        );
-        continue; // no transaction rule is needed
       }
 
       let rule:

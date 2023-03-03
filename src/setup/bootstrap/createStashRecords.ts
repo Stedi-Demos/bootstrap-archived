@@ -1,5 +1,5 @@
 import { requiredEnvVar } from "../../lib/environment.js";
-import { saveTransactionSetDestinations } from "../../lib/saveDestinations.js";
+import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
 
 export const createSampleStashRecords = async () => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");

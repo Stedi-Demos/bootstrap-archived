@@ -6,7 +6,7 @@ import {
 } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { stashClient as stashClient } from "../lib/clients/stash.js";
-import { saveTransactionSetDestinations } from "../lib/saveDestinations.js";
+import { saveTransactionSetDestinations } from "../lib/saveTransactionSetDestinations.js";
 import {
   CreateInboundX12TransactionCommand,
   CreateInboundX12TransactionCommandInput,
@@ -44,15 +44,6 @@ export const up = async () => {
   const stashPartnerships = allStashPartnerships();
 
   for (const stashPartnership of stashPartnerships) {
-    const destinationsId = stashPartnership.id!.replace(
-      "partnership|",
-      "destinations|"
-    );
-
-    const stashPartnershipKey = stashPartnership.id;
-    delete stashPartnership.id;
-    saveTransactionSetDestinations(destinationsId, stashPartnership);
-
     const txnSetWithProfile = stashPartnership.transactionSets.find(
       (txnSet) => "sendingPartnerId" in txnSet
     ) as TransactionSetWithGuideId;
@@ -78,6 +69,7 @@ export const up = async () => {
     const receivingStashProfile = findStashProfile(
       txnSetWithProfile.receivingPartnerId
     );
+
     // prepare "partner" profile in Partners API
     const partnerProfile: CreateX12ProfileCommandInput = {
       profileId: txnSetWithProfile.receivingPartnerId,
@@ -190,19 +182,13 @@ export const up = async () => {
         );
       }
 
-      await stash.send(
-        new SetValueCommand({
-          keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `destinations|${rule.transactionId}`,
-          value: {
-            description: transactionSet.description!,
-            destinations: transactionSet.destinations,
-          },
-        })
-      );
+      saveTransactionSetDestinations(`destinations|${rule.transactionId}`, {
+        description: transactionSet.description!,
+        destinations: transactionSet.destinations,
+      });
     }
 
-    migratedStashPartnershipKeys.push(stashPartnershipKey as string);
+    migratedStashPartnershipKeys.push(stashPartnership.id!);
   }
 
   /// CLEANUP AFTER ALL SUCCESSFUL MIGRATION

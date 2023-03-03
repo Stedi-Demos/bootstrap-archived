@@ -3,7 +3,6 @@ import {
   BucketsClient,
   DeleteObjectCommand,
   PutObjectCommand,
-  ReadBucketCommand,
 } from "@stedi/sdk-client-buckets";
 import { EDITranslateClient } from "@stedi/sdk-client-edi-translate";
 import { FunctionsClient } from "@stedi/sdk-client-functions";
@@ -40,13 +39,7 @@ export const mockExecutionTracking = (mockedClient = mockBucketClient()) => {
     .on(PutObjectCommand, { bucketName: executionsBucket }) // execution creation
     .resolvesOnce({})
     .on(DeleteObjectCommand, { bucketName: executionsBucket }) // execution cleanup
-    .resolvesOnce({})
-    .on(ReadBucketCommand, { bucketName: executionsBucket }) // infinite loop check
-    .resolvesOnce({
-      notifications: {
-        functions: [],
-      },
-    });
+    .resolvesOnce({});
 };
 
 /**

@@ -22,8 +22,6 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
 
-    // Note, if an infinite Function execution loop is detected by `executionsBucketClient()`
-    // the failed execution will not be uploaded to the executions bucket
     return failedExecution(executionId, error);
   }
 };

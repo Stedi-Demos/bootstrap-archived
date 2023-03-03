@@ -6,7 +6,6 @@ import {
   BucketsClient,
   DeleteObjectCommand,
   PutObjectCommand,
-  ReadBucketCommand,
 } from "@stedi/sdk-client-buckets";
 import { requiredEnvVar } from "./environment.js";
 import { ErrorWithContext } from "./errorWithContext.js";
@@ -15,7 +14,6 @@ import { bucketsClient } from "./clients/buckets.js";
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
 let _executionsBucketClient: BucketsClient;
-let _infiniteLoopCheckPassed: boolean = false;
 
 export type FailureRecord = { bucketName?: string; key: string };
 export type FailureResponse = {
@@ -116,23 +114,6 @@ const functionName = () => requiredEnvVar("STEDI_FUNCTION_NAME");
 const executionsBucketClient = async (): Promise<BucketsClient> => {
   if (_executionsBucketClient === undefined) {
     _executionsBucketClient = bucketsClient();
-  }
-
-  if (!_infiniteLoopCheckPassed) {
-    // guard against infinite Function execution loops
-    const executionsBucket = await _executionsBucketClient.send(
-      new ReadBucketCommand({ bucketName })
-    );
-    if (
-      executionsBucket.notifications?.functions?.some(
-        (fn) => fn.functionName === functionName()
-      )
-    ) {
-      throw new Error(
-        "Error: executions bucket has recursive notifications configured"
-      );
-    }
-    _infiniteLoopCheckPassed = true;
   }
 
   return _executionsBucketClient;

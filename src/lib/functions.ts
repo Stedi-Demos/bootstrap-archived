@@ -1,3 +1,5 @@
+import { DocumentType } from "@aws-sdk/types";
+import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 import {
   CreateFunctionCommand,
   CreateFunctionCommandOutput,
@@ -7,45 +9,43 @@ import {
   UpdateFunctionCommand,
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
+import { bucketsClient } from "./clients/buckets.js";
 import { functionsClient } from "./clients/functions.js";
+import { requiredEnvVar } from "./environment.js";
 
 const functions = functionsClient();
+const buckets = bucketsClient();
 
 type FunctionInvocationId = string;
 
 export const invokeFunction = async (
   functionName: string,
-  input: any
-): Promise<string | undefined> => {
+  input: DocumentType
+): Promise<DocumentType | undefined> => {
   const result = await functions.send(
     new InvokeFunctionCommand({
       functionName,
-      requestPayload: Buffer.from(JSON.stringify(input)),
+      payload: input,
     })
   );
 
-  return result.responsePayload
-    ? Buffer.from(result.responsePayload).toString()
-    : undefined;
+  return result.payload;
 };
 
 export const invokeFunctionAsync = async (
   functionName: string,
-  input?: any
+  input?: DocumentType
 ): Promise<FunctionInvocationId> => {
-  const requestPayload = input ? Buffer.from(JSON.stringify(input)) : undefined;
-
-  const { functionInvocationId } = await functions.send(
+  const { invocationId } = await functions.send(
     new InvokeFunctionCommand({
       functionName,
       invocationType: "Event",
-      requestPayload,
-      contentType: "application/json",
+      payload: input ?? {},
     })
   );
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return functionInvocationId!;
+  return invocationId!;
 };
 
 export const createFunction = async (
@@ -55,10 +55,22 @@ export const createFunction = async (
     [key: string]: string;
   }
 ): Promise<CreateFunctionCommandOutput> => {
+  const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
+  const key = `functions/${functionName}/package.zip`;
+
+  await buckets.send(
+    new PutObjectCommand({
+      bucketName,
+      key,
+      body: functionPackage,
+    })
+  );
+
   return functions.send(
     new CreateFunctionCommand({
       functionName,
-      package: functionPackage,
+      packageBucket: bucketName,
+      packageKey: key,
       environmentVariables,
       timeout: 900,
     })
@@ -72,10 +84,22 @@ export const updateFunction = async (
     [key: string]: string;
   }
 ): Promise<UpdateFunctionCommandOutput> => {
+  const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
+  const key = `functions/${functionName}/package.zip`;
+
+  await buckets.send(
+    new PutObjectCommand({
+      bucketName,
+      key,
+      body: functionPackage,
+    })
+  );
+
   return functions.send(
     new UpdateFunctionCommand({
       functionName,
-      package: functionPackage,
+      packageBucket: bucketName,
+      packageKey: key,
       environmentVariables,
       timeout: 900,
     })

@@ -16,6 +16,7 @@ export const saveTransactionSetDestinations = async (
 
   if (!parseResult.success) {
     console.dir(partnership, { depth: null });
+    console.dir(parseResult.error, { depth: null });
     throw Error("Partnership does not match allowed schema");
   }
 

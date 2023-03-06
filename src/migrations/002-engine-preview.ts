@@ -93,6 +93,7 @@ export const up = async () => {
     await partners.send(new CreateX12ProfileCommand(partnerProfile));
     migratedStashProfileKeys.push(partnerProfile.profileId);
 
+    console.log("before partnership create");
     // create partnership
     const partnership = await partners.send(
       new CreateX12PartnershipCommand({
@@ -101,6 +102,8 @@ export const up = async () => {
         partnershipId: `${localProfile.profileId}_${partnerProfile.profileId}`,
       })
     );
+
+    console.log("------------------------------------------------------");
 
     for (const transactionSet of stashPartnership.transactionSets) {
       let guideId: string | undefined;

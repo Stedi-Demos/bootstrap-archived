@@ -23,7 +23,6 @@ import {
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { loadTransactionSetDestinations } from "../../../lib/loadTransactionSetDestinations.js";
-import { tr } from "date-fns/locale";
 
 export const handler = async (
   event: OutboundEvent

@@ -12,4 +12,4 @@ jobs:
       if: github.event.action == 'opened'
       with:
         project-url: 'https://github.com/orgs/Stedi/projects/94'
-        github-token: ${{ secrets.ENG_GITHUB_TOKEN }}
+        github-token: ${{ secrets.CUSTOMER_OPS_TOKEN }}

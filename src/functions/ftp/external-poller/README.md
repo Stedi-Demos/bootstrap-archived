@@ -3,7 +3,7 @@
 This bootstrap module supports the polling of remote FTP / SFTP servers for files to be processed. When files are found
 during the polling operation, they are copied to a [Stedi bucket](https://www.stedi.com/docs/buckets), and can then
 optionally be deleted from the remote server. If the destination bucket has bucket notifications enabled to invoke
-the [`edi-inbound`](src/functions/edi/inbound/handler.ts) function, and you specify an `inbound` directory as the
+the [`edi-inbound`](/src/functions/edi/inbound/handler.ts) function, and you specify an `inbound` directory as the
 destination for downloaded files, those documents will be processed automatically.
 
 ## Configuration
@@ -163,9 +163,9 @@ Result:
 If you'd like to invoke the poller on a scheduled basis, there are several options. You can set up a workflow using your
 orchestration tool of choice, and use either
 the [Functions SDK](https://www.stedi.com/docs/functions/tutorial#invoke-a-function-using-the-stedi-functions-sdk) or
-the [Functions API](https://www.stedi.com/docs/api/functions) in order to invoke the function.
+the [Functions API](https://www.stedi.com/docs/api/functions#InvokeFunction) in order to invoke the function.
 
-The repo also includes a [scheduler GitHub action](.github/workflows/scheduled-ftp-poller.yaml) which can be used to
+The repo also includes a [scheduler GitHub action](/.github/workflows/scheduled-ftp-poller.yaml) which can be used to
 invoke the
 function automatically on a scheduled basis. If you would like to use this approach, you can fork the repo and follow
 the steps below in order to enable the scheduled function executions in your account:

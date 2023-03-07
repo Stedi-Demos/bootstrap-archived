@@ -100,11 +100,14 @@ export const handler = async (
       },
     };
 
+    console.log(envelope);
+
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
       transactionSetDestinations.destinations.map(
         async ({ destination, mappingId }) => {
+          console.log(destination);
           const guideJson =
             mappingId !== undefined
               ? await invokeMapping(mappingId, outboundEvent.payload)
@@ -118,6 +121,8 @@ export const handler = async (
             transactionSetConfig.guideId,
             envelope
           );
+
+          console.log(translation);
 
           const destinationFilename = generateDestinationFilename(
             isaControlNumber,

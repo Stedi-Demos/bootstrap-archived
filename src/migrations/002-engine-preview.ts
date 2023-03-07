@@ -16,6 +16,7 @@ import {
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
+  UpdateX12PartnershipCommand,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../lib/clients/partners.js";
 import { cloneDeep } from "lodash-es";
@@ -95,11 +96,13 @@ export const up = async () => {
 
     console.log("before partnership create");
     // create partnership
+    const partnershipId = `${localProfile.profileId}_${partnerProfile.profileId}`;
     const partnership = await partners.send(
       new CreateX12PartnershipCommand({
+        partnershipId,
         localProfileId: localProfile.profileId,
         partnerProfileId: partnerProfile.profileId,
-        partnershipId: `${localProfile.profileId}_${partnerProfile.profileId}`,
+        functionalAcknowledgmentConfig: undefined,
       })
     );
 
@@ -131,6 +134,20 @@ export const up = async () => {
           };
         } else {
           // ack config
+
+          // update partnership to include 997 config
+          await partners.send(
+            new UpdateX12PartnershipCommand({
+              partnershipId,
+              functionalAcknowledgmentConfig: {
+                acknowledgmentType: "997",
+                generate: "ALWAYS",
+                groupBy: "ONE_PER_INTERCHANGE",
+              },
+            })
+          );
+
+          // write 997 destinations to Stash
           await stash.send(
             new SetValueCommand({
               keyspaceName: PARTNERS_KEYSPACE_NAME,
@@ -171,14 +188,6 @@ export const up = async () => {
           transactionSetIdentifier: guideTarget.transactionSet,
           guideId,
         };
-
-        if ("acknowledgmentConfig" in transactionSet) {
-          params.functionalAcknowledgmentConfig = {
-            acknowledgmentType: "997",
-            generate: "ALWAYS",
-            groupBy: "ONE_PER_INTERCHANGE",
-          };
-        }
 
         rule = await partners.send(
           new CreateInboundX12TransactionCommand(params)

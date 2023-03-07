@@ -1,6 +1,7 @@
 {
   "metadata": {
-    "partnershipId": "this-is-me_another-merchant "
+    "partnershipId": "this-is-me_another-merchant",
+    "usageIndicatorCode": "T"
   },
   "payload": {
     "heading": {

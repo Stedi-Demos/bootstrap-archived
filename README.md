@@ -395,9 +395,9 @@ cases. [Contact us](https://www.stedi.com/contact) to set up a meeting with our 
 
 # Polling remote FTP / SFTP servers
 
-The bootstrap project now includes support for polling remote FTP and SFTP servers in order to download files from your
-trading partners. For additional details, see
-the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md).
+You can poll remote FTP and SFTP servers to download files from your
+trading partners. Visit
+the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md) for details.
 
 # Cleanup
 

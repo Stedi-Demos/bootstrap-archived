@@ -1,0 +1,15 @@
+name: auto-assign-issues-to-project
+on:
+  issues:
+    types: [opened]
+jobs:
+  assign_one_project:
+    runs-on: ubuntu-latest
+    name: Assign to Customer Ops Project
+    steps:
+    - name: Assign new issues to Customer Ops project
+      uses: actions/add-to-project@960fbad431afda394cfcf8743445e741acd19e85 # v0.4.0
+      if: github.event.action == 'opened'
+      with:
+        project-url: 'https://github.com/orgs/Stedi/projects/94'
+        github-token: ${{ secrets.CUSTOMER_OPS_TOKEN }}

@@ -12,10 +12,10 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
 
-const buckets = bucketsClient();
-const sftp = sftpClient();
-
 (async () => {
+  const buckets = bucketsClient();
+  const sftp = sftpClient();
+
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions

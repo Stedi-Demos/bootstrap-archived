@@ -11,17 +11,9 @@ import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
   generateDestinationFilename,
-  groupDeliveryResults
+  groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
-import { loadPartnership } from "../../../lib/loadPartnership.js";
-import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
-import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
-import {
-  getTransactionSetConfigsForPartnership,
-  groupTransactionSetConfigsByType,
-  resolveTransactionSetConfig,
-} from "../../../lib/transactionSetConfigs.js";
 import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
@@ -29,8 +21,13 @@ import {
   OutboundEventSchema,
 } from "../../../lib/types/OutboundEvent.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
+import { loadTransactionSetDestinations } from "../../../lib/loadTransactionSetDestinations.js";
+import { tr } from "date-fns/locale";
 
-export const handler = async (event: any): Promise<Record<string, any>> => {
+export const handler = async (
+  event: OutboundEvent
+): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
   console.log("starting", JSON.stringify({ input: event, executionId }));
 
@@ -38,90 +35,66 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     await recordNewExecution(executionId, event);
     const outboundEvent = OutboundEventSchema.parse(event);
 
-    // load "my" Trading Partner profile
-    const { sendingPartnerId } = outboundEvent.metadata;
-    const senderProfile = await loadPartnerProfile(sendingPartnerId);
-
-    // load the receiver's Trading Partner profile
-    const { receivingPartnerId } = outboundEvent.metadata;
-    const receiverProfile = await loadPartnerProfile(receivingPartnerId);
-
     // load the outbound x12 configuration for the sender
-    const partnership = await loadPartnership(
-      sendingPartnerId,
-      receivingPartnerId
-    );
+    const partnership = await loadPartnershipById({
+      partnershipId: event.metadata.partnershipId,
+    });
 
     // get the transaction set from Guide JSON or event metadata
-    const transactionSetType = determineTransactionSetType(outboundEvent);
-    const release = determineRelease(outboundEvent);
+    const transactionSetIdentifier =
+      determineTransactionSetIdentifier(outboundEvent);
 
-    // get transaction set configs for partnership
-    const transactionSetConfigs = getTransactionSetConfigsForPartnership({
-      partnership,
-      sendingPartnerId,
-      receivingPartnerId,
-    });
+    const transactionSetConfig = partnership.outboundTransactions?.find(
+      (txn) => txn.transactionSetIdentifier === transactionSetIdentifier
+    );
 
-    const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
-
-    // load the guide for the transaction set
-    const guideSummary = await resolveGuide({
-      guideIdsForPartnership: groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
-        (config) => config.guideId
-      ),
-      transactionSetType,
-      release,
-    });
-
-    if (release && guideSummary.release !== release) {
+    if (transactionSetConfig === undefined)
       throw new Error(
-        `No guide exists for the specified release: ${release}, found guide with release: ${guideSummary.release}`
+        `Transaction set not found in partnership configuration for '${transactionSetIdentifier}'`
       );
-    }
 
-    // find the transaction set config for partnership that includes guide
-    const transactionSetConfig = resolveTransactionSetConfig(
-      groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
-      guideSummary.guideId
+    const transactionSetDestinations = await loadTransactionSetDestinations(
+      transactionSetConfig.transactionId!
     );
 
     // resolve the functional group for the transaction set
-    const functionalIdentifierCode =
-      lookupFunctionalIdentifierCode(transactionSetType);
+    const functionalIdentifierCode = lookupFunctionalIdentifierCode(
+      transactionSetIdentifier
+    );
 
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
     const isaControlNumber = await generateControlNumber({
       segment: "ISA",
-      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
-      sendingPartnerId,
-      receivingPartnerId,
+      usageIndicatorCode: event.metadata.usageIndicatorCode,
+      sendingPartnerId: partnership.localProfileId!,
+      receivingPartnerId: partnership.partnerProfileId!,
     });
+
     const gsControlNumber = await generateControlNumber({
       segment: "GS",
-      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
-      sendingPartnerId,
-      receivingPartnerId,
+      usageIndicatorCode: event.metadata.usageIndicatorCode,
+      sendingPartnerId: partnership.localProfileId!,
+      receivingPartnerId: partnership.partnerProfileId!,
     });
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
       interchangeHeader: {
-        senderQualifier: senderProfile.partnerInterchangeQualifier,
-        senderId: senderProfile.partnerInterchangeId,
-        receiverQualifier: receiverProfile.partnerInterchangeQualifier,
-        receiverId: receiverProfile.partnerInterchangeId,
+        senderQualifier: partnership.localProfile!.interchangeQualifier,
+        senderId: partnership.localProfile!.interchangeId,
+        receiverQualifier: partnership.partnerProfile!.interchangeQualifier,
+        receiverId: partnership.partnerProfile?.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
         controlNumber: isaControlNumber,
-        usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
+        usageIndicatorCode: event.metadata.usageIndicatorCode,
       },
       groupHeader: {
         functionalIdentifierCode,
-        applicationSenderCode: senderProfile.partnerApplicationId,
-        applicationReceiverCode: receiverProfile.partnerApplicationId,
+        applicationSenderCode: partnership.localProfile!.applicationId,
+        applicationReceiverCode: partnership.partnerProfile!.applicationId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
         controlNumber: gsControlNumber,
@@ -131,7 +104,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
-      transactionSetConfig.destinations.map(
+      transactionSetDestinations.destinations.map(
         async ({ destination, mappingId }) => {
           const guideJson =
             mappingId !== undefined
@@ -143,11 +116,15 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           // Translate the Guide schema-based JSON to X12 EDI
           const translation = await translateJsonToEdi(
             guideJson,
-            guideSummary.guideId,
+            transactionSetConfig.guideId,
             envelope
           );
 
-          const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
+          const destinationFilename = generateDestinationFilename(
+            isaControlNumber,
+            transactionSetIdentifier,
+            "edi"
+          );
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
@@ -165,8 +142,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         executionId,
         new ErrorWithContext(
           `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
-          deliveryResultsByStatus,
-        ),
+          deliveryResultsByStatus
+        )
       );
     }
 
@@ -182,14 +159,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
   }
 };
 
-const determineTransactionSetType = (event: OutboundEvent): string => {
+const determineTransactionSetIdentifier = (event: OutboundEvent): string => {
   return (
     event.metadata.transactionSet ??
-    extractTransactionSetTypeFromGuideJson(event.payload)
+    extractTransactionSetIdentifierFromGuideJson(event.payload)
   );
 };
-
-const determineRelease = (event: OutboundEvent): string | undefined => event.metadata.release;
 
 const normalizeGuideJson = (guideJson: any): any[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },
@@ -197,7 +172,9 @@ const normalizeGuideJson = (guideJson: any): any[] => {
   return Array.isArray(guideJson) ? guideJson : [guideJson];
 };
 
-const extractTransactionSetTypeFromGuideJson = (guideJson: any): string => {
+const extractTransactionSetIdentifierFromGuideJson = (
+  guideJson: any
+): string => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   // ensure that there is exactly 1 transaction set type in the input
@@ -232,8 +209,7 @@ const validateTransactionSetControlNumbers = (guideJson: any) => {
       t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
     );
     if (controlNumberValue !== expectedControlNumber) {
-      const message =
-        `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;
+      const message = `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;
       console.log(message);
       throw new Error(message);
     }

@@ -1,16 +1,11 @@
 import * as z from "zod";
+import { UsageIndicatorCodeSchema } from "../generateControlNumber";
 
 export const OutboundEventSchema = z.strictObject({
   metadata: z.strictObject({
-    sendingPartnerId: z.string(),
-    receivingPartnerId: z.string(),
+    partnershipId: z.string(),
     transactionSet: z.string().optional(),
-    release: z
-      .string()
-      .optional()
-      .describe(
-        "selects a guide with a specific release when multiple guides are configured for the same transaction set"
-      ),
+    usageIndicatorCode: UsageIndicatorCodeSchema,
   }),
   payload: z.any(),
 });

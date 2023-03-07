@@ -61,3 +61,12 @@ export const DestinationSchema = z.strictObject({
 });
 
 export type Destination = z.infer<typeof DestinationSchema>;
+
+export const TransactionSetDestinationsSchema = z.strictObject({
+  description: z.string().optional(),
+  destinations: z.array(DestinationSchema),
+});
+
+export type TransactionSetDestinations = z.infer<
+  typeof TransactionSetDestinationsSchema
+>;

@@ -4,7 +4,6 @@ import {
   UpdateBucketInput,
 } from "@stedi/sdk-client-buckets";
 import { bucketsClient } from "../lib/clients/buckets.js";
-
 import { requiredEnvVar } from "../lib/environment.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 

@@ -1,11 +1,11 @@
 export const lookupFunctionalIdentifierCode = (
-  transactionSet: string
+  transactionSetIdentifier: string
 ): string => {
-  const code = functionalIdentifierCodeLookup[transactionSet];
+  const code = functionalIdentifierCodeLookup[transactionSetIdentifier];
 
   if (code === undefined)
     throw new Error(
-      `No functional identifier code found for '${transactionSet}'`
+      `No functional identifier code found for '${transactionSetIdentifier}'`
     );
 
   return code;

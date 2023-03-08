@@ -12,6 +12,7 @@ export const stashClient = () => {
     if (process.env["USE_PREVIEW"] !== undefined)
       config.endpoint = "https://stash.us.preproduction.stedi.com/2022-04-20";
 
+    console.log({ config });
     _stashClient = new StashClient(config);
   }
 

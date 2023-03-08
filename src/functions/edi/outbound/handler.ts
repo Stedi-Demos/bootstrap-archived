@@ -28,7 +28,7 @@ export const handler = async (
   event: OutboundEvent
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
-  console.log("starting", JSON.stringify({ input: event, executionId }));
+  console.log("test! starting", JSON.stringify({ input: event, executionId }));
 
   try {
     await recordNewExecution(executionId, event);
@@ -38,6 +38,7 @@ export const handler = async (
     const partnership = await loadPartnershipById({
       partnershipId: event.metadata.partnershipId,
     });
+    console.log({ partnership });
 
     // get the transaction set from Guide JSON or event metadata
     const transactionSetIdentifier =
@@ -46,6 +47,7 @@ export const handler = async (
     const transactionSetConfig = partnership.outboundTransactions?.find(
       (txn) => txn.transactionSetIdentifier === transactionSetIdentifier
     );
+    console.log({ transactionSetConfig });
 
     if (transactionSetConfig === undefined)
       throw new Error(

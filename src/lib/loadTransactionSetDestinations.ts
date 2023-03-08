@@ -11,6 +11,10 @@ const stash = stashClient();
 export const loadTransactionSetDestinations = async (
   transactionRuleId: string
 ): Promise<TransactionSetDestinations> => {
+  console.log({
+    keyspaceName: PARTNERS_KEYSPACE_NAME,
+    key: `destinations|${transactionRuleId}`,
+  });
   const { value } = await stash.send(
     new GetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,

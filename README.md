@@ -380,13 +380,13 @@ You can invoke the `outbound-edi` function through the UI for testing.
 The bootstrap workflow uses a sample trading partner to set up and test the read and write EDI workflows. You can
 customize the bootstrap workflow by doing one or all of the following:
 
-- [Edit the partner profile](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#add-a-trading-partner-profile)
+- [Edit the partner profile](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#add-a-partner-profile-for-your-trading-partners)
   to replace the test trading partner with your real trading partners' details and requirements.
-- [Create Stedi mappings](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#map-inbound-messages). The base
+- [Create Stedi mappings](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#map-inbound-messages-to-a-custom-json-shape). The base
   bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. You may need to
   create a mapping to transform EDI documents into a custom JSON shape for your internal system. You can also create a
   mapping that transforms JSON data from your system into the JSON schema required for outgoing EDI documents.
-- [Create SFTP users](https://www.stedi.com/docs/bootstrap/adjusting-the-workflow#sending-and-receiving-documents-with-sftp)
+- [Create SFTP users](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#send-and-receive-documents-with-sftp)
   for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets.
 
 You may want to use additional Stedi products to further optimize your EDI workflows. We can help you customize the
@@ -395,9 +395,9 @@ cases. [Contact us](https://www.stedi.com/contact) to set up a meeting with our 
 
 # Polling remote FTP / SFTP servers
 
-The bootstrap project now includes support for polling remote FTP and SFTP servers in order to download files from your
-trading partners. For additional details, see
-the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md).
+You can poll remote FTP and SFTP servers to download files from your
+trading partners. Visit
+the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md) for details.
 
 # Cleanup
 

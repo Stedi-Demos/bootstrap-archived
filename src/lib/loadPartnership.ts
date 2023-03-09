@@ -1,7 +1,7 @@
 import * as x12 from "@stedi/x12-tools";
 import {
-  GetX12PartnershipByX12IdentifiersCommand,
-  GetX12PartnershipByX12IdentifiersCommandOutput,
+  GetX12PartnershipByInterchangesCommand,
+  GetX12PartnershipByInterchangesCommandOutput,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "./clients/partners.js";
 import { InterchangePartnerDetail } from "./metadata.js";
@@ -18,18 +18,12 @@ export const loadPartnershipByISA = async ({
   sender,
   receiver,
   functionalGroupEnvelope,
-}: LoadPartnershipParams): Promise<GetX12PartnershipByX12IdentifiersCommandOutput> => {
+}: LoadPartnershipParams): Promise<GetX12PartnershipByInterchangesCommandOutput> => {
   try {
     return await partners.send(
-      new GetX12PartnershipByX12IdentifiersCommand({
-        localInterchangeIdentifier: {
-          ...sender,
-          applicationId: functionalGroupEnvelope.applicationSenderCode,
-        },
-        partnerInterchangeIdentifier: {
-          ...receiver,
-          applicationId: functionalGroupEnvelope.applicationReceiverCode,
-        },
+      new GetX12PartnershipByInterchangesCommand({
+        localInterchangeIdentifier: sender,
+        partnerInterchangeIdentifier: receiver,
       })
     );
   } catch (error) {
@@ -42,15 +36,9 @@ export const loadPartnershipByISA = async ({
       throw error;
 
     return await partners.send(
-      new GetX12PartnershipByX12IdentifiersCommand({
-        localInterchangeIdentifier: {
-          ...receiver,
-          applicationId: functionalGroupEnvelope.applicationReceiverCode,
-        },
-        partnerInterchangeIdentifier: {
-          ...sender,
-          applicationId: functionalGroupEnvelope.applicationSenderCode,
-        },
+      new GetX12PartnershipByInterchangesCommand({
+        localInterchangeIdentifier: receiver,
+        partnerInterchangeIdentifier: sender,
       })
     );
   }

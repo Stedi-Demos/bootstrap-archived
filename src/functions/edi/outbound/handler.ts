@@ -92,10 +92,9 @@ export const handler = async (
       },
       groupHeader: {
         functionalIdentifierCode,
-        applicationSenderCode:
-          partnership.localProfile!.applicationId ?? "TODOREMOVE",
+        applicationSenderCode: partnership.localProfile!.interchangeQualifier,
         applicationReceiverCode:
-          partnership.partnerProfile!.applicationId ?? "TODOREMOVE",
+          partnership.partnerProfile!.interchangeQualifier,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
         controlNumber: gsControlNumber,

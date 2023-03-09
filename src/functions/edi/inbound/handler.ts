@@ -11,6 +11,7 @@ import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 const buckets = bucketsClient();
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
+  console.log(JSON.stringify(event, null, 2));
   const executionId = generateExecutionId(event);
 
   try {

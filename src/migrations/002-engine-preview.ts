@@ -63,7 +63,6 @@ export const up = async () => {
       profileType: "local",
       interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
       interchangeId: sendingStashProfile.partnerInterchangeId.padEnd(15, " "),
-      applicationId: sendingStashProfile.partnerApplicationId,
     };
 
     // get "receiving" profile from Stash
@@ -77,7 +76,6 @@ export const up = async () => {
       profileType: "partner",
       interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
       interchangeId: receivingStashProfile.partnerInterchangeId.padEnd(15, " "),
-      applicationId: receivingStashProfile.partnerApplicationId,
     };
 
     if (

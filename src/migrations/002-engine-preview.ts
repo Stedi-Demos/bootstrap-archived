@@ -65,7 +65,6 @@ export const up = async () => {
       interchangeId: sendingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: sendingStashProfile.partnerApplicationId,
     };
-    console.log({ localProfile });
 
     // get "receiving" profile from Stash
     const receivingStashProfile = findStashProfile(
@@ -80,7 +79,6 @@ export const up = async () => {
       interchangeId: receivingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: receivingStashProfile.partnerApplicationId,
     };
-    console.log({ partnerProfile });
 
     if (
       localProfile.profileId === undefined ||

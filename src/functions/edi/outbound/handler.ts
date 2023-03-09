@@ -38,7 +38,6 @@ export const handler = async (
     const partnership = await loadPartnershipById({
       partnershipId: event.metadata.partnershipId,
     });
-    console.log({ partnership });
 
     // get the transaction set from Guide JSON or event metadata
     const transactionSetIdentifier =

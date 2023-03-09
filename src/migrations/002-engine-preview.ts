@@ -57,7 +57,6 @@ export const up = async () => {
       txnSetWithProfile.sendingPartnerId
     );
 
-    console.log(sendingStashProfile);
     // prepare "local" profile in Partners API
     const localProfile: CreateX12ProfileCommandInput = {
       profileId: txnSetWithProfile.sendingPartnerId,
@@ -66,13 +65,13 @@ export const up = async () => {
       interchangeId: sendingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: sendingStashProfile.partnerApplicationId,
     };
+    console.log({ localProfile });
 
     // get "receiving" profile from Stash
     const receivingStashProfile = findStashProfile(
       txnSetWithProfile.receivingPartnerId
     );
 
-    console.log(receivingStashProfile);
     // prepare "partner" profile in Partners API
     const partnerProfile: CreateX12ProfileCommandInput = {
       profileId: txnSetWithProfile.receivingPartnerId,
@@ -81,6 +80,7 @@ export const up = async () => {
       interchangeId: receivingStashProfile.partnerInterchangeId.padEnd(15, " "),
       applicationId: receivingStashProfile.partnerApplicationId,
     };
+    console.log({ partnerProfile });
 
     if (
       localProfile.profileId === undefined ||

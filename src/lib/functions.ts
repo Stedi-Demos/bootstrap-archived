@@ -56,7 +56,9 @@ export const createFunction = async (
   }
 ): Promise<CreateFunctionCommandOutput> => {
   const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
-  const key = `functionPackages/${functionName}/package.zip`;
+  const key = `functionPackages/${functionName}/${new Date()
+    .getTime()
+    .toString()}-package.zip`;
 
   await buckets.send(
     new PutObjectCommand({
@@ -72,6 +74,7 @@ export const createFunction = async (
       packageBucket: bucketName,
       packageKey: key,
       environmentVariables,
+
       timeout: 900,
     })
   );
@@ -85,7 +88,9 @@ export const updateFunction = async (
   }
 ): Promise<UpdateFunctionCommandOutput> => {
   const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
-  const key = `functionPackages/${functionName}/package.zip`;
+  const key = `functionPackages/${functionName}/${new Date()
+    .getTime()
+    .toString()}-package.zip`;
 
   await buckets.send(
     new PutObjectCommand({

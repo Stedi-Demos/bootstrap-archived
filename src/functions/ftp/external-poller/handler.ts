@@ -1,16 +1,13 @@
-import {
-  GetValueCommand,
-  SetValueCommand,
-  StashClient,
-} from "@stedi/sdk-client-stash";
+import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
 
 import { requiredEnvVar } from "../../../lib/environment.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
 import {
-  failedExecution, FailureResponse,
+  failedExecution,
+  FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
-  recordNewExecution
+  recordNewExecution,
 } from "../../../lib/execution.js";
 import {
   RemotePollerConfig,
@@ -22,19 +19,19 @@ import { RemotePoller } from "./pollers/remotePoller.js";
 import { FtpPoller } from "./pollers/ftpPoller.js";
 import { SftpPoller } from "./pollers/sftpPoller.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import { stashClient } from "../../../lib/clients/stash.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
 const ftpConfigStashKey = "bootstrap|remote-poller-config";
 
-const stashClient = new StashClient({
-  region: "us",
-  apiKey: requiredEnvVar("STEDI_API_KEY"),
-});
+const stash = stashClient();
 
-const getRemotePoller = async (remotePollerConfig: RemotePollerConfig): Promise<RemotePoller> => {
-  switch(remotePollerConfig.connectionDetails.protocol) {
+const getRemotePoller = async (
+  remotePollerConfig: RemotePollerConfig
+): Promise<RemotePoller> => {
+  switch (remotePollerConfig.connectionDetails.protocol) {
     case "ftp":
-      return await FtpPoller.getPoller(remotePollerConfig.connectionDetails)
+      return await FtpPoller.getPoller(remotePollerConfig.connectionDetails);
     case "sftp":
       return await SftpPoller.getPoller(remotePollerConfig.connectionDetails);
   }
@@ -53,7 +50,7 @@ export const handler = async (
   });
 
   try {
-    const stashResponse = await stashClient.send(
+    const stashResponse = await stash.send(
       new GetValueCommand({
         keyspaceName,
         key: ftpConfigStashKey,
@@ -61,9 +58,8 @@ export const handler = async (
     );
 
     // `FtpPollerConfigMap.parse` handles failed stash lookup as well (value is undefined)
-    const remotePollerConfigMap: RemotePollerConfigMap = RemotePollerConfigMapSchema.parse(
-      stashResponse.value
-    );
+    const remotePollerConfigMap: RemotePollerConfigMap =
+      RemotePollerConfigMapSchema.parse(stashResponse.value);
     const pollerConfig: RemotePollerConfig = remotePollerConfigMap[configId];
 
     if (!pollerConfig) {
@@ -89,8 +85,8 @@ export const handler = async (
         executionId,
         new ErrorWithContext(
           "at least one processing error encountered during polling",
-          { results },
-        ),
+          { results }
+        )
       );
     }
 
@@ -101,7 +97,7 @@ export const handler = async (
       [configId]: { ...(pollerConfig as object) },
     };
 
-    await stashClient.send(
+    await stash.send(
       new SetValueCommand({
         keyspaceName,
         key: ftpConfigStashKey,
@@ -148,7 +144,8 @@ const pollRemoteServer = async (
 
     try {
       await remotePoller.downloadFile(remotePollerConfig.destination, file);
-      remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
+      remotePollerConfig.deleteAfterProcessing &&
+        (await remotePoller.deleteFile(file));
       ftpPollingResults.processedFiles.push(file);
     } catch (e) {
       const error = ErrorWithContext.fromUnknown(e);

@@ -1,11 +1,12 @@
-import { IncrementValueCommand, StashClient } from "@stedi/sdk-client-stash";
+import { IncrementValueCommand } from "@stedi/sdk-client-stash";
 import { z } from "zod";
-import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
+import { stashClient } from "./clients/stash.js";
+import { OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME } from "./constants.js";
 
 export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
 export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 
-const stashClient = new StashClient(DEFAULT_SDK_CLIENT_PROPS);
+const stash = stashClient();
 
 type GenerateControlNumberInput = {
   usageIndicatorCode: UsageIndicatorCode;
@@ -23,12 +24,13 @@ export const generateControlNumber = async ({
   amount,
 }: GenerateControlNumberInput) => {
   const key = `${usageIndicatorCode}|${segment}|${sendingPartnerId}|${receivingPartnerId}`;
-  let { value: controlNumber } = await stashClient.send(
-    new IncrementValueCommand({
-      keyspaceName: "outbound-control-numbers",
-      key,
-      amount: amount ?? 1,
-    })
+  const params = {
+    keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
+    key,
+    amount: amount ?? 1,
+  };
+  let { value: controlNumber } = await stash.send(
+    new IncrementValueCommand(params)
   );
 
   if (!controlNumber)

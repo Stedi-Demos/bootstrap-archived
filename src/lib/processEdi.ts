@@ -1,4 +1,4 @@
-import { translateEdiToJson } from "./translateV3.js";
+import { translateEdiToJson } from "./translateEDI.js";
 
 export const processEdi = async (
   guideId: string,

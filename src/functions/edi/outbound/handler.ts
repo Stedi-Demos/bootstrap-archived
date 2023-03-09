@@ -1,6 +1,5 @@
 import { format } from "date-fns";
-
-import { translateJsonToEdi } from "../../../lib/translateV3.js";
+import { translateJsonToEdi } from "../../../lib/translateEDI.js";
 import {
   failedExecution,
   generateExecutionId,
@@ -23,12 +22,13 @@ import {
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { loadTransactionSetDestinations } from "../../../lib/loadTransactionSetDestinations.js";
+import { env } from "process";
 
 export const handler = async (
   event: OutboundEvent
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
-  console.log("test! starting", JSON.stringify({ input: event, executionId }));
+  console.log("test 2 starting", JSON.stringify({ input: event, executionId }));
 
   try {
     await recordNewExecution(executionId, event);
@@ -46,7 +46,6 @@ export const handler = async (
     const transactionSetConfig = partnership.outboundTransactions?.find(
       (txn) => txn.transactionSetIdentifier === transactionSetIdentifier
     );
-    console.log({ transactionSetConfig });
 
     if (transactionSetConfig === undefined)
       throw new Error(
@@ -101,7 +100,7 @@ export const handler = async (
       },
     };
 
-    console.log(envelope);
+    console.log({ envelope });
 
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
@@ -159,6 +158,7 @@ export const handler = async (
       deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
     };
   } catch (e) {
+    console.error(e);
     const errorWithContext = ErrorWithContext.fromUnknown(e);
     return failedExecution(executionId, errorWithContext);
   }

@@ -21,18 +21,19 @@ const createOrUpdateFunction = async (
     [key: string]: string;
   }
 ) => {
-  // try {
-  //   await updateFunction(functionName, functionPackage, environmentVariables);
-  // } catch (e) {
-  console.log("Deleting function: ", functionName);
-  await deleteFunction(functionName);
-  await waitUntilFunctionDeleteComplete(
-    { client: functions, maxWaitTime: 90 },
-    { functionName }
-  );
-  console.log("Create function: ", functionName);
-  await createFunction(functionName, functionPackage, environmentVariables);
-  // }
+  // console.log("Deleting function now: ", functionName);
+  // await deleteFunction(functionName);
+  // await waitUntilFunctionDeleteComplete(
+  //   { client: functions, maxWaitTime: 90 },
+  //   { functionName }
+  // );
+  // console.log("Create function: ", functionName);
+
+  try {
+    await updateFunction(functionName, functionPackage, environmentVariables);
+  } catch (e) {
+    await createFunction(functionName, functionPackage, environmentVariables);
+  }
 };
 
 (async () => {

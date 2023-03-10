@@ -165,6 +165,14 @@ export const up = async () => {
         }
       }
 
+      if (
+        "acknowledgmentConfig" in transactionSet &&
+        transactionSet.acknowledgmentConfig?.acknowledgmentType === "997" &&
+        guideTarget.transactionSet !== undefined
+      ) {
+        generate997For.push(guideTarget.transactionSet);
+      }
+
       let rule:
         | CreateOutboundX12TransactionCommandOutput
         | CreateInboundX12TransactionCommandOutput;

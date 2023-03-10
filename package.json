@@ -11,6 +11,7 @@
     "configure-storage": "npm run ensure-keyspaces-exist && npm run configure-buckets",
     "ensure-keyspaces-exist": "ts-node-esm ./src/setup/bootstrap/ensureKeyspacesExist.ts",
     "enable-notifications": "ts-node-esm ./src/setup/enableBucketNotifications.ts",
+    "write-edi": "ts-node-esm ./src/scripts/writeEdi.ts",
     "execute": "ts-node-esm ./src/scripts/execute.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
     "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",

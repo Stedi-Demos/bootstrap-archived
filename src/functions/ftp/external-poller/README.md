@@ -1,19 +1,36 @@
 # External FTP / SFTP poller
 
-This bootstrap module supports the polling of remote FTP / SFTP servers for files to be processed. When files are found
-during the polling operation, they are copied to a [Stedi bucket](https://www.stedi.com/docs/buckets), and can then
-optionally be deleted from the remote server. If the destination bucket has bucket notifications enabled to invoke
-the [`edi-inbound`](/src/functions/edi/inbound/handler.ts) function, and you specify an `inbound` directory as the
-destination for downloaded files, those documents will be processed automatically.
+This bootstrap module supports polling remote FTP / SFTP servers for files. When the poller finds files, it copies them to a [Stedi bucket](https://www.stedi.com/docs/buckets). Then, the operation can optionally delete those files from the remote server.
 
-## Configuration
+- [Poller overview](#poller-overview)
+- [Add a configuration entry](#add-a-configuration-entry)
+- [Invoke the poller function](#invoke-the-poller-function)
+- [Configure boostrap to process files automatically](#configure-bootstrap-to-process-files-automatically)
 
-The poller configuration is stored in [Stash](https://www.stedi.com/docs/stash) alongside the trading partners
+
+## Poller overview
+
+The `ftp-external-poller` function performs the following steps:
+
+1. Calls [Stash](https://www.stedi.com/docs/stash) to retrieve the configuration for the poller.
+
+1. Looks for the configuration associated with the key that was provided on invocation.
+
+1. Connects to the remote server using the corresponding connection configuration.
+
+1. Looks for files to process on the remote server.
+
+1. For each file to be processed, copies the file to the bucket and path specified in the configuration.
+
+1. Optionally deletes the file from the remote server.
+
+1. After processing all files to be processed, closes the connection.
+
+The poller configuration is stored in [Stash](https://www.stedi.com/docs/stash) with the trading partners
 configuration in the `partners-config` keyspace. The poller configuration is stored in
-the `bootstrap|remote-poller-config` key, and the value is a map of keys to ftp/sftp configuration entries as shown in
-the schema below:
+the `bootstrap|remote-poller-config` key, and the value is a map of keys to ftp/sftp configuration entries.
 
-### Remote poller configuration schema:
+The following code shows the remote poller configuration schema.
 
 ```typescript
 type RemotePollerConfig = {
@@ -54,18 +71,18 @@ type DestinationBucket = {
 };
 ```
 
-### Adding a configuration entry
+## Add a configuration entry
 
-In order to invoke the poller, you will need a configuration entry in Stash. Navigate to the `partners-configuration`
-keyspace in the [Stash UI](https://www.stedi.com/app/stash/keyspace/partners-configuration). If this is your first
-remote poller configuration entry, add a new Stash key named `bootstrap|remote-poller-config`. If you already have
-an existing configuration entry, you can simply add a new entry to the map by editing the value of the Stash key.
+You must create configuration entry in Stash before you can invoke the poller function. 
 
-Below is an example configuration that includes two remote poller configuration entries (one for FTP
-named `my-remote-ftp`, and one for SFTP named `my-remote-sftp`). You can use this example configuration as a template
+1. Navigate to the `partners-configuration`
+keyspace in the [Stash UI](https://www.stedi.com/app/stash/keyspace/partners-configuration). 
+1. If this is your first remote poller configuration entry, add a new Stash key named `bootstrap|remote-poller-config`. If you already have
+a configuration entry, edit the Stash key value to add a new entry to the existing map.
+
+The following example configuration includes two remote poller configuration entries: one for FTP
+named `my-remote-ftp`, and one for SFTP named `my-remote-sftp`. Use this example configuration as a template
 for your Stash value, updating the configuration parameters to correspond to your remote server.
-
-Example remote poller config JSON:
 
 ```json
 {
@@ -108,36 +125,18 @@ Example remote poller config JSON:
 }
 ```
 
-## Poller overview
+## Invoke the poller function
 
-On each invocation of the function, the `ftp-external-poller` performs several steps:
 
-1. Calls [Stash](https://www.stedi.com/docs/stash) to retrieve the configuration for the poller.
+### Invoke manually
 
-1. Looks for the configuration associated with the key that was provided on invocation.
-
-1. Connects to the remote server using the corresponding connection configuration.
-
-1. Looks for files to process on the remote server.
-
-1. For each file to be processed, copies the file to the bucket and path specified in the configuration.
-
-1. Optionally deletes the file from the remote server.
-
-1. After processing all files to be processed, closes the connection.
-
-## Invoking the function
-
-### Invoking manually
-
-Once deployed, you may invoke the function via the command line to verify functionality by running:
+Once deployed, you can invoke the function with the command line to verify functionality. The following command invokes the `ftp-external-poller` Stedi function and polls the remote server for files.
 
 ```bash
 npm run execute ftp-external-poller <CONFIGURATION_KEY>
 ```
 
-This will invoke the `ftp-external-poller` Stedi function and poll the remote server to look for files to be processed.
-The output of the script will include a summary of the polling operations:
+The script output includes a summary of the polling operations.
 
 ```bash
 > stedi-bootstrap@1.0.0 execute
@@ -158,32 +157,40 @@ Result:
   }
 ```
 
-### Scheduled invocation
+### Invoke automatically
 
-If you'd like to invoke the poller on a scheduled basis, there are several options. You can set up a workflow using your
-orchestration tool of choice, and use either
-the [Functions SDK](https://www.stedi.com/docs/functions/tutorial#invoke-a-function-using-the-stedi-functions-sdk) or
-the [Functions API](https://www.stedi.com/docs/api/functions#InvokeFunction) in order to invoke the function.
+You can invoke the poller function automatically with one of two options.
 
-The repo also includes a [scheduler GitHub action](/.github/workflows/scheduled-ftp-poller.yaml) which can be used to
-invoke the
-function automatically on a scheduled basis. If you would like to use this approach, you can fork the repo and follow
-the steps below in order to enable the scheduled function executions in your account:
+#### Orchestration tool
 
-1. Create a
-   new [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets?tool=webui#creating-encrypted-secrets-for-a-repository)
-   in your forked repo named `STEDI_API_KEY` and save the value of your API key as the secret value. This secret is
+Set up a workflow using your orchestration tool of choice, and use one of the following to invoke the function: 
+- [Functions SDK](https://www.stedi.com/docs/functions/tutorial#invoke-a-function-using-the-stedi-functions-sdk) 
+- [Functions API](https://www.stedi.com/docs/api/functions#InvokeFunction)
+
+#### GitHub Action
+
+You can use the [scheduler GitHub action](/.github/workflows/scheduled-ftp-poller.yaml) in this repository to invoke the
+function automatically. Complete the following steps: 
+
+1. Fork this repository.
+2. Create a new [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets?tool=webui#creating-encrypted-secrets-for-a-repository)
+   in your forked repository named `STEDI_API_KEY` and save the value of your API key as the secret value. This secret is
    referenced within the workflow and is passed as an environment variable to the script that invokes
-   the `ftp-external-poller` Stedi function in your account. _Note:_ make sure there is no leading or trailing
+   the `ftp-external-poller` Stedi function in your account. _Note:_ Make sure there is no leading or trailing
    whitespace in the secret value as this will cause authentication to fail.
 
-1. Enable the workflow to run in your forked repo. For security purposes, GitHub requires that you explicitly enable
-   workflows that are copied over when a repo is forked. In your forked repo, click the `Actions` tab, and click the
+1. Enable the workflow to run in your forked repository. GitHub requires you to explicitly enable
+   workflows that are copied from a forked repository. In your forked repository, click the `Actions` tab, and then click the
    button to enable workflow runs.
 
-#### Changing the invocation schedule
+To change the schedule for invoking the poller:
 
-To change the schedule for invoking the poller, you can modify the `cron` attribute of the schedule in accordance
-with
-the [GitHub documentation for workflow schedules](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule).
-After making changes to the workflow definition, be sure to commit the changes and push them to your forked repo.
+1. Modify the `cron` attribute of the schedule in accordance
+with the [GitHub documentation for workflow schedules](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule).
+1. Commit the changes and push them to your forked repository.
+
+## Configure bootstrap to process files automatically
+
+Do the following to configure the bootstrap module to process new files automatically:
+- Specify an `inbound` directory as the destination for new files
+- Enable bucket notifications in the destination bucket to invoke the [`edi-inbound`](/src/functions/edi/inbound/handler.ts) function

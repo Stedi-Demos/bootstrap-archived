@@ -1,0 +1,56 @@
+name: Scheduled Write EDI Invocation
+
+on:
+  workflow_dispatch:
+    inputs:
+      loopCount:
+        description: 'Number of outbound EDI files to write (default=1)'
+        required: false
+        type: number
+  schedule:
+    # run every 15 mins (starting from 10 after each hour)
+    - cron: "10/15 * * * *"
+
+jobs:
+  run_batch_invocation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.7"
+      - run: npm ci
+        # run batch-invoke with loopCount=1 (will write one outbound document to sftp bucket)
+      - run: npm run write-edi 1
+        env:
+          STEDI_API_KEY: ${{secrets.WRITE_EDI_STEDI_API_KEY}}
+      # notify via slack if any failures are encountered
+      - if: ${{ failure() }}
+        name: "send failure alert via slack"
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":alert: Scheduled write edi invocation failed :alert:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|:point_right: Github Actions failure>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

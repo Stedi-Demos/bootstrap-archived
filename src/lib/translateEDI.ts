@@ -12,6 +12,7 @@ export const translateJsonToEdi = async (
   guideId: string | undefined,
   envelope: any
 ): Promise<string> => {
+  console.log({ guideId });
   if (guideId === undefined)
     throw Error(
       "Transaction Configuration must have a guide assigned for writing EDI"

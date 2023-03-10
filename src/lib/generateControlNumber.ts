@@ -24,6 +24,7 @@ export const generateControlNumber = async ({
   amount,
 }: GenerateControlNumberInput) => {
   const key = `${usageIndicatorCode}|${segment}|${sendingPartnerId}|${receivingPartnerId}`;
+  console.log(key);
   const params = {
     keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
     key,

@@ -13,7 +13,9 @@
 
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
     "outDir": "dist",
+    "resolveJsonModule": true
   },
+  
   "ts-node": {
     "esm": true
   },

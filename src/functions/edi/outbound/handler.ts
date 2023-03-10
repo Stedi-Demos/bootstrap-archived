@@ -22,13 +22,11 @@ import {
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { loadTransactionSetDestinations } from "../../../lib/loadTransactionSetDestinations.js";
-import { env } from "process";
 
 export const handler = async (
   event: OutboundEvent
 ): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
-  console.log("test 2 starting", JSON.stringify({ input: event, executionId }));
 
   try {
     await recordNewExecution(executionId, event);
@@ -101,14 +99,11 @@ export const handler = async (
       },
     };
 
-    console.log({ envelope });
-
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
       transactionSetDestinations.destinations.map(
         async ({ destination, mappingId }) => {
-          console.log(destination);
           const guideJson =
             mappingId !== undefined
               ? await invokeMapping(mappingId, outboundEvent.payload)
@@ -122,8 +117,6 @@ export const handler = async (
             transactionSetConfig.guideId,
             envelope
           );
-
-          console.log(translation);
 
           const destinationFilename = generateDestinationFilename(
             isaControlNumber,

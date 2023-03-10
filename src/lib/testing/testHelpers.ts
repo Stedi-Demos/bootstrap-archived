@@ -7,6 +7,7 @@ import {
 import { EDITranslateClient } from "@stedi/sdk-client-edi-translate";
 import { FunctionsClient } from "@stedi/sdk-client-functions";
 import { GuidesClient } from "@stedi/sdk-client-guides";
+import { PartnersClient } from "@stedi/sdk-client-partners";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
 
@@ -76,4 +77,13 @@ export const mockTranslateClient = () => {
  */
 export const mockGuideClient = () => {
   return mockClient(GuidesClient);
+};
+
+/**
+ * Creates a mocked Stedi PartnersClient
+ *
+ * @returns a mocked PartnersClient
+ */
+export const mockPartnersClient = () => {
+  return mockClient(PartnersClient as any);
 };

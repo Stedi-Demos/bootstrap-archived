@@ -101,12 +101,10 @@ test("delivery via function invokes Stedi function with both payload and additio
 
   t.deepEqual(functions.calls()[0].args[0].input, {
     functionName,
-    requestPayload: Buffer.from(
-      JSON.stringify({
-        additionalInput,
-        payload,
-      })
-    ),
+    payload: {
+      additionalInput,
+      payload,
+    },
   });
 });
 

@@ -92,7 +92,8 @@ export const up = async () => {
     await partners.send(new CreateX12ProfileCommand(partnerProfile));
     migratedStashProfileKeys.push(partnerProfile.profileId);
 
-    console.log("before partnership create");
+    const generate997For: string[] = [];
+
     // create partnership
     const partnershipId = `${localProfile.profileId}_${partnerProfile.profileId}`;
     const partnership = await partners.send(
@@ -107,8 +108,6 @@ export const up = async () => {
         },
       })
     );
-
-    console.log("------------------------------------------------------");
 
     for (const transactionSet of stashPartnership.transactionSets) {
       let guideId: string | undefined;
@@ -155,6 +154,7 @@ export const up = async () => {
               keyspaceName: PARTNERS_KEYSPACE_NAME,
               key: `destinations|acknowledgements`,
               value: {
+                generateFor: generate997For,
                 description: transactionSet.description!,
                 destinations: transactionSet.destinations,
               },

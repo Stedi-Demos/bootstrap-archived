@@ -1,9 +1,9 @@
 import { ListValuesCommand } from "@stedi/sdk-client-stash";
-import { keys } from "object-hash";
+import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { savePartnership } from "../lib/savePartnership.js";
-import { stashClient as buildStashClient } from "../lib/stash.js";
-const stashClient = buildStashClient();
+
+const stash = stashClient();
 
 export const up = async () => {
   const partnerships = await loadPartnerships();
@@ -48,7 +48,7 @@ export const up = async () => {
 };
 
 const loadPartnerships = async (): Promise<any[]> => {
-  const { items } = await stashClient.send(
+  const { items } = await stash.send(
     new ListValuesCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
     })

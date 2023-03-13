@@ -1,16 +1,14 @@
-import dotenv from "dotenv";
-
 import {
   ReadBucketCommand,
   UpdateBucketCommand,
   UpdateBucketInput,
 } from "@stedi/sdk-client-buckets";
+import { bucketsClient } from "../lib/clients/buckets.js";
 
-import { bucketClient } from "../lib/buckets.js";
 import { requiredEnvVar } from "../lib/environment.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 
-dotenv.config({ override: true });
+const buckets = bucketsClient();
 
 (async () => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
@@ -29,20 +27,23 @@ dotenv.config({ override: true });
 
   const functionName = functionNameFromPath(functionPaths[0]);
 
-  const existingBucketConfig = await bucketClient().send(
+  const existingBucketConfig = await buckets.send(
     new ReadBucketCommand({
       bucketName: sftpBucketName,
-    }),
+    })
   );
 
   const currentNotificationFunctionCount =
     existingBucketConfig?.notifications?.functions?.length || 0;
 
   if (currentNotificationFunctionCount !== 0) {
-    const notificationFunctionNames = existingBucketConfig?.notifications?.functions?.map(
-      (fn) => fn.functionName
+    const notificationFunctionNames =
+      existingBucketConfig?.notifications?.functions?.map(
+        (fn) => fn.functionName
+      );
+    const bucketNotificationListOutput = JSON.stringify(
+      notificationFunctionNames
     );
-    const bucketNotificationListOutput = JSON.stringify(notificationFunctionNames);
     console.log(
       `Bucket notifications already enabled for ${sftpBucketName}: ${bucketNotificationListOutput}. Skipping.`
     );
@@ -56,9 +57,7 @@ dotenv.config({ override: true });
     },
   };
 
-  await bucketClient().send(
-    new UpdateBucketCommand(enableBucketNotificationsArgs)
-  );
+  await buckets.send(new UpdateBucketCommand(enableBucketNotificationsArgs));
 
   console.log(`\nDone.`);
   console.log(

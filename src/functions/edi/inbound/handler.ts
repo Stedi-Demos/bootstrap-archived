@@ -1,6 +1,5 @@
 import consumers from "stream/consumers";
 import { Readable } from "stream";
-import { serializeError } from "serialize-error";
 
 import {
   DeleteObjectCommand,
@@ -11,7 +10,6 @@ import * as x12 from "@stedi/x12-tools";
 import { processEdi } from "../../../lib/processEdi.js";
 import {
   failedExecution,
-  functionName,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
@@ -20,19 +18,18 @@ import {
   Convert,
   Record as BucketNotificationRecord,
 } from "../../../lib/types/BucketNotificationEvent.js";
-import { bucketClient } from "../../../lib/buckets.js";
+import { bucketsClient } from "../../../lib/clients/buckets.js";
 import {
   FilteredKey,
   GroupedEventKeys,
   KeyToProcess,
   ProcessingResults,
 } from "./types.js";
-import { trackProgress } from "../../../lib/progressTracking.js";
 import {
-  DeliverToDestinationListInput,
-  deliverToDestinations,
-  generateDestinationFilename
-} from "../../../lib/destinations.js";
+  ProcessDeliveriesInput,
+  processDeliveries,
+  generateDestinationFilename,
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { resolvePartnerIdFromISAId } from "../../../lib/resolvePartnerIdFromISAId.js";
@@ -44,16 +41,14 @@ import {
 } from "../../../lib/transactionSetConfigs.js";
 import { AckDeliveryInput, deliverAck } from "../../../lib/acks.js";
 import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import { archiveFile } from "../../../lib/archive/archiveFile.js";
 
 // Buckets client is shared across handler and execution tracking logic
-const bucketsClient = bucketClient();
+const buckets = bucketsClient();
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
-  await trackProgress(`starting ${functionName()}`, {
-    input: event,
-    executionId,
-  });
 
   try {
     await recordNewExecution(executionId, event);
@@ -65,7 +60,6 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // - filteredKeys:  keys that won't be processed (notifications for folders or objects not in an `inbound` directory)
     // - keysToProcess: keys for objects in an `inbound` directory, which will be processed by the handler
     const groupedEventKeys = groupEventKeys(bucketNotificationEvent.Records);
-    await trackProgress("grouped event keys", groupedEventKeys);
 
     // empty structure to hold the results of each key that is processed
     const results: ProcessingResults = {
@@ -77,23 +71,33 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // Iterate through each key that represents an object within an `inbound` directory
     for await (const keyToProcess of groupedEventKeys.keysToProcess) {
       // load the object from the bucket
-      const getObjectResponse = await bucketsClient.send(
+      const getObjectResponse = await buckets.send(
         new GetObjectCommand(keyToProcess)
       );
+
       const fileContents = await consumers.text(
         getObjectResponse.body as Readable
       );
+
+      // archive a copy of the input
+      const archivalRequest = archiveFile({
+        currentKey: keyToProcess.key,
+        body: fileContents,
+      });
 
       try {
         // parse EDI and determine what it contains
         const metadata = x12.metadata(fileContents);
 
         for (const interchange of metadata.interchanges) {
-          const { senderId, receiverId, delimiters, interchangeSegments } = extractInterchangeData(interchange);
+          const { senderId, receiverId, delimiters, interchangeSegments } =
+            extractInterchangeData(interchange);
 
           // resolve the partnerIds for the sending and receiving partners
           const sendingPartnerId = await resolvePartnerIdFromISAId(senderId);
-          const receivingPartnerId = await resolvePartnerIdFromISAId(receiverId);
+          const receivingPartnerId = await resolvePartnerIdFromISAId(
+            receiverId
+          );
 
           // load the Partnership for the sending and receiving partners
           const partnership = await loadPartnership(
@@ -108,18 +112,21 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             receivingPartnerId,
           });
 
-          const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+          const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(
+            transactionSetConfigs
+          );
 
           // keep track of transaction sets in interchange to determine whether to send ack
           const transactionSetConfigsForInterchange: TransactionSet[] = [];
 
           const guideIdsForPartnership =
             groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
-              (config) => (config).guideId
+              (config) => config.guideId
             );
 
           for (const functionalGroup of interchange.functionalGroups) {
-            const functionalGroupSegments = extractFunctionalGroupData(functionalGroup);
+            const functionalGroupSegments =
+              extractFunctionalGroupData(functionalGroup);
 
             // For each Transaction Set:
             // - look up the guideId
@@ -129,12 +136,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             //   - optionally invokes the mapping if one is included in config
             //   - sends the result to the destination
             for (const transactionSet of functionalGroup.transactionSets) {
-              const { id: transactionSetId } = extractTransactionSetData(transactionSet);
+              const { id: transactionSetId } =
+                extractTransactionSetData(transactionSet);
 
               // load the guide for the transaction set
               const guideSummary = await resolveGuide({
                 guideIdsForPartnership,
                 transactionSetType: transactionSetId,
+                release: functionalGroup.envelope?.release,
               });
 
               const transactionSetContents = fileContents.slice(
@@ -160,10 +169,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
               transactionSetConfigsForInterchange.push(transactionSetConfig);
 
-              const ediJson = await processEdi(
-                guideSummary.guideId,
-                edi,
-              );
+              const ediJson = await processEdi(guideSummary.guideId, edi);
 
               const filenamePrefix = interchange?.envelope?.controlNumber
                 ? interchange.envelope.controlNumber
@@ -175,28 +181,34 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 "json"
               );
 
-              const deliverToDestinationsInput: DeliverToDestinationListInput = {
+              const processDeliveriesInput: ProcessDeliveriesInput = {
                 destinations: transactionSetConfig.destinations,
                 payload: ediJson,
                 destinationFilename,
               };
-              await deliverToDestinations(deliverToDestinationsInput);
+              await processDeliveries(processDeliveriesInput);
             }
           }
 
           // if any of the transaction sets included an ack configuration, send ack for interchange
-          const transactionSetConfigWithAck = transactionSetConfigsForInterchange.find(
-            (config) => "acknowledgmentConfig" in config
-          );
+          const transactionSetConfigWithAck =
+            transactionSetConfigsForInterchange.find(
+              (config) => "acknowledgmentConfig" in config
+            );
+
           if (transactionSetConfigWithAck) {
             const ackTransactionSetConfig = getAckTransactionConfig(
               groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
             );
+
             // note: sendingPartnerId and receivingPartnerId are flip-flopped from interchange being ack'd
             const ackDeliveryInput: AckDeliveryInput = {
               ackTransactionSet: ackTransactionSetConfig,
               interchange,
-              edi: fileContents.slice(interchange.span.start, interchange.span.end),
+              edi: fileContents.slice(
+                interchange.span.start,
+                interchange.span.end
+              ),
               sendingPartnerId: receivingPartnerId,
               receivingPartnerId: sendingPartnerId,
             };
@@ -204,18 +216,13 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           }
         }
 
-        // Delete the processed file (could also archive in a `processed` directory or in another bucket if desired)
-        await bucketsClient.send(new DeleteObjectCommand(keyToProcess));
+        // ensure archival is complete
+        await archivalRequest;
+        // Delete the processed file (could also archive elsewhere if desired)
+        await buckets.send(new DeleteObjectCommand(keyToProcess));
         results.processedKeys.push(keyToProcess.key);
       } catch (e) {
-        const error =
-          e instanceof Error
-            ? e
-            : new Error(`unknown error: ${serializeError(e)}`);
-        await trackProgress("error processing document", {
-          key: keyToProcess.key,
-          error: serializeError(error),
-        });
+        const error = ErrorWithContext.fromUnknown(e);
         results.processingErrors.push({
           key: keyToProcess.key,
           error,
@@ -232,17 +239,17 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         errorCount > 1 ? "s" : ""
       }`;
       const message = `encountered ${errorCountMessage} while attempting to process ${keyCountMessage}`;
-      return failedExecution(executionId, new Error(message), results);
+      return failedExecution(
+        executionId,
+        new ErrorWithContext(message, results)
+      );
     }
 
     await markExecutionAsSuccessful(executionId);
-    await trackProgress("results", results);
 
     return results;
   } catch (e) {
-    const error =
-      e instanceof Error ? e : new Error(`unknown error: ${JSON.stringify(e)}`);
-    await trackProgress("handler error", { error: serializeError(error) });
+    const error = ErrorWithContext.fromUnknown(e);
 
     // Note, if an infinite Function execution loop is detected by `executionsBucketClient()`
     // the failed execution will not be uploaded to the executions bucket
@@ -266,10 +273,14 @@ const groupEventKeys = (
         return collectedKeys;
       }
       const splitKey = eventKey.split("/");
-      if (splitKey.length < 2 || splitKey[splitKey.length - 2] !== "inbound") {
+      if (
+        splitKey.length < 2 ||
+        !splitKey[splitKey.length - 2].match(/^(inbound|processed)$/)
+      ) {
         filteredKeys.push({
           key: eventKey,
-          reason: "key does not match an item in an `inbound` directory",
+          reason:
+            "key does not match an item in an `inbound` or `processed` directory",
         });
         return collectedKeys;
       }
@@ -295,10 +306,10 @@ const decodeObjectKey = (objectKey: string): string =>
 const extractInterchangeData = (
   interchange: x12.Interchange
 ): {
-  senderId: string,
-  receiverId: string,
-  delimiters: x12.Delimiters,
-  interchangeSegments: x12.InterchangeSegments,
+  senderId: string;
+  receiverId: string;
+  delimiters: x12.Delimiters;
+  interchangeSegments: x12.InterchangeSegments;
 } => {
   if (!interchange.envelope) {
     throw new Error("invalid interchange: unable to extract envelope");
@@ -312,8 +323,12 @@ const extractInterchangeData = (
     throw new Error("invalid interchange: unable to extract delimiters");
   }
 
-  const senderId = `${interchange.envelope.senderQualifier}/${interchange.envelope.senderId.trim()}`;
-  const receiverId = `${interchange.envelope.receiverQualifier}/${interchange.envelope.receiverId.trim()}`;
+  const senderId = `${
+    interchange.envelope.senderQualifier
+  }/${interchange.envelope.senderId.trim()}`;
+  const receiverId = `${
+    interchange.envelope.receiverQualifier
+  }/${interchange.envelope.receiverId.trim()}`;
 
   return {
     senderId,
@@ -327,7 +342,9 @@ const extractFunctionalGroupData = (
   functionalGroup: x12.FunctionalGroup
 ): x12.FunctionalGroupSegments => {
   if (!functionalGroup.envelope?.segments) {
-    throw new Error("invalid functional group: unable to extract functional group segments");
+    throw new Error(
+      "invalid functional group: unable to extract functional group segments"
+    );
   }
 
   return functionalGroup.envelope.segments;
@@ -335,7 +352,7 @@ const extractFunctionalGroupData = (
 
 const extractTransactionSetData = (
   transactionSet: x12.TransactionSet
-): { id: string; } => {
+): { id: string } => {
   if (!transactionSet.id) {
     throw new Error("invalid transaction set: unable to extract identifier");
   }

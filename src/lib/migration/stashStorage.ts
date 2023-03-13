@@ -1,9 +1,9 @@
 import { UmzugStorage } from "umzug";
 import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../constants.js";
-import { stashClient as buildStashClient } from "../stash.js";
+import { stashClient } from "../clients/stash.js";
 
-const stashClient = buildStashClient();
+const stash = stashClient();
 
 export type StashStorageConstructorOptions = {
   /**
@@ -25,7 +25,7 @@ export class StashStorage implements UmzugStorage {
     const loggedMigrations = await this.executed();
     loggedMigrations.push(migrationName);
 
-    await stashClient.send(
+    await stash.send(
       new SetValueCommand({
         keyspaceName: this.keyspace,
         key: this.key,
@@ -44,7 +44,7 @@ export class StashStorage implements UmzugStorage {
       (name) => name !== migrationName
     );
 
-    await stashClient.send(
+    await stash.send(
       new SetValueCommand({
         keyspaceName: this.keyspace,
         key: this.key,
@@ -54,7 +54,7 @@ export class StashStorage implements UmzugStorage {
   }
 
   async executed(): Promise<string[]> {
-    const { value } = await stashClient.send(
+    const { value } = await stash.send(
       new GetValueCommand({
         keyspaceName: this.keyspace,
         key: this.key,

@@ -1,7 +1,8 @@
 {
   "metadata": {
     "sendingPartnerId": "this-is-me",
-    "receivingPartnerId": "another-merchant"
+    "receivingPartnerId": "another-merchant",
+    "release": "005010"
   },
   "payload": {
     "heading": {

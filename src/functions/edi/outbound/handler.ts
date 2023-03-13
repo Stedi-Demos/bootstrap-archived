@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { serializeError } from "serialize-error";
 
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
 import {
@@ -9,10 +8,11 @@ import {
   recordNewExecution,
 } from "../../../lib/execution.js";
 import {
-  deliverToDestination,
-  DeliverToDestinationInput,
-  generateDestinationFilename
-} from "../../../lib/destinations.js";
+  processSingleDelivery,
+  ProcessSingleDeliveryInput,
+  generateDestinationFilename,
+  groupDeliveryResults
+} from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
@@ -28,6 +28,7 @@ import {
   OutboundEvent,
   OutboundEventSchema,
 } from "../../../lib/types/OutboundEvent.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
 export const handler = async (event: any): Promise<Record<string, any>> => {
   const executionId = generateExecutionId(event);
@@ -52,7 +53,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     );
 
     // get the transaction set from Guide JSON or event metadata
-    const transactionSetType = determineTransactionSetType(event);
+    const transactionSetType = determineTransactionSetType(outboundEvent);
+    const release = determineRelease(outboundEvent);
 
     // get transaction set configs for partnership
     const transactionSetConfigs = getTransactionSetConfigsForPartnership({
@@ -69,7 +71,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         (config) => config.guideId
       ),
       transactionSetType,
+      release,
     });
+
+    if (release && guideSummary.release !== release) {
+      throw new Error(
+        `No guide exists for the specified release: ${release}, found guide with release: ${guideSummary.release}`
+      );
+    }
 
     // find the transaction set config for partnership that includes guide
     const transactionSetConfig = resolveTransactionSetConfig(
@@ -139,35 +148,25 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           );
 
           const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
-          const deliverToDestinationInput: DeliverToDestinationInput = {
+          const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
             destinationFilename,
           };
-          return await deliverToDestination(deliverToDestinationInput);
+          return await processSingleDelivery(deliverToDestinationInput);
         }
       )
     );
 
-    const deliveryResultsByStatus = deliveryResults.reduce(
-      (
-        groupedResults: Record<"fulfilled" | "rejected", any[]>,
-        { status, ...rest }
-      ) => {
-        groupedResults[status].push(rest);
-        return groupedResults;
-      },
-      { fulfilled: [], rejected: [] }
-    );
-
+    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(
         executionId,
-        new Error(
-          `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`
+        new ErrorWithContext(
+          `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
+          deliveryResultsByStatus,
         ),
-        deliveryResultsByStatus
       );
     }
 
@@ -178,9 +177,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
     };
   } catch (e) {
-    const error =
-      e instanceof Error ? e : new Error(`unknown error: ${serializeError(e)}`);
-    return failedExecution(executionId, error);
+    const errorWithContext = ErrorWithContext.fromUnknown(e);
+    return failedExecution(executionId, errorWithContext);
   }
 };
 
@@ -190,6 +188,8 @@ const determineTransactionSetType = (event: OutboundEvent): string => {
     extractTransactionSetTypeFromGuideJson(event.payload)
   );
 };
+
+const determineRelease = (event: OutboundEvent): string | undefined => event.metadata.release;
 
 const normalizeGuideJson = (guideJson: any): any[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },

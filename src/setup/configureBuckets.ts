@@ -1,9 +1,5 @@
 import dotenv from "dotenv";
-import {
-  SftpClient,
-  CreateUserCommand,
-  DeleteUserCommand,
-} from "@stedi/sdk-client-sftp";
+import { CreateUserCommand, DeleteUserCommand } from "@stedi/sdk-client-sftp";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -11,24 +7,20 @@ import {
   PutObjectCommand,
 } from "@stedi/sdk-client-buckets";
 
-import { bucketClient } from "../lib/buckets.js";
 import { updateDotEnvFile } from "../support/utils.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
+import { bucketsClient } from "../lib/clients/buckets.js";
+import { sftpClient } from "../lib/clients/sftp.js";
 
-dotenv.config({ override: true });
+const buckets = bucketsClient();
+const sftp = sftpClient();
 
 (async () => {
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
 
-  const sftpClient = new SftpClient({
-    region: "us-east-1",
-    endpoint: "https://api.sftp.us.stedi.com/2022-04-01",
-    apiKey: process.env.STEDI_API_KEY,
-  });
-
-  const user = await sftpClient.send(
+  const user = await sftp.send(
     new CreateUserCommand({
       description: "Temp user to get bucket name",
       homeDirectory: "/_stedi/void",
@@ -44,7 +36,7 @@ dotenv.config({ override: true });
     `${tradingPartnerPrefix}/outbound/`,
   ];
   for await (const key of tradingPartnerDirectories) {
-    await bucketClient().send(
+    await buckets.send(
       new PutObjectCommand({
         bucketName: user.bucketName,
         key,
@@ -57,13 +49,13 @@ dotenv.config({ override: true });
   const stediAccountId = user.bucketName.split("-sftp")[0];
   const executionsBucketName = `${stediAccountId}-executions`;
 
-  const bucketsList = await bucketClient().send(new ListBucketsCommand({}));
+  const bucketsList = await buckets.send(new ListBucketsCommand({}));
   if (
     !bucketsList.items?.some(
       (bucket) => bucket.bucketName === executionsBucketName
     )
   ) {
-    bucketClient().send(
+    buckets.send(
       new CreateBucketCommand({
         bucketName: executionsBucketName,
       })
@@ -84,8 +76,8 @@ dotenv.config({ override: true });
   await updateResourceMetadata(bucketEnvVarEntries);
 
   // Clean up temporary user and corresponding home directory
-  await sftpClient.send(new DeleteUserCommand({ username: user.username }));
-  await bucketClient().send(
+  await sftp.send(new DeleteUserCommand({ username: user.username }));
+  await buckets.send(
     new DeleteObjectCommand({
       bucketName: user.bucketName,
       key: user.homeDirectory,

@@ -1,48 +1,26 @@
-import { TextEncoder } from "util";
-
-import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import {
   CreateFunctionCommand,
   CreateFunctionCommandOutput,
   DeleteFunctionCommand,
   DeleteFunctionCommandOutput,
-  FunctionsClient,
-  FunctionsClientConfig,
   InvokeFunctionCommand,
   UpdateFunctionCommand,
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
+import { functionsClient } from "./clients/functions.js";
 
-import { DEFAULT_SDK_CLIENT_PROPS } from "../lib/constants.js";
+const functions = functionsClient();
 
 type FunctionInvocationId = string;
-
-let _functionsClient: FunctionsClient;
-
-export const functionClient = (): FunctionsClient => {
-  if (_functionsClient === undefined) {
-    const config: FunctionsClientConfig = {
-      ...DEFAULT_SDK_CLIENT_PROPS,
-      maxAttempts: 5,
-      requestHandler: new NodeHttpHandler({
-        connectionTimeout: 1_000,
-      }),
-    };
-
-    _functionsClient = new FunctionsClient(config);
-  }
-
-  return _functionsClient;
-};
 
 export const invokeFunction = async (
   functionName: string,
   input: any
-): Promise<any> => {
-  const result = await functionClient().send(
+): Promise<string | undefined> => {
+  const result = await functions.send(
     new InvokeFunctionCommand({
       functionName,
-      requestPayload: new TextEncoder().encode(JSON.stringify(input)),
+      requestPayload: Buffer.from(JSON.stringify(input)),
     })
   );
 
@@ -55,11 +33,9 @@ export const invokeFunctionAsync = async (
   functionName: string,
   input?: any
 ): Promise<FunctionInvocationId> => {
-  const requestPayload = input
-    ? new TextEncoder().encode(JSON.stringify(input))
-    : undefined;
+  const requestPayload = input ? Buffer.from(JSON.stringify(input)) : undefined;
 
-  const { functionInvocationId } = await functionClient().send(
+  const { functionInvocationId } = await functions.send(
     new InvokeFunctionCommand({
       functionName,
       invocationType: "Event",
@@ -79,7 +55,7 @@ export const createFunction = async (
     [key: string]: string;
   }
 ): Promise<CreateFunctionCommandOutput> => {
-  return functionClient().send(
+  return functions.send(
     new CreateFunctionCommand({
       functionName,
       package: functionPackage,
@@ -96,7 +72,7 @@ export const updateFunction = async (
     [key: string]: string;
   }
 ): Promise<UpdateFunctionCommandOutput> => {
-  return functionClient().send(
+  return functions.send(
     new UpdateFunctionCommand({
       functionName,
       package: functionPackage,
@@ -109,7 +85,7 @@ export const updateFunction = async (
 export const deleteFunction = async (
   functionName: string
 ): Promise<DeleteFunctionCommandOutput> => {
-  return functionClient().send(
+  return functions.send(
     new DeleteFunctionCommand({
       functionName,
     })

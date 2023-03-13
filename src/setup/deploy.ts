@@ -1,10 +1,7 @@
 import dotenv from "dotenv";
-
 import { compile, packForDeployment } from "../support/compile.js";
-import { createFunction, updateFunction } from "../support/functions.js";
+import { createFunction, updateFunction } from "../lib/functions.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
-
-dotenv.config({ override: true });
 
 const createOrUpdateFunction = async (
   functionName: string,

@@ -5,11 +5,14 @@ import { Client } from "basic-ftp";
 
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
-import { bucketClient } from "../../../../lib/buckets.js";
+import { bucketsClient } from "../../../../lib/clients/buckets.js";
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
 import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
+import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
+
+const buckets = bucketsClient();
 
 export class FtpPoller extends RemotePoller {
   readonly client: Client;
@@ -27,20 +30,25 @@ export class FtpPoller extends RemotePoller {
     this.client.close();
   }
 
-  async getRemoteFileDetails(remotePath = "/", remoteFiles?: string[]): Promise<RemoteFileDetails> {
+  async getRemoteFileDetails(
+    remotePath = "/",
+    remoteFiles?: string[]
+  ): Promise<RemoteFileDetails> {
     const normalizedRemotePath = path.normalize(remotePath);
     return remoteFiles && remoteFiles.length > 0
       ? await this.getSpecifiedFileDetails(normalizedRemotePath, remoteFiles)
       : await this.getAllFileDetailsForPath(normalizedRemotePath);
-
   }
 
-  async downloadFile(destination: DestinationBucket, file: FileDetails): Promise<void> {
+  async downloadFile(
+    destination: DestinationBucket,
+    file: FileDetails
+  ): Promise<void> {
     const localTmpFilePath = `/tmp/${file.name}`;
     await this.client.downloadTo(localTmpFilePath, this.getFullFilePath(file));
 
     const destinationKey = `${destination.path}/${file.name}`;
-    await bucketClient().send(
+    await buckets.send(
       new PutObjectCommand({
         bucketName: destination.bucketName,
         key: destinationKey,
@@ -56,7 +64,10 @@ export class FtpPoller extends RemotePoller {
     await this.client.remove(this.getFullFilePath(file));
   }
 
-  private async getSpecifiedFileDetails(remotePath: string, remoteFiles: string[]): Promise<RemoteFileDetails> {
+  private async getSpecifiedFileDetails(
+    remotePath: string,
+    remoteFiles: string[]
+  ): Promise<RemoteFileDetails> {
     const filesToProcess: FileDetails[] = [];
     const processingErrors: ProcessingError[] = [];
 
@@ -66,21 +77,27 @@ export class FtpPoller extends RemotePoller {
       if (listResult.length !== 1) {
         processingErrors.push({
           path: remoteFilePath,
-          errorMessage: `expected exactly one match for list of single file ${remoteFilePath}`,
+          error: new ErrorWithContext(
+            `Expected exactly one match for list of single file`,
+            { remoteFilePath }
+          ),
         });
         break;
       }
 
       listResult[0].isFile
         ? filesToProcess.push({
-          path: remotePath,
-          ...this.extractFileDetails(listResult[0])
-        })
+            path: remotePath,
+            ...this.extractFileDetails(listResult[0]),
+          })
         : // handle non-file as processing error since file was specifically requested
-        processingErrors.push({
-          path: remoteFilePath,
-          errorMessage: `requested remote file ${file}, but it is not a file`,
-        });
+          processingErrors.push({
+            path: remoteFilePath,
+            error: new ErrorWithContext(
+              `Requested remote file, but it is not a file`,
+              { file }
+            ),
+          });
     }
 
     return {
@@ -89,20 +106,22 @@ export class FtpPoller extends RemotePoller {
     };
   }
 
-  private async getAllFileDetailsForPath(remotePath: string): Promise<RemoteFileDetails> {
+  private async getAllFileDetailsForPath(
+    remotePath: string
+  ): Promise<RemoteFileDetails> {
     const directoryContents = await this.client.list(remotePath);
     return directoryContents.reduce(
       (remoteFileDetails: RemoteFileDetails, currentFile) => {
         currentFile.isFile
           ? remoteFileDetails.filesToProcess.push({
-            path: remotePath,
-            ...this.extractFileDetails(currentFile),
-          })
+              path: remotePath,
+              ...this.extractFileDetails(currentFile),
+            })
           : remoteFileDetails.skippedItems?.push({
-            path: remotePath,
-            name: currentFile.name,
-            reason: "not a file",
-          });
+              path: remotePath,
+              name: currentFile.name,
+              reason: "not a file",
+            });
 
         return remoteFileDetails;
       },
@@ -114,10 +133,12 @@ export class FtpPoller extends RemotePoller {
     return {
       name: file.name,
       lastModifiedTime: file.modifiedAt?.getTime() || 0,
-    }
+    };
   }
 
-  static getPoller = async (connectionDetails: ConnectionDetails): Promise<RemotePoller> => {
+  static getPoller = async (
+    connectionDetails: ConnectionDetails
+  ): Promise<RemotePoller> => {
     const poller = new FtpPoller();
     await poller.connect(connectionDetails);
     return poller;

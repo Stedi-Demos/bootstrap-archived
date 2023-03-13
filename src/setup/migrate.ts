@@ -1,7 +1,4 @@
-import dotenv from "dotenv";
 import { migrator } from "../lib/migration/config.js";
-
-dotenv.config({ override: true });
 
 (async () => {
   console.log("Migrating Bootstrap...");

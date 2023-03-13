@@ -3,14 +3,14 @@ import {
   GetX12ProfileCommandOutput,
 } from "@stedi/sdk-client-partners";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
+import { partnersClient } from "./clients/partners.js";
+import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { partnersClient as buildPartnersClient } from "./partners.js";
-import { stashClient as buildStashClient } from "./stash.js";
+
 import { PartnerProfileSchema } from "./types/PartnerRouting.js";
 
-const stashClient = buildStashClient();
-
-const partnersClient = buildPartnersClient();
+const stash = stashClient();
+const partners = partnersClient();
 
 type Profile = Omit<
   GetX12ProfileCommandOutput,
@@ -22,7 +22,7 @@ export const loadPartnerProfile = async (
 ): Promise<Profile> => {
   if (process.env["USE_BETA"] === "true") {
     // load x12 Trading Partner Profile (pre-GA)
-    const profile = await partnersClient.send(
+    const profile = await partners.send(
       new GetX12ProfileCommand({
         id: partnerId,
       })
@@ -38,7 +38,7 @@ export const loadPartnerProfile = async (
     // load replica of x12 Trading Partner Profile from Stash
     const key = `profile|${partnerId}`;
 
-    const { value } = await stashClient.send(
+    const { value } = await stash.send(
       new GetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
         key: `profile|${partnerId}`,

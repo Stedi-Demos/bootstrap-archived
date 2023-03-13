@@ -3,7 +3,6 @@ import {
   SetValueCommand,
   StashClient,
 } from "@stedi/sdk-client-stash";
-import { serializeError } from "serialize-error";
 
 import { requiredEnvVar } from "../../../lib/environment.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
@@ -22,6 +21,7 @@ import { RemotePollingResults } from "./types.js";
 import { RemotePoller } from "./pollers/remotePoller.js";
 import { FtpPoller } from "./pollers/ftpPoller.js";
 import { SftpPoller } from "./pollers/sftpPoller.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
 const ftpConfigStashKey = "bootstrap|remote-poller-config";
@@ -69,7 +69,7 @@ export const handler = async (
     if (!pollerConfig) {
       return failedExecution(
         executionId,
-        new Error(`config not found for key: ${configId}`)
+        new ErrorWithContext("config not found for key", { configId })
       );
     }
 
@@ -87,8 +87,10 @@ export const handler = async (
     if (results.processingErrors.length > 0) {
       return failedExecution(
         executionId,
-        new Error("at least one processing error encountered during polling"),
-        results.processingErrors
+        new ErrorWithContext(
+          "at least one processing error encountered during polling",
+          { results },
+        ),
       );
     }
 
@@ -110,8 +112,7 @@ export const handler = async (
     await markExecutionAsSuccessful(executionId);
     return results;
   } catch (e) {
-    const error =
-      e instanceof Error ? e : new Error(`unknown error: ${serializeError(e)}`);
+    const error = ErrorWithContext.fromUnknown(e);
     return failedExecution(executionId, error);
   }
 };
@@ -145,9 +146,17 @@ const pollRemoteServer = async (
       continue;
     }
 
-    await remotePoller.downloadFile(remotePollerConfig.destination, file);
-    remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
-    ftpPollingResults.processedFiles.push(file);
+    try {
+      await remotePoller.downloadFile(remotePollerConfig.destination, file);
+      remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
+      ftpPollingResults.processedFiles.push(file);
+    } catch (e) {
+      const error = ErrorWithContext.fromUnknown(e);
+      ftpPollingResults.processingErrors.push({
+        path: `${file.path}/${file.name}`,
+        error,
+      });
+    }
   }
 
   await remotePoller.disconnect();

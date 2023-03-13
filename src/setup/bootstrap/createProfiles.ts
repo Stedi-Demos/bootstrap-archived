@@ -1,11 +1,10 @@
-import dotenv from "dotenv";
-dotenv.config({ override: true });
 import { CreateX12ProfileCommand } from "@stedi/sdk-client-partners";
-import { partnersClient as buildPartnersClient } from "../../lib/partners.js";
-import { stashClient as buildStashClient } from "../../lib/stash.js";
+
 import { PartnerProfileSchema } from "../../lib/types/PartnerRouting.js";
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
+import { partnersClient } from "../../lib/clients/partners.js";
+import { stashClient } from "../../lib/clients/stash.js";
 
 export const createProfiles = async () => {
   const profiles = [
@@ -28,12 +27,12 @@ export const createProfiles = async () => {
   ];
 
   if (process.env["USE_BETA"] === "true") {
-    const partnersClient = buildPartnersClient();
+    const partners = partnersClient();
     console.log("[BETA] Creating X12 Trading Partner Profile in Partners API");
 
     for (const profile of profiles) {
       try {
-        await partnersClient.send(new CreateX12ProfileCommand(profile));
+        await partners.send(new CreateX12ProfileCommand(profile));
       } catch (error) {
         if (
           typeof error === "object" &&
@@ -47,7 +46,7 @@ export const createProfiles = async () => {
     }
   } else {
     console.log("Creating X12 Trading Partner Profile in Stash");
-    const stashClient = buildStashClient();
+    const stash = stashClient();
 
     for (const profile of profiles) {
       const parseResult = PartnerProfileSchema.safeParse(profile);
@@ -55,7 +54,7 @@ export const createProfiles = async () => {
       if (!parseResult.success) throw new Error(parseResult.error.message);
       // throw new Error(`Invalid profile for ${profile.id}`);
 
-      await stashClient.send(
+      await stash.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
           key: `profile|${profile.id}`,

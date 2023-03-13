@@ -247,16 +247,26 @@ export const up = async () => {
   }
 };
 
-let allConfigValues: ValueOutput[] = [];
+const allConfigValues: ValueOutput[] = [];
 
 const loadAllConfigValues = async () => {
-  const { items } = await stash.send(
-    new ListValuesCommand({
-      keyspaceName: PARTNERS_KEYSPACE_NAME,
-    })
-  );
+  let recordsRemaining = true;
+  while (recordsRemaining) {
+    const { items, nextPageToken } = await stash.send(
+      new ListValuesCommand({
+        keyspaceName: PARTNERS_KEYSPACE_NAME,
+      })
+    );
 
-  if (items !== undefined) allConfigValues = items;
+    if (items === undefined) {
+      console.log("Nothing to backup");
+      process.exit(1);
+    }
+
+    allConfigValues.push(...items);
+
+    recordsRemaining = nextPageToken !== undefined;
+  }
 };
 
 type PartnershipWithId = Partnership & { id?: string };

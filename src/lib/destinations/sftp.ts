@@ -23,8 +23,21 @@ export const deliverToDestination = async (
   const { host, username } = input.destination.connectionDetails;
   const fileContents = payloadAsString(input.destinationPayload);
 
+  const config = input.destination.connectionDetails;
+  const options: sftp.ConnectOptions = {
+    host: config.host,
+    port: config.port,
+    username: config.username,
+    password: config.password,
+    readyTimeout: 10_000,
+    algorithms: {
+      serverHostKey: ['ssh-rsa'],
+      cipher: ['aes128-ctr'],
+      kex: ['diffie-hellman-group14-sha1']
+    },
+  };
   const sftpClient = new sftp();
-  await sftpClient.connect(input.destination.connectionDetails);
+  await sftpClient.connect(options);
   await sftpClient.put(Buffer.from(fileContents), remotePath);
   await sftpClient.end();
 

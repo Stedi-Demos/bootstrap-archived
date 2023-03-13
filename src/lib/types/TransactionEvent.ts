@@ -26,6 +26,7 @@ export const TransactionEventSchema = z.object({
       id: z.string(),
       usageIndicatorCode: UsageIndicatorCodeSchema,
       transactionSetIdentifier: z.string(),
+      ruleId: z.string(),
     }),
     input: z.object({
       type: z.string(),

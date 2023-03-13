@@ -136,17 +136,17 @@ export const up = async () => {
         } else {
           // ack config
 
-          // update partnership to include 997 config
-          await partners.send(
-            new UpdateX12PartnershipCommand({
-              partnershipId,
-              functionalAcknowledgmentConfig: {
-                acknowledgmentType: "997",
-                generate: "ALWAYS",
-                groupBy: "ONE_PER_INTERCHANGE",
-              },
-            })
-          );
+          // // update partnership to include 997 config
+          // await partners.send(
+          //   new UpdateX12PartnershipCommand({
+          //     partnershipId,
+          //     functionalAcknowledgmentConfig: {
+          //       acknowledgmentType: "997",
+          //       generate: "ALWAYS",
+          //       groupBy: "ONE_PER_INTERCHANGE",
+          //     },
+          //   })
+          // );
 
           // write 997 destinations to Stash
           await stash.send(

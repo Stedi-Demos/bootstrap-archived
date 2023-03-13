@@ -28,6 +28,7 @@ export const deliverToDestination = async (
     },
     body: payloadAsString(input.destinationPayload),
   };
+  console.log(input, params);
 
   const response = await fetch(input.destination.url, params);
 

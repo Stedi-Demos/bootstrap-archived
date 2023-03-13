@@ -11,5 +11,6 @@ export const loadPartnershipById = async ({
 }: {
   partnershipId: string;
 }): Promise<GetX12PartnershipCommandOutput> => {
+  console.log({ partnershipId });
   return await partners.send(new GetX12PartnershipCommand({ partnershipId }));
 };

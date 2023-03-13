@@ -17,7 +17,6 @@ type LoadPartnershipParams = {
 export const loadPartnershipByISA = async ({
   sender,
   receiver,
-  functionalGroupEnvelope,
 }: LoadPartnershipParams): Promise<GetX12PartnershipByInterchangesCommandOutput> => {
   try {
     return await partners.send(

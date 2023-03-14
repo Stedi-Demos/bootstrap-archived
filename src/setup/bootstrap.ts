@@ -19,12 +19,12 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
   await updateResourceMetadata({
     GUIDE_IDS: [guide850.id!, guide855.id!, guide997.id!],
   });
-  const { rule850, rule855, rule997 } = await createProfiles({
+  const { partnershipId, rule850, rule855, rule997 } = await createProfiles({
     guide850,
     guide855,
     guide997,
   });
-  await createSampleStashRecords({ rule850, rule855, rule997 });
+  await createSampleStashRecords({ partnershipId, rule850, rule855, rule997 });
 
   // record all migrations as run (as this file always creates the latest state)
   const migrationStore = new StashStorage({});

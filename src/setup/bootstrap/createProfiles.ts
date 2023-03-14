@@ -138,7 +138,7 @@ export const createProfiles = async ({
     partnership,
   });
 
-  return { rule850, rule855, rule997 };
+  return { partnershipId, rule850, rule855, rule997 };
 };
 
 const ensureOutboundTransaction = async ({

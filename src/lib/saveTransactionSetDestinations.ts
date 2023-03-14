@@ -10,12 +10,12 @@ const stash = stashClient();
 
 export const saveTransactionSetDestinations = async (
   id: string,
-  partnership: object
+  destinations: object
 ): Promise<TransactionSetDestinations> => {
-  const parseResult = TransactionSetDestinationsSchema.safeParse(partnership);
+  const parseResult = TransactionSetDestinationsSchema.safeParse(destinations);
 
   if (!parseResult.success) {
-    console.dir(partnership, { depth: null });
+    console.dir(destinations, { depth: null });
     console.dir(parseResult.error, { depth: null });
     throw Error("Partnership does not match allowed schema");
   }

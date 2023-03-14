@@ -212,7 +212,7 @@ export const up = async () => {
       }
 
       saveTransactionSetDestinations(
-        `destinations|${rule.transactionSetIdentifier}`,
+        `destinations|${partnershipId}|${rule.transactionSetIdentifier}`,
         {
           description: transactionSet.description!,
           destinations: transactionSet.destinations,
@@ -224,7 +224,7 @@ export const up = async () => {
     await stash.send(
       new SetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `destinations|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgements`,
         value: {
           generateFor: generate997For,
         },

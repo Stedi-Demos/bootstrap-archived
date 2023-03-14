@@ -24,6 +24,7 @@ import {
   ListX12PartnershipsCommand,
   ListX12ProfilesCommand,
 } from "@stedi/sdk-client-partners";
+import { parseGuideId } from "../support/guide.js";
 
 const stash = stashClient();
 const buckets = bucketsClient();
@@ -81,7 +82,8 @@ const partners = partnersClient();
 
   // Delete Guides
   console.log("Deleting Guides");
-  for (const guideId of resources.GUIDE_IDS ?? []) {
+  for (const gId of resources.GUIDE_IDS ?? []) {
+    const guideId = parseGuideId(gId);
     await guides.send(new DeleteGuideCommand({ id: `LIVE_${guideId}` }));
     await guides.send(new DeleteGuideCommand({ id: `DRFT_${guideId}` }));
   }

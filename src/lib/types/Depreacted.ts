@@ -37,8 +37,6 @@ const NonAckTransactionSetSchema = BaseTransactionSetSchema.extend({
   acknowledgmentConfig: AckSchema.optional(),
 });
 
-type NonAckTransactionSet = z.infer<typeof NonAckTransactionSetSchema>;
-
 // base guide transaction sets
 // - do not include `guideId`
 // - must include `release` and `transactionSet` to determine base guide to use

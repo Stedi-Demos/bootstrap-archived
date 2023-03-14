@@ -25,7 +25,7 @@
     "@stedi/sdk-client-functions": "^0.1.28",
     "@stedi/sdk-client-guides": "^0.0.46",
     "@stedi/sdk-client-mappings": "^0.0.46",
-    "@stedi/sdk-client-partners": "^0.1.31",
+    "@stedi/sdk-client-partners": "^0.1.33",
     "@stedi/sdk-client-queues": "^0.1.28",
     "@stedi/sdk-client-sftp": "^0.0.46",
     "@stedi/sdk-client-stash": "^0.0.46",

@@ -16,7 +16,6 @@ import {
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
-  UpdateX12PartnershipCommand,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../lib/clients/partners.js";
 import { cloneDeep } from "lodash-es";
@@ -29,6 +28,7 @@ import {
   PartnerProfile,
   Partnership,
   TransactionSetWithGuideId,
+  isAckTransactionSet,
 } from "../lib/types/Depreacted.js";
 
 const stash = stashClient();
@@ -109,6 +109,37 @@ export const up = async () => {
       })
     );
 
+    const ackConfig = stashPartnership.transactionSets.find((txnSet) =>
+      isAckTransactionSet(txnSet)
+    );
+
+    if (ackConfig !== undefined) {
+      // TODO: use 997 guide from Ross' ACK work
+      //
+      // const guideFor997 = await guides.send(
+      //   new GetGuideCommand({ id: `DRFT_TBD` })
+      // );
+      // const ackRuleId = await partners.send(
+      //   new CreateOutboundX12TransactionCommand({
+      //     partnershipId: partnership.partnershipId,
+      //     timeZone: "UTC",
+      //     release: guideFor997.target!.release,
+      //     transactionSetIdentifier: guideFor997.target!.transactionSet,
+      //     guideId: "TBD",
+      //   })
+      // );
+      // await stash.send(
+      //   new SetValueCommand({
+      //     keyspaceName: PARTNERS_KEYSPACE_NAME,
+      //     key: `destinations|${ackRuleId}`,
+      //     value: {
+      //       description: ackConfig.description,
+      //       destinations: ackConfig.destinations,
+      //     },
+      //   })
+      // );
+    }
+
     for (const transactionSet of stashPartnership.transactionSets) {
       let guideId: string | undefined;
       let guideTarget: GetGuideCommandOutput["target"];
@@ -135,47 +166,21 @@ export const up = async () => {
           };
         } else {
           // ack config
-
-          // // update partnership to include 997 config
-          // await partners.send(
-          //   new UpdateX12PartnershipCommand({
-          //     partnershipId,
-          //     functionalAcknowledgmentConfig: {
-          //       acknowledgmentType: "997",
-          //       generate: "ALWAYS",
-          //       groupBy: "ONE_PER_INTERCHANGE",
-          //     },
-          //   })
-          // );
-
-          // write 997 destinations to Stash
-          await stash.send(
-            new SetValueCommand({
-              keyspaceName: PARTNERS_KEYSPACE_NAME,
-              key: `destinations|acknowledgements`,
-              value: {
-                generateFor: generate997For,
-                description: transactionSet.description!,
-                destinations: transactionSet.destinations,
-              },
-            })
-          );
           // no transaction rule is needed so skip below
           continue;
         }
       }
 
       if (
-        "acknowledgmentConfig" in transactionSet &&
-        transactionSet.acknowledgmentConfig?.acknowledgmentType === "997" &&
+        isAckTransactionSet(transactionSet) &&
         guideTarget.transactionSet !== undefined
-      ) {
+      )
         generate997For.push(guideTarget.transactionSet);
-      }
 
       let rule:
         | CreateOutboundX12TransactionCommandOutput
         | CreateInboundX12TransactionCommandOutput;
+
       if (
         "sendingPartnerId" in transactionSet &&
         transactionSet.sendingPartnerId == localProfile.profileId
@@ -209,6 +214,17 @@ export const up = async () => {
         destinations: transactionSet.destinations,
       });
     }
+
+    // record the txn sets we want to generate 997's for
+    await stash.send(
+      new SetValueCommand({
+        keyspaceName: PARTNERS_KEYSPACE_NAME,
+        key: `destinations|acknowledgements`,
+        value: {
+          generateFor: generate997For,
+        },
+      })
+    );
 
     migratedStashPartnershipKeys.push(stashPartnership.id!);
   }

@@ -1,7 +1,17 @@
+import {
+  InboundX12TransactionSummary,
+  OutboundX12TransactionSummary,
+} from "@stedi/sdk-client-partners";
 import { requiredEnvVar } from "../../lib/environment.js";
 import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
 
-export const createSampleStashRecords = async () => {
+export const createSampleStashRecords = async ({
+  rule850,
+  rule855,
+}: {
+  rule850: InboundX12TransactionSummary;
+  rule855: OutboundX12TransactionSummary;
+}) => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
 

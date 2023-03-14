@@ -75,6 +75,7 @@ const partners = partnersClient();
 
   // Delete Buckets
   console.log("Deleting Buckets");
+  // TODO - uncomment
   // await emptyAndDeleteBucket(resources.SFTP_BUCKET_NAME ?? "");
   // await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME ?? "");
 

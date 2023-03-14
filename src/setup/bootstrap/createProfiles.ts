@@ -7,13 +7,13 @@ import {
   CreateX12PartnershipCommandOutput,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
-  GetInboundX12TransactionCommandOutput,
   GetX12PartnershipCommand,
   GetX12PartnershipCommandOutput,
   InboundX12TransactionSummary,
   OutboundX12TransactionSummary,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../../lib/clients/partners.js";
+import { parseGuideId } from "../../support/guide.js";
 
 export const createProfiles = async ({
   guide850,
@@ -23,7 +23,7 @@ export const createProfiles = async ({
   guide855: GetGuideCommandOutput;
 }) => {
   const localProfile: CreateX12ProfileCommandInput = {
-    profileId: "this-is-me-inc",
+    profileId: "this-is-me",
     profileType: "local",
     interchangeQualifier: "ZZ",
     interchangeId: "THISISME".padEnd(15, " "),
@@ -100,7 +100,7 @@ export const createProfiles = async ({
         partnershipId,
         release: guide855.target!.release,
         transactionSetIdentifier: guide855.target!.transactionSet,
-        guideId: guide855.id,
+        guideId: parseGuideId(guide855.id!),
       })
     )) as object as OutboundX12TransactionSummary;
   } catch (error) {
@@ -132,7 +132,7 @@ export const createProfiles = async ({
         timeZone: "UTC",
         release: guide850.target!.release,
         transactionSetIdentifier: guide850.target!.transactionSet,
-        guideId: guide850.id,
+        guideId: parseGuideId(guide850.id!),
       })
     );
   } catch (error) {

@@ -3,7 +3,6 @@ import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
 import {
   Destination,
-  DestinationSchema,
   TransactionSetDestinationsSchema,
 } from "./types/Destination.js";
 

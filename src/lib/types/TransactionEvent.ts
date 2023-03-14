@@ -5,7 +5,7 @@ export const TransactionEventSchema = z.object({
   version: z.string(),
   id: z.string(),
   source: z.literal("stedi.engine"),
-  "detail-type": z.literal("engine.inbound"),
+  "detail-type": z.literal("transaction.processed"),
   time: z.string(),
   region: z.string(),
   resources: z.array(z.string()),
@@ -15,6 +15,7 @@ export const TransactionEventSchema = z.object({
     metadata: z.object({
       interchange: z.object({
         controlNumber: z.string(),
+        usageIndicatorCode: UsageIndicatorCodeSchema,
       }),
       group: z.object({
         controlNumber: z.string(),
@@ -24,7 +25,6 @@ export const TransactionEventSchema = z.object({
     transaction: z.object({
       controlNumber: z.string(),
       id: z.string(),
-      usageIndicatorCode: UsageIndicatorCodeSchema,
       transactionSetIdentifier: z.string(),
       ruleId: z.string(),
     }),

@@ -2,24 +2,28 @@ import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
 import {
-  Destination,
+  TransactionSetDestinations,
   TransactionSetDestinationsSchema,
 } from "./types/Destination.js";
 
 const stash = stashClient();
 
-export const loadDestinations = async (
-  transactionSetIdentifier: string
-): Promise<Destination[]> => {
+export const loadDestinations = async ({
+  partnershipId,
+  transactionSetIdentifier,
+}: {
+  partnershipId: string;
+  transactionSetIdentifier: string;
+}): Promise<TransactionSetDestinations> => {
   try {
     const { value } = await stash.send(
       new GetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `destinations|${transactionSetIdentifier}`,
+        key: `destinations|${partnershipId}|${transactionSetIdentifier}`,
       })
     );
 
-    return TransactionSetDestinationsSchema.parse(value).destinations;
+    return TransactionSetDestinationsSchema.parse(value);
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -27,7 +31,7 @@ export const loadDestinations = async (
       "name" in error &&
       error.name === "ResourceNotFoundException"
     )
-      return [];
+      return { destinations: [] };
     else throw error;
   }
 };

@@ -51,9 +51,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
   const guideJSON = JSON.parse(fileContents);
 
   // get the destinations for this transaction set
-  const destinations = await loadDestinations(
-    transactionEvent.detail.transaction.transactionSetIdentifier
-  );
+  const { destinations } = await loadDestinations({
+    partnershipId: transactionEvent.detail.partnership.partnershipId,
+    transactionSetIdentifier:
+      transactionEvent.detail.transaction.transactionSetIdentifier,
+  });
 
   // prepare delivery payloads
   const filenamePrefix = transactionEvent.detail.metadata.interchange

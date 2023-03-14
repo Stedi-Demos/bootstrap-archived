@@ -21,7 +21,7 @@ import {
 } from "../../../lib/types/OutboundEvent.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
-import { loadTransactionSetDestinations } from "../../../lib/loadTransactionSetDestinations.js";
+import { loadDestinations } from "../../../lib/loadDestinations.js";
 
 export const handler = async (
   event: OutboundEvent
@@ -50,9 +50,10 @@ export const handler = async (
         `Transaction set not found in partnership configuration for '${transactionSetIdentifier}'`
       );
 
-    const transactionSetDestinations = await loadTransactionSetDestinations(
-      transactionSetIdentifier
-    );
+    const transactionSetDestinations = await loadDestinations({
+      partnershipId: event.metadata.partnershipId,
+      transactionSetIdentifier,
+    });
 
     // resolve the functional group for the transaction set
     const functionalIdentifierCode = lookupFunctionalIdentifierCode(

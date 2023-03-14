@@ -118,7 +118,7 @@ export const up = async () => {
     );
 
     if (ackConfig !== undefined) {
-      const ackRuleId = await partners.send(
+      const ackRule = await partners.send(
         new CreateOutboundX12TransactionCommand({
           partnershipId: partnership.partnershipId,
           timeZone: "UTC",
@@ -131,7 +131,7 @@ export const up = async () => {
       await stash.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `destinations|${ackRuleId}`,
+          key: `destinations|${ackRule.transactionId}`,
           value: {
             description: ackConfig.description!,
             destinations: ackConfig.destinations,

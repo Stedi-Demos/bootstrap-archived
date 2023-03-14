@@ -131,7 +131,7 @@ export const up = async () => {
       await stash.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `destinations|${ackRule.transactionId}`,
+          key: `destinations|${ackRule.transactionSetIdentifier}`,
           value: {
             description: ackConfig.description!,
             destinations: ackConfig.destinations,
@@ -211,10 +211,13 @@ export const up = async () => {
         );
       }
 
-      saveTransactionSetDestinations(`destinations|${rule.transactionId}`, {
-        description: transactionSet.description!,
-        destinations: transactionSet.destinations,
-      });
+      saveTransactionSetDestinations(
+        `destinations|${rule.transactionSetIdentifier}`,
+        {
+          description: transactionSet.description!,
+          destinations: transactionSet.destinations,
+        }
+      );
     }
 
     // record the txn sets we want to generate 997's for

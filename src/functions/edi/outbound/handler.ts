@@ -51,7 +51,7 @@ export const handler = async (
       );
 
     const transactionSetDestinations = await loadTransactionSetDestinations(
-      transactionSetConfig.transactionId!
+      transactionSetIdentifier
     );
 
     // resolve the functional group for the transaction set

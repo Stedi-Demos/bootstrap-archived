@@ -9,13 +9,13 @@ import {
 const stash = stashClient();
 
 export const loadDestinations = async (
-  transactionRuleId: string
+  transactionSetIdentifier: string
 ): Promise<Destination[]> => {
   try {
     const { value } = await stash.send(
       new GetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `destinations|${transactionRuleId}`,
+        key: `destinations|${transactionSetIdentifier}`,
       })
     );
 

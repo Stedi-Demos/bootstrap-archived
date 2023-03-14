@@ -52,7 +52,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
   // get the destinations for this transaction set
   const destinations = await loadDestinations(
-    transactionEvent.detail.transaction.ruleId
+    transactionEvent.detail.transaction.transactionSetIdentifier
   );
 
   // prepare delivery payloads

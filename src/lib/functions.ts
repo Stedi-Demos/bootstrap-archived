@@ -32,22 +32,6 @@ export const invokeFunction = async (
   return result.payload;
 };
 
-export const invokeFunctionAsync = async (
-  functionName: string,
-  input?: DocumentType
-): Promise<FunctionInvocationId> => {
-  const { invocationId } = await functions.send(
-    new InvokeFunctionCommand({
-      functionName,
-      invocationType: "Event",
-      payload: input ?? {},
-    })
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return invocationId!;
-};
-
 export const createFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
@@ -65,7 +49,7 @@ export const createFunction = async (
       bucketName,
       key,
       body: functionPackage,
-    })
+    }) as any //SDK mismatches
   );
 
   return functions.send(
@@ -97,7 +81,7 @@ export const updateFunction = async (
       bucketName,
       key,
       body: functionPackage,
-    })
+    }) as any //SDK mismatches
   );
 
   return functions.send(

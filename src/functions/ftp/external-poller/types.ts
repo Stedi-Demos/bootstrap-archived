@@ -28,4 +28,3 @@ export type RemotePollingResults = {
   skippedItems: SkippedItem[];
   processingErrors: ProcessingError[];
 };
-

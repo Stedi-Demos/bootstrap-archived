@@ -55,10 +55,6 @@ const TransactionSetWithoutGuideIdSchema = z.union([
   BaseGuideTransactionSetSchema,
 ]);
 
-export type TransactionSetWithoutGuideId = z.infer<
-  typeof TransactionSetWithoutGuideIdSchema
->;
-
 // transaction sets with `guideId`:
 // - no `release` or `transactionSetIdentifier` (inferred from guide)
 const TransactionSetWithGuideIdSchema = NonAckTransactionSetSchema.extend({
@@ -79,8 +75,6 @@ export type TransactionSet = z.infer<typeof TransactionSetSchema>;
 export const PartnershipSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
 });
-
-export type PartnershipInput = z.input<typeof PartnershipSchema>;
 
 export type Partnership = z.infer<typeof PartnershipSchema>;
 

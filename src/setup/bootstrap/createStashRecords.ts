@@ -2,6 +2,9 @@ import {
   InboundX12TransactionSummary,
   OutboundX12TransactionSummary,
 } from "@stedi/sdk-client-partners";
+import { SetValueCommand } from "@stedi/sdk-client-stash";
+import { stashClient } from "../../lib/clients/stash.js";
+import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
 import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
 
@@ -56,7 +59,7 @@ export const createSampleStashRecords = async ({
   await saveTransactionSetDestinations(
     `destinations|${partnershipId}|${rule997.transactionSetIdentifier}`,
     {
-      description: "Outbound 997 Acknowledgments",
+      description: "Outbound 997 Acknowledgements",
       destinations: [
         {
           destination: {
@@ -67,5 +70,15 @@ export const createSampleStashRecords = async ({
         },
       ],
     }
+  );
+
+  await stashClient().send(
+    new SetValueCommand({
+      keyspaceName: PARTNERS_KEYSPACE_NAME,
+      key: `destinations|${partnershipId}|acknowledgements`,
+      value: {
+        generateFor: ["855"],
+      },
+    })
   );
 };

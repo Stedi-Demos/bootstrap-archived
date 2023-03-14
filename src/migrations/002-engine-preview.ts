@@ -30,12 +30,16 @@ import {
   TransactionSetWithGuideId,
   isAckTransactionSet,
 } from "../lib/types/Depreacted.js";
+import { ensureGuideExists, parseGuideId } from "../support/guide.js";
 
 const stash = stashClient();
 const partners = partnersClient();
 const guides = guidesClient();
 
 export const up = async () => {
+  const guide997 = await ensureGuideExists(
+    "src/resources/X12/5010/997/guide.json"
+  );
   const migratedStashPartnershipKeys: string[] = [];
   const migratedStashProfileKeys: string[] = [];
 
@@ -114,30 +118,26 @@ export const up = async () => {
     );
 
     if (ackConfig !== undefined) {
-      // TODO: use 997 guide from Ross' ACK work
-      //
-      // const guideFor997 = await guides.send(
-      //   new GetGuideCommand({ id: `DRFT_TBD` })
-      // );
-      // const ackRuleId = await partners.send(
-      //   new CreateOutboundX12TransactionCommand({
-      //     partnershipId: partnership.partnershipId,
-      //     timeZone: "UTC",
-      //     release: guideFor997.target!.release,
-      //     transactionSetIdentifier: guideFor997.target!.transactionSet,
-      //     guideId: "TBD",
-      //   })
-      // );
-      // await stash.send(
-      //   new SetValueCommand({
-      //     keyspaceName: PARTNERS_KEYSPACE_NAME,
-      //     key: `destinations|${ackRuleId}`,
-      //     value: {
-      //       description: ackConfig.description,
-      //       destinations: ackConfig.destinations,
-      //     },
-      //   })
-      // );
+      const ackRuleId = await partners.send(
+        new CreateOutboundX12TransactionCommand({
+          partnershipId: partnership.partnershipId,
+          timeZone: "UTC",
+          release: guide997.target!.release,
+          transactionSetIdentifier: guide997.target!.transactionSet,
+          guideId: parseGuideId(guide997.id!),
+        })
+      );
+
+      await stash.send(
+        new SetValueCommand({
+          keyspaceName: PARTNERS_KEYSPACE_NAME,
+          key: `destinations|${ackRuleId}`,
+          value: {
+            description: ackConfig.description!,
+            destinations: ackConfig.destinations,
+          },
+        })
+      );
     }
 
     for (const transactionSet of stashPartnership.transactionSets) {

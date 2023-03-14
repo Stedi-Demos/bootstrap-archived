@@ -131,7 +131,7 @@ export const up = async () => {
       await stash.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `destinations|${ackRule.transactionSetIdentifier}`,
+          key: `destinations|${partnershipId}|${ackRule.transactionSetIdentifier}`,
           value: {
             description: ackConfig.description!,
             destinations: ackConfig.destinations,
@@ -279,10 +279,7 @@ const loadAllConfigValues = async () => {
       })
     );
 
-    if (items === undefined) {
-      console.log("Nothing to backup");
-      process.exit(1);
-    }
+    if (items === undefined) return;
 
     allConfigValues.push(...items);
 

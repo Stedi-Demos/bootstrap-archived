@@ -171,8 +171,10 @@ export const up = async () => {
         }
       }
 
+      // does the current txn set want a 997
       if (
-        isAckTransactionSet(transactionSet) &&
+        "acknowledgmentConfig" in transactionSet &&
+        transactionSet.acknowledgmentConfig?.acknowledgmentType === "997" &&
         guideTarget.transactionSet !== undefined
       )
         generate997For.push(guideTarget.transactionSet);

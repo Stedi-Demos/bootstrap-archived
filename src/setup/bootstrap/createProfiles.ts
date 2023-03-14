@@ -1,7 +1,6 @@
 import { GetGuideCommandOutput } from "@stedi/sdk-client-guides";
 import {
   CreateInboundX12TransactionCommand,
-  CreateInboundX12TransactionCommandOutput,
   CreateOutboundX12TransactionCommand,
   CreateX12PartnershipCommand,
   CreateX12PartnershipCommandOutput,
@@ -15,12 +14,16 @@ import {
 import { partnersClient } from "../../lib/clients/partners.js";
 import { parseGuideId } from "../../support/guide.js";
 
+const partners = partnersClient();
+
 export const createProfiles = async ({
   guide850,
   guide855,
+  guide997,
 }: {
   guide850: GetGuideCommandOutput;
   guide855: GetGuideCommandOutput;
+  guide997: GetGuideCommandOutput;
 }) => {
   const localProfile: CreateX12ProfileCommandInput = {
     profileId: "this-is-me",
@@ -35,7 +38,6 @@ export const createProfiles = async ({
     interchangeId: "ANOTHERMERCH".padEnd(15, " "),
   };
 
-  const partners = partnersClient();
   console.log("Creating X12 Trading Partner Profile in Partners API");
 
   for (const profile of [localProfile, remoteProfile]) {
@@ -92,47 +94,15 @@ export const createProfiles = async ({
 
   // inbound
 
-  let rule855: OutboundX12TransactionSummary | undefined;
+  let rule855: InboundX12TransactionSummary | undefined;
 
   try {
-    rule855 = (await partners.send(
+    rule855 = await partners.send(
       new CreateInboundX12TransactionCommand({
         partnershipId,
         release: guide855.target!.release,
         transactionSetIdentifier: guide855.target!.transactionSet,
         guideId: parseGuideId(guide855.id!),
-      })
-    )) as object as OutboundX12TransactionSummary;
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      error.name === "ResourceConflictException"
-    ) {
-      if ("outboundTransactions" in partnership) {
-        rule855 = partnership.outboundTransactions?.find(
-          (txn) =>
-            txn.transactionSetIdentifier === guide855.target!.transactionSet
-        );
-      } else throw error;
-    } else throw error;
-  }
-
-  if (rule855 === undefined) throw new Error("Rule 855 not found");
-
-  // outbound 850
-
-  let rule850: InboundX12TransactionSummary | undefined;
-
-  try {
-    rule850 = await partners.send(
-      new CreateOutboundX12TransactionCommand({
-        partnershipId,
-        timeZone: "UTC",
-        release: guide850.target!.release,
-        transactionSetIdentifier: guide850.target!.transactionSet,
-        guideId: parseGuideId(guide850.id!),
       })
     );
   } catch (error) {
@@ -140,18 +110,82 @@ export const createProfiles = async ({
       typeof error === "object" &&
       error !== null &&
       "name" in error &&
-      error.name === "ResourceConflictException"
+      (error.name === "ResourceConflictException" ||
+        (error.name === "BadRequestException" &&
+          "message" in error &&
+          typeof error.message === "string" &&
+          error.message.includes("conflicts with transaction")))
     ) {
       if ("inboundTransactions" in partnership) {
-        rule850 = partnership.inboundTransactions?.find(
+        rule855 = partnership.inboundTransactions?.find(
           (txn) =>
-            txn.transactionSetIdentifier === guide850.target!.transactionSet
+            txn.transactionSetIdentifier === guide855.target!.transactionSet
         );
-      } else throw error;
+      } else
+        throw new Error("Partnership does not contain inboundTransactions");
     } else throw error;
   }
 
-  if (rule850 === undefined) throw new Error("Rule 850 not found");
+  if (rule855 === undefined) throw new Error("Rule 855 not found");
 
-  return { rule850, rule855 };
+  const rule850 = await ensureOutboundTransaction({
+    guide: guide850,
+    partnership,
+  });
+
+  const rule997 = await ensureOutboundTransaction({
+    guide: guide997,
+    partnership,
+  });
+
+  return { rule850, rule855, rule997 };
+};
+
+const ensureOutboundTransaction = async ({
+  guide,
+  partnership,
+}: {
+  guide: GetGuideCommandOutput;
+  partnership:
+    | CreateX12PartnershipCommandOutput
+    | GetX12PartnershipCommandOutput;
+}) => {
+  let rule: OutboundX12TransactionSummary | undefined;
+
+  try {
+    rule = await partners.send(
+      new CreateOutboundX12TransactionCommand({
+        partnershipId: partnership.partnershipId,
+        timeZone: "UTC",
+        release: guide.target!.release,
+        transactionSetIdentifier: guide.target!.transactionSet,
+        guideId: parseGuideId(guide.id!),
+      })
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error.name === "ResourceConflictException" ||
+        (error.name === "BadRequestException" &&
+          "message" in error &&
+          typeof error.message === "string" &&
+          error.message.includes("conflicts with transaction")))
+    ) {
+      if ("outboundTransactions" in partnership) {
+        rule = partnership.outboundTransactions?.find(
+          (txn) => txn.transactionSetIdentifier === guide.target!.transactionSet
+        );
+      } else
+        throw new Error("Partnership does not contain outboundTransactions");
+    } else throw error;
+  }
+
+  if (rule === undefined)
+    throw new Error(
+      `Failed to create rule for ${guide.target!.transactionSet}`
+    );
+
+  return rule;
 };

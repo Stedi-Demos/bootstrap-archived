@@ -1,38 +1,56 @@
-import { requiredEnvVar } from "../../../../lib/environment.js";
-
 export const sampleTransactionProcessedEvent = {
   version: "0",
-  id: "3d9d5b1b-0e14-99d0-66d2-6736d9c77ede",
+  id: "fedbee6f-f48e-df69-f279-3fbc9fad6305",
   "detail-type": "transaction.processed",
   source: "stedi.engine",
   account: "217851219840",
-  time: "2023-03-14T09:47:29Z",
+  time: "2023-03-16T14:19:17Z",
   region: "us-east-1",
   resources: [],
   detail: {
     version: "2023-02-13",
     direction: "RECEIVED",
-    metadata: {
-      interchange: { controlNumber: "1746", usageIndicatorCode: "T" },
-      group: { controlNumber: "1746", release: "005010" },
-      processedAt: "2023-03-14T09:47:28.981Z",
+    envelopes: {
+      interchange: {
+        acknowledgmentRequestedCode: "0",
+        controlNumber: 1746,
+        date: "220914",
+        receiverId: "THISISME ",
+        receiverQualifier: "ZZ",
+        senderId: "ANOTHERMERCH ",
+        senderQualifier: "14",
+        time: "2022",
+        usageIndicatorCode: "T",
+        versionNumberCode: "00501",
+      },
+      functionalGroup: {
+        applicationReceiverCode: "MYAPPID",
+        applicationSenderCode: "ANOTAPPID",
+        controlNumber: 1746,
+        date: "20220914",
+        functionalIdentifierCode: "PR",
+        release: "005010",
+        responsibleAgencyCode: "X",
+        time: "202222",
+      },
     },
+    metadata: { processedAt: "2023-03-16T14:19:17.371Z" },
     transaction: {
-      id: "6b27245f-c761-4946-bb1c-2ec8786c3737",
-      controlNumber: "1",
+      id: "a16254d1-c940-4ba1-b553-b9954f8d3d41",
+      controlNumber: 1,
       transactionSetIdentifier: "855",
-      ruleId: "01GVDZ7DVSTX4CH79D13H8J3W3",
+      ruleId: "01GVGMMD1ZHVCDX472NEM74GCS",
     },
     input: {
       type: "EDI/X12",
       bucketName: "stedi-default-engine-artifacts-217851219840",
-      key: "799573aa-6b53-a29c-9643-5c7e49bd49cd/1746-1746-1.edi",
+      key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.edi",
     },
     output: {
       type: "STEDI/GUIDE-JSON",
       bucketName:
         "default-engine-inbox-json-bfa02b63-0f40-4ea6-a99d-7edb8ed9e86d",
-      key: "799573aa-6b53-a29c-9643-5c7e49bd49cd/1746-1746-1.json",
+      key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.json",
     },
     partnership: {
       partnershipId: "this-is-me_another-merchant",

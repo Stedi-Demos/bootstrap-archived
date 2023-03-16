@@ -62,9 +62,9 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     });
 
     // prepare delivery payloads
-    const filenamePrefix = transactionEvent.detail.metadata.interchange
+    const filenamePrefix = transactionEvent.detail.envelopes.interchange
       .controlNumber
-      ? transactionEvent.detail.metadata.interchange.controlNumber
+      ? transactionEvent.detail.envelopes.interchange.controlNumber
       : Date.now();
 
     const destinationFilename = generateDestinationFilename(

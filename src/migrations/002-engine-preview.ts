@@ -105,11 +105,6 @@ export const up = async () => {
         partnershipId,
         localProfileId: localProfile.profileId,
         partnerProfileId: partnerProfile.profileId,
-        functionalAcknowledgmentConfig: {
-          acknowledgmentType: "997",
-          generate: "NEVER",
-          groupBy: "ONE_PER_INTERCHANGE",
-        },
       })
     );
 

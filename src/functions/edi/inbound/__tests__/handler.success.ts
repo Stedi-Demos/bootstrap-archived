@@ -12,16 +12,15 @@ import {
 } from "../../../../lib/testing/testHelpers.js";
 import { GetObjectCommand } from "@stedi/sdk-client-buckets";
 import { Readable } from "stream";
-import {
-  GetValueCommand,
-  IncrementValueCommand,
-} from "@stedi/sdk-client-stash";
+import { GetValueCommand } from "@stedi/sdk-client-stash";
 import guideJSON855 from "../__fixtures__/855-guide.json" assert { type: "json" };
 
 const buckets = mockBucketClient();
 const translate = mockTranslateClient();
 const stash = mockStashClient();
 const guides = mockGuideClient();
+
+const partnershipId = "this-is-me_another-merchant";
 
 test.beforeEach(() => {
   nock.disableNetConnect();
@@ -47,7 +46,7 @@ test.serial(
 
     stash
       .on(GetValueCommand, {
-        key: `destinations|${sampleTransactionProcessedEvent.detail.transaction.ruleId}`,
+        key: `destinations|${partnershipId}|855`,
       }) // mock destinations lookup
       .resolvesOnce({
         value: {

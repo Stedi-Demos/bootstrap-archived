@@ -13,7 +13,6 @@ import {
   groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
-import { generateControlNumber } from "../../../lib/generateControlNumber.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
   OutboundEvent,
@@ -22,6 +21,10 @@ import {
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { loadDestinations } from "../../../lib/loadDestinations.js";
+import { partnersClient } from "../../../lib/clients/partners.js";
+import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
+
+const partners = partnersClient();
 
 export const handler = async (
   event: OutboundEvent
@@ -63,19 +66,19 @@ export const handler = async (
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
-    const isaControlNumber = await generateControlNumber({
-      segment: "ISA",
-      usageIndicatorCode: event.metadata.usageIndicatorCode,
-      sendingPartnerId: partnership.localProfileId!,
-      receivingPartnerId: partnership.partnerProfileId!,
-    });
+    const { x12ControlNumber: isaControlNumber } = await partners.send(
+      new IncrementX12ControlNumberCommand({
+        partnershipId: partnership.partnershipId,
+        controlNumberType: "interchange",
+      })
+    );
 
-    const gsControlNumber = await generateControlNumber({
-      segment: "GS",
-      usageIndicatorCode: event.metadata.usageIndicatorCode,
-      sendingPartnerId: partnership.localProfileId!,
-      receivingPartnerId: partnership.partnerProfileId!,
-    });
+    const { x12ControlNumber: gsControlNumber } = await partners.send(
+      new IncrementX12ControlNumberCommand({
+        partnershipId: partnership.partnershipId,
+        controlNumberType: "group",
+      })
+    );
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope = {
@@ -120,7 +123,7 @@ export const handler = async (
           );
 
           const destinationFilename = generateDestinationFilename(
-            isaControlNumber,
+            isaControlNumber!.toString(),
             transactionSetIdentifier,
             "edi"
           );

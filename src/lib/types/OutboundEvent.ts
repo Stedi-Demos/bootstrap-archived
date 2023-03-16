@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { UsageIndicatorCodeSchema } from "../generateControlNumber.js";
+import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
 
 export const OutboundEventSchema = z.strictObject({
   metadata: z.strictObject({

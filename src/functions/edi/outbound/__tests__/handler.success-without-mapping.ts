@@ -9,15 +9,12 @@ import {
 } from "../../../../lib/testing/testHelpers.js";
 import { handler } from "../handler.js";
 import sampleOutboundEvent from "../../../../resources/X12/5010/850/outbound.json" assert { type: "json" };
-import { GetX12PartnershipCommand } from "@stedi/sdk-client-partners";
 import {
-  GetValueCommand,
-  IncrementValueCommand,
-} from "@stedi/sdk-client-stash";
-import {
-  OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-  PARTNERS_KEYSPACE_NAME,
-} from "../../../../lib/constants.js";
+  GetX12PartnershipCommand,
+  IncrementX12ControlNumberCommand,
+} from "@stedi/sdk-client-partners";
+import { GetValueCommand } from "@stedi/sdk-client-stash";
+import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
 import { TranslateJsonToX12Command } from "@stedi/sdk-client-edi-translate";
 
 const buckets = mockBucketClient();
@@ -25,8 +22,8 @@ const partners = mockPartnersClient();
 const stash = mockStashClient();
 const translate = mockTranslateClient();
 
-const transactionId = "850-transaction-rule-id";
 const guideId = "850-guide-id";
+const partnershipId = "this-is-me_another-merchant";
 
 test.beforeEach(() => {
   nock.disableNetConnect();
@@ -44,10 +41,10 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
   partners
     // load partnership
     .on(GetX12PartnershipCommand as any, {
-      partnershipId: "this-is-me_another-merchant",
+      partnershipId,
     })
     .resolvesOnce({
-      partnershipId: "this-is-me_another-merchant",
+      partnershipId,
       localProfileId: "this-is-me",
       localProfile: { interchangeQualifier: "ZZ", interchangeId: "THISISME" },
       partnerProfileId: "another-merchant",
@@ -58,17 +55,27 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
       outboundTransactions: [
         {
           transactionSetIdentifier: "850",
-          transactionId,
+          transactionId: "850-transaction-rule-id",
           guideId,
         },
       ],
-    } as any);
+    } as any)
+    // increment interchange control number
+    .on(IncrementX12ControlNumberCommand as any, {
+      controlNumberType: "interchange",
+    })
+    .resolvesOnce({ x12ControlNumber: 1916 } as any)
+    // increment group control number
+    .on(IncrementX12ControlNumberCommand as any, {
+      controlNumberType: "group",
+    })
+    .resolvesOnce({ x12ControlNumber: 1916 } as any);
 
   stash
     // loading destinations
     .on(GetValueCommand, {
       keyspaceName: PARTNERS_KEYSPACE_NAME,
-      key: `destinations|${transactionId}`,
+      key: `destinations|${partnershipId}|850`,
     })
     .resolvesOnce({
       value: {
@@ -82,19 +89,7 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
           },
         ],
       },
-    })
-    // generate isa control number
-    .on(IncrementValueCommand, {
-      key: "T|ISA|this-is-me|another-merchant",
-      keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-    })
-    .resolvesOnce({ value: 1916 })
-    // generate gs control number
-    .on(IncrementValueCommand, {
-      key: "T|GS|this-is-me|another-merchant",
-      keyspaceName: OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-    })
-    .resolvesOnce({ value: 1916 });
+    });
 
   translate
     // convert guide JSON to x12

@@ -1,6 +1,6 @@
 import z from "zod";
-import { UsageIndicatorCodeSchema } from "../generateControlNumber.js";
 import { DestinationSchema } from "./Destination.js";
+import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
 
 /*
  * WARNING: THE SCHEMAS & TYPES DECLARED BELOW ARE NOW DEPRECATED

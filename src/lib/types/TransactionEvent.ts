@@ -1,5 +1,7 @@
 import * as z from "zod";
-import { UsageIndicatorCodeSchema } from "../generateControlNumber.js";
+
+export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
+export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 
 export const TransactionEventSchema = z.object({
   version: z.string(),

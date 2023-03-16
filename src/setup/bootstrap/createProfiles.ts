@@ -67,11 +67,6 @@ export const createProfiles = async ({
         partnershipId,
         localProfileId: localProfile.profileId,
         partnerProfileId: remoteProfile.profileId,
-        functionalAcknowledgmentConfig: {
-          acknowledgmentType: "997",
-          generate: "ALWAYS",
-          groupBy: "ONE_PER_INTERCHANGE",
-        },
       })
     );
   } catch (error) {

@@ -14,21 +14,38 @@ export const TransactionEventSchema = z.object({
   detail: z.object({
     version: z.literal("2023-02-13"),
     direction: z.literal("SENT").or(z.literal("RECEIVED")),
-    metadata: z.object({
+    envelopes: z.object({
       interchange: z.object({
-        controlNumber: z.string(),
+        acknowledgmentRequestedCode: z.string(),
+        controlNumber: z.number(),
+        date: z.string(),
+        receiverId: z.string(),
+        receiverQualifier: z.string(),
+        senderId: z.string(),
+        senderQualifier: z.string(),
+        time: z.string(),
         usageIndicatorCode: UsageIndicatorCodeSchema,
+        versionNumberCode: z.string(),
       }),
-      group: z.object({
-        controlNumber: z.string(),
+      functionalGroup: z.object({
+        applicationReceiverCode: z.string(),
+        applicationSenderCode: z.string(),
+        controlNumber: z.number(),
+        date: z.string(),
+        functionalIdentifierCode: z.string(),
+        release: z.string(),
+        responsibleAgencyCode: z.string(),
+        time: z.string(),
       }),
-      processedAt: z.string(),
     }),
     transaction: z.object({
-      controlNumber: z.string(),
+      controlNumber: z.number(),
       id: z.string(),
       transactionSetIdentifier: z.string(),
       ruleId: z.string(),
+    }),
+    metadata: z.object({
+      processedAt: z.string(),
     }),
     input: z.object({
       type: z.string(),
@@ -61,3 +78,4 @@ export const TransactionEventSchema = z.object({
 });
 
 export type TransactionEvent = z.infer<typeof TransactionEventSchema>;
+

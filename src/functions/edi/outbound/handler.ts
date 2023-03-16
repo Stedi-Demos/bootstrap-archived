@@ -12,7 +12,7 @@ import {
   generateDestinationFilename,
   groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
-import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
+import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
   OutboundEvent,
@@ -20,9 +20,12 @@ import {
 } from "../../../lib/types/OutboundEvent.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
+import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteEnvelope.js";
+import { loadProfile } from "../../../lib/loadProfileById.js";
 import { loadDestinations } from "../../../lib/loadDestinations.js";
 import { partnersClient } from "../../../lib/clients/partners.js";
 import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
+import assert from "node:assert";
 
 const partners = partnersClient();
 
@@ -40,12 +43,22 @@ export const handler = async (
       partnershipId: event.metadata.partnershipId,
     });
 
+    // TODO: use the partnership output when it returns the default applicationId
+    const [localProfile, partnerProfile] = await Promise.all([
+      loadProfile(partnership.localProfileId),
+      loadProfile(partnership.partnerProfileId),
+    ]);
+
+    assert(localProfile && partnerProfile);
+
     // get the transaction set from Guide JSON or event metadata
     const transactionSetIdentifier =
       determineTransactionSetIdentifier(outboundEvent);
 
     const transactionSetConfig = partnership.outboundTransactions?.find(
-      (txn) => txn.transactionSetIdentifier === transactionSetIdentifier
+      (txn) =>
+        txn.transactionSetIdentifier === transactionSetIdentifier &&
+        (!event.metadata.release || txn.release === event.metadata.release)
     );
 
     if (transactionSetConfig === undefined)
@@ -66,40 +79,51 @@ export const handler = async (
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
-    const { x12ControlNumber: isaControlNumber } = await partners.send(
+    const { x12ControlNumber: isaControlNumber } = (await partners.send(
       new IncrementX12ControlNumberCommand({
         partnershipId: partnership.partnershipId,
         controlNumberType: "interchange",
       })
-    );
+    )) as { x12ControlNumber: number };
 
-    const { x12ControlNumber: gsControlNumber } = await partners.send(
+    const { x12ControlNumber: gsControlNumber } = (await partners.send(
       new IncrementX12ControlNumberCommand({
         partnershipId: partnership.partnershipId,
         controlNumberType: "group",
       })
-    );
+    )) as { x12ControlNumber: number };
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
-    const envelope = {
+    const envelope: EdiTranslateWriteEnvelope = {
       interchangeHeader: {
-        senderQualifier: partnership.localProfile!.interchangeQualifier,
-        senderId: partnership.localProfile!.interchangeId,
-        receiverQualifier: partnership.partnerProfile!.interchangeQualifier,
-        receiverId: partnership.partnerProfile?.interchangeId,
+        senderQualifier: partnership.localProfile!
+          .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["senderQualifier"],
+        senderId: partnership.localProfile.interchangeId,
+        receiverQualifier: partnership.partnerProfile!
+          .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["receiverQualifier"],
+        receiverId: partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
-        controlNumber: isaControlNumber,
+        controlNumber: isaControlNumber.toString(),
         usageIndicatorCode: event.metadata.usageIndicatorCode,
+        controlVersionNumber: transactionSetConfig.release.slice(
+          0,
+          5
+        ) as EdiTranslateWriteEnvelope["interchangeHeader"]["controlVersionNumber"],
       },
       groupHeader: {
-        functionalIdentifierCode,
-        applicationSenderCode: partnership.localProfile!.interchangeQualifier,
+        functionalIdentifierCode:
+          functionalIdentifierCode as EdiTranslateWriteEnvelope["groupHeader"]["functionalIdentifierCode"],
+        applicationSenderCode:
+          localProfile.defaultApplicationId ??
+          partnership.localProfile.interchangeId,
         applicationReceiverCode:
-          partnership.partnerProfile!.interchangeQualifier,
+          partnerProfile.defaultApplicationId ??
+          partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
-        controlNumber: gsControlNumber,
+        controlNumber: gsControlNumber.toString(),
+        release: transactionSetConfig.release,
       },
     };
 
@@ -119,7 +143,8 @@ export const handler = async (
           const translation = await translateJsonToEdi(
             guideJson,
             transactionSetConfig.guideId,
-            envelope
+            envelope,
+            event.metadata.useBuiltInGuide
           );
 
           const destinationFilename = generateDestinationFilename(

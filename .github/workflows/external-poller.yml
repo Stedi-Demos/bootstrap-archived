@@ -23,7 +23,7 @@ jobs:
           SFTP_BUCKET_NAME: ${{secrets.SFTP_BUCKET_NAME }}
       # notify via slack if any failures are encountered
       # - if: #${{ failure() }}
-      - if: true
+      - if: failure()
         name: "Send GitHub Action trigger failure data to Slack"
         id: slack
         uses: slackapi/slack-github-action@v1.23.0

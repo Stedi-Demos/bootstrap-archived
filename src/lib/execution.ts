@@ -92,7 +92,7 @@ export class PostToSlack {
 }
 
 const notifySlack = async (message: string[]): Promise<void> => {
-  const body = new PostToSlack(message.join("\n"));
+  const body = new PostToSlack(message.filter(s => s == "").join("\n "));
 
   const response = await fetch(slackEndPoint, {
     method: "post",

@@ -30,16 +30,18 @@ export const deliverToDestination = async (
     port: config.port,
     username: config.username,
     password: config.password,
-    readyTimeout: 15_000,
+    readyTimeout: 20_000,
     timeout: 60_000,
     debug: console.log,
     algorithms: {
       serverHostKey: ["ssh-rsa", "rsa-sha2-256"],
       kex: [
-        "diffie-hellman-group-exchange-sha256",
+        //"diffie-hellman-group-exchange-sha256",
+        "diffie-hellman-group16-sha512",
         "diffie-hellman-group14-sha256",
+        "diffie-hellman-group14-sha1",
       ],
-      cipher: ["aes256-ctr", "aes256-gcm", "aes128-ctr"],
+      cipher: ["aes256-ctr", "aes128-ctr"],
       hmac: [
         "hmac-sha2-256-etm@openssh.com",
         "hmac-sha2-256",

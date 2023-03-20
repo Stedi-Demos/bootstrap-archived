@@ -11,8 +11,11 @@ import {
 import { requiredEnvVar } from "./environment.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 import { bucketsClient } from "./clients/buckets.js";
+import fetch from "node-fetch";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
+const slackEndPoint = requiredEnvVar("SLACK_ENDPOINT");
+const stediApiKey = requiredEnvVar("STEDI_API_KEY");
 
 let _executionsBucketClient: BucketsClient;
 let _infiniteLoopCheckPassed: boolean = false;
@@ -73,6 +76,36 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
   return { inputResult, previousFailure };
 };
 
+export class PostToSlack {
+  constructor(
+    message: string,
+    type: "Success" | "Failure" | "Info" | "Warning" = "Failure",
+    customer = "FMXCHEP"
+  ) {
+    this.Type = type;
+    this.Customer = customer;
+    this.Message = message;
+  }
+  public Type: "Success" | "Failure" | "Info" | "Warning";
+  public Customer: string;
+  public Message: string;
+}
+
+const notifySlack = async (message: string[]): Promise<void> => {
+  const body = new PostToSlack(message.join("\n"));
+
+  const response = await fetch(slackEndPoint, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Key " + stediApiKey,
+    },
+  });
+  const data = await response.json();
+  console.log(data);
+};
+
 export const failedExecution = async (
   executionId: string,
   errorWithContext: ErrorWithContext
@@ -82,6 +115,7 @@ export const failedExecution = async (
   const statusCode =
     (errorWithContext as any)?.["$metadata"]?.httpStatusCode || 500;
   const message = "execution failed";
+  await notifySlack([message, rawError.message ?? "", rawError.name ?? ""]);
   return { statusCode, message, failureRecord, error: rawError };
 };
 

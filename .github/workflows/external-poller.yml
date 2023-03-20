@@ -35,14 +35,14 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Warning :warning:",
+                    "text": "Warning :warning:"
                   }
                 },
                 {
                   "type": "header",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Scheduled SFTP poller failed :rotating_light:",
+                    "text": "Scheduled SFTP poller failed :rotating_light:"
                   }
                 },
                 {

@@ -30,20 +30,21 @@ export class SftpPoller extends RemotePoller {
       timeout: 60_000,
       debug: console.log,
       algorithms: {
-        serverHostKey: ["ssh-rsa", "rsa-sha2-256"],
         kex: [
-          //"diffie-hellman-group-exchange-sha256",
-          "diffie-hellman-group16-sha512",
+          //"diffie-hellman-group-exchange-sha256", // hangs
+          //"diffie-hellman-group16-sha512", // hangs
           "diffie-hellman-group14-sha256",
           "diffie-hellman-group14-sha1",
         ],
-        cipher: ["aes256-ctr", "aes128-ctr"],
+        serverHostKey: ["ssh-rsa"],
+        cipher: ["aes256-cbc", "aes256-ctr", "aes128-cbc", "aes128-ctr"],
         hmac: [
-          "hmac-sha2-256-etm@openssh.com",
+          "hmac-sha2-512",
           "hmac-sha2-256",
-          "hmac-sha2-256-96",
+          "hmac-sha1",
         ],
       },
+      tryKeyboard: true,
     };
 
     await this.client.connect(options);

@@ -92,7 +92,7 @@ export class PostToSlack {
 }
 
 const notifySlack = async (message: string[]): Promise<void> => {
-  const body = new PostToSlack(message.filter(s => s == "").join("\n "));
+  const body = new PostToSlack(message.filter((s) => s == "").join("\n "));
 
   const response = await fetch(slackEndPoint, {
     method: "post",
@@ -115,7 +115,14 @@ export const failedExecution = async (
   const statusCode =
     (errorWithContext as any)?.["$metadata"]?.httpStatusCode || 500;
   const message = "execution failed";
-  await notifySlack([message, rawError.message ?? "", rawError.name ?? ""]);
+  await notifySlack([
+    "Stedi function failed to execute",
+    message,
+    rawError.message ?? "",
+    rawError.name ?? "",
+    rawError.stack ?? "",
+    failureRecord.key ?? "",
+  ]);
   return { statusCode, message, failureRecord, error: rawError };
 };
 

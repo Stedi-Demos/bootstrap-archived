@@ -1,5 +1,6 @@
 import {
   failedExecution,
+  FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
@@ -23,7 +24,9 @@ import {
 // Buckets client is shared across handler and execution tracking logic
 const buckets = bucketsClient();
 
-export const handler = async (event: any): Promise<Record<string, any>> => {
+export const handler = async (
+  event: unknown
+): Promise<Record<string, unknown> | FailureResponse> => {
   console.log(JSON.stringify(event, null, 2));
   const executionId = generateExecutionId(event);
   try {
@@ -44,7 +47,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     const fileContents = await consumers.text(
       getObjectResponse.body as Readable
     );
-    const guideJSON = JSON.parse(fileContents);
+    const guideJSON = JSON.parse(fileContents) as object;
 
     // get the destinations for this transaction set
     const { destinations } = await loadDestinations({

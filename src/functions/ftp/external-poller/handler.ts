@@ -1,6 +1,5 @@
 import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
 
-import { requiredEnvVar } from "../../../lib/environment.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
 import {
   failedExecution,
@@ -44,7 +43,7 @@ export const handler = async (
   const executionId = generateExecutionId({ executionTime });
 
   await recordNewExecution(executionId, { executionTime });
-  await console.log("starting", {
+  console.log("starting", {
     executionId,
     payload: JSON.stringify({ executionTime }),
   });
@@ -60,7 +59,8 @@ export const handler = async (
     // `FtpPollerConfigMap.parse` handles failed stash lookup as well (value is undefined)
     const remotePollerConfigMap: RemotePollerConfigMap =
       RemotePollerConfigMapSchema.parse(stashResponse.value);
-    const pollerConfig: RemotePollerConfig = remotePollerConfigMap[configId];
+    const pollerConfig: RemotePollerConfig | undefined =
+      remotePollerConfigMap[configId];
 
     if (!pollerConfig) {
       return failedExecution(
@@ -124,14 +124,14 @@ const pollRemoteServer = async (
 
   const ftpPollingResults: RemotePollingResults = {
     processedFiles: [],
-    skippedItems: fileDetails.skippedItems || [],
-    processingErrors: fileDetails.processingErrors || [],
+    skippedItems: fileDetails.skippedItems ?? [],
+    processingErrors: fileDetails.processingErrors ?? [],
   };
 
   for await (const file of fileDetails.filesToProcess) {
     // if last poll time is not set, use `0` (epoch)
     // if remote file modifiedAt is not set, use current time
-    const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() || 0;
+    const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() ?? 0;
     const remoteFileTimestamp = file.lastModifiedTime;
     if (remoteFileTimestamp < lastPollTimestamp) {
       ftpPollingResults.skippedItems.push({

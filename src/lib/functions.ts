@@ -15,9 +15,7 @@ import { functionsClient } from "./clients/functions.js";
 import { requiredEnvVar } from "./environment.js";
 import {
   CreateEventToFunctionBindingCommand,
-  Events,
   UpdateEventToFunctionBindingCommand,
-  waitUntilEventToFunctionBindingCreateComplete,
 } from "@stedi/sdk-client-events";
 import { eventsClient } from "./clients/events.js";
 
@@ -27,13 +25,13 @@ const events = eventsClient();
 
 export const invokeFunction = async (
   functionName: string,
-  input: DocumentType,
+  input: unknown,
   invocationType = InvocationType.SYNCHRONOUS
 ): Promise<DocumentType | undefined> => {
   const result = await functions.send(
     new InvokeFunctionCommand({
       functionName,
-      payload: input,
+      payload: input as DocumentType,
       invocationType,
     })
   );
@@ -44,9 +42,7 @@ export const invokeFunction = async (
 export const createFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ): Promise<CreateFunctionCommandOutput> => {
   const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
   const key = `functionPackages/${functionName}/${new Date()
@@ -54,10 +50,12 @@ export const createFunction = async (
     .toString()}-package.zip`;
 
   await buckets.send(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     new PutObjectCommand({
       bucketName,
       key,
       body: functionPackage,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any //SDK mismatches
   );
 
@@ -76,9 +74,7 @@ export const createFunction = async (
 export const updateFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ): Promise<UpdateFunctionCommandOutput> => {
   const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
   const key = `functionPackages/${functionName}/${new Date()
@@ -86,10 +82,12 @@ export const updateFunction = async (
     .toString()}-package.zip`;
 
   await buckets.send(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     new PutObjectCommand({
       bucketName,
       key,
       body: functionPackage,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any //SDK mismatches
   );
 

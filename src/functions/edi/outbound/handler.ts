@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { translateJsonToEdi } from "../../../lib/translateEDI.js";
 import {
   failedExecution,
+  FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
@@ -31,7 +32,7 @@ const partners = partnersClient();
 
 export const handler = async (
   event: OutboundEvent
-): Promise<Record<string, any>> => {
+): Promise<Record<string, unknown> | FailureResponse> => {
   const executionId = generateExecutionId(event);
 
   try {
@@ -96,10 +97,10 @@ export const handler = async (
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope: EdiTranslateWriteEnvelope = {
       interchangeHeader: {
-        senderQualifier: partnership.localProfile!
+        senderQualifier: partnership.localProfile
           .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["senderQualifier"],
         senderId: partnership.localProfile.interchangeId,
-        receiverQualifier: partnership.partnerProfile!
+        receiverQualifier: partnership.partnerProfile
           .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["receiverQualifier"],
         receiverId: partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
@@ -112,8 +113,7 @@ export const handler = async (
         ) as EdiTranslateWriteEnvelope["interchangeHeader"]["controlVersionNumber"],
       },
       groupHeader: {
-        functionalIdentifierCode:
-          functionalIdentifierCode as EdiTranslateWriteEnvelope["groupHeader"]["functionalIdentifierCode"],
+        functionalIdentifierCode: functionalIdentifierCode,
         applicationSenderCode:
           localProfile.defaultApplicationId ??
           partnership.localProfile.interchangeId,
@@ -148,7 +148,7 @@ export const handler = async (
           );
 
           const destinationFilename = generateDestinationFilename(
-            isaControlNumber!.toString(),
+            isaControlNumber.toString(),
             transactionSetIdentifier,
             "edi"
           );
@@ -194,22 +194,24 @@ const determineTransactionSetIdentifier = (event: OutboundEvent): string => {
   );
 };
 
-const normalizeGuideJson = (guideJson: any): any[] => {
+const normalizeGuideJson = (guideJson: unknown): unknown[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },
   // or an array of transaction set objects: [{ heading, detail, summary}]
   return Array.isArray(guideJson) ? guideJson : [guideJson];
 };
 
 const extractTransactionSetIdentifierFromGuideJson = (
-  guideJson: any
+  guideJson: unknown
 ): string => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   // ensure that there is exactly 1 transaction set type in the input
   const uniqueTransactionSets = normalizedGuideJson.reduce(
     (transactionSetIds: Set<string>, t) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const currentId =
-        t.heading?.transaction_set_header_ST
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (t as any).heading?.transaction_set_header_ST
           ?.transaction_set_identifier_code_01;
       if (currentId !== undefined) {
         transactionSetIds.add(currentId as string);
@@ -224,17 +226,21 @@ const extractTransactionSetIdentifierFromGuideJson = (
     throw new Error("unable to determine transaction set type from input");
   }
 
-  return uniqueTransactionSets.values().next().value;
+  const [result] = uniqueTransactionSets.values();
+
+  return result;
 };
 
-const validateTransactionSetControlNumbers = (guideJson: any) => {
+const validateTransactionSetControlNumbers = (guideJson: unknown) => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   let expectedControlNumber = 1;
   normalizedGuideJson.forEach((t) => {
     // handle both string and numeric values
     const controlNumberValue = Number(
-      t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (t as any).heading?.transaction_set_header_ST
+        ?.transaction_set_control_number_02
     );
     if (controlNumberValue !== expectedControlNumber) {
       const message = `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;

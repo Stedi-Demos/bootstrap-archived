@@ -21,9 +21,7 @@ const events = eventsClient();
 const createOrUpdateFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ) => {
   try {
     await updateFunction(functionName, functionPackage, environmentVariables);
@@ -44,6 +42,7 @@ const createOrUpdateEventBinding = async (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const functionPaths = getFunctionPaths(process.argv[2]);
 
@@ -63,8 +62,8 @@ const createOrUpdateEventBinding = async (
     try {
       const functionPackage = new Uint8Array(code);
       const environmentVariables = dotenv.config().parsed ?? {};
-      environmentVariables["NODE_OPTIONS"] = "--enable-source-maps";
-      environmentVariables["STEDI_FUNCTION_NAME"] = functionName;
+      environmentVariables.NODE_OPTIONS = "--enable-source-maps";
+      environmentVariables.STEDI_FUNCTION_NAME = functionName;
 
       await createOrUpdateFunction(
         functionName,
@@ -79,8 +78,14 @@ const createOrUpdateEventBinding = async (
       FUNCTION_NAMES.push(functionName);
 
       console.log(`Done ${functionName}`);
-    } catch (e) {
-      console.error(`Could not update deploy ${functionName}. Error ${e}`);
+    } catch (e: unknown) {
+      console.error(
+        `Could not update deploy ${functionName}. Error: ${JSON.stringify(
+          e,
+          null,
+          2
+        )}`
+      );
     }
   });
 
@@ -93,7 +98,7 @@ const createOrUpdateEventBinding = async (
   // deploying event bindings
   //
   const EVENT_BINDING_NAMES: string[] = [];
-  createOrUpdateEventBinding(
+  void createOrUpdateEventBinding(
     "edi-inbound",
     {
       source: ["stedi.engine"],
@@ -113,7 +118,7 @@ const createOrUpdateEventBinding = async (
     )
   );
 
-  createOrUpdateEventBinding(
+  void createOrUpdateEventBinding(
     "edi-acknowledgment",
     {
       source: ["stedi.engine"],

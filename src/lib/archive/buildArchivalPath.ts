@@ -15,7 +15,7 @@ export const buildArchivalPath = ({
     const filenameWithoutExtension = currentFilenameParts.join(".");
     filename = `${currentKeyParts.join(
       "/"
-    )}/${filenameWithoutExtension}_${timestamp}.${extension}`;
+    )}/${filenameWithoutExtension}_${timestamp}.${extension!}`;
   } else {
     filename = `${currentFilenameParts[0]}_${timestamp}`;
   }

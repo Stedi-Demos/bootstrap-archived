@@ -11,14 +11,12 @@ import {
 } from "@stedi/sdk-client-stash";
 import {
   DeleteFunctionCommand,
-  waitForFunctionDeleteComplete,
   waitUntilFunctionDeleteComplete,
 } from "@stedi/sdk-client-functions";
 import {
   BootstrapMetadata,
   BootstrapMetadataSchema,
 } from "../lib/types/BootstrapMetadata.js";
-import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 import { stashClient } from "../lib/clients/stash.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { guidesClient } from "../lib/clients/guides.js";
@@ -28,14 +26,11 @@ import { partnersClient } from "../lib/clients/partners.js";
 import {
   DeleteX12PartnershipCommand,
   DeleteX12ProfileCommand,
-  ListX12PartnershipsCommand,
-  ListX12ProfilesCommand,
 } from "@stedi/sdk-client-partners";
 import { parseGuideId } from "../support/guide.js";
 import { eventsClient } from "../lib/clients/events.js";
 import {
   DeleteEventToFunctionBindingCommand,
-  waitUntilEventToFunctionBindingCreateComplete,
   waitUntilEventToFunctionBindingDeleteComplete,
 } from "@stedi/sdk-client-events";
 import { maxWaitTime } from "./contants.js";
@@ -47,6 +42,7 @@ const functions = functionsClient();
 const guides = guidesClient();
 const partners = partnersClient();
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
 

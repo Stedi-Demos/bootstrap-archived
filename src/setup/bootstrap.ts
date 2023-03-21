@@ -5,6 +5,7 @@ import { migrator } from "../lib/migration/config.js";
 import { createProfiles } from "./bootstrap/createProfiles.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const guide850 = await ensureGuideExists(
     "src/resources/X12/5010/850/guide.json"
@@ -32,6 +33,6 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
   const appliedMigrations = await migrationStore.executed();
   for (const { name } of allMigrations) {
     if (appliedMigrations.includes(name)) continue;
-    migrationStore.logMigration({ name });
+    await migrationStore.logMigration({ name });
   }
 })();

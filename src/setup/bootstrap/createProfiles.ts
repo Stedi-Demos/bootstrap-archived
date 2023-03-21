@@ -62,7 +62,7 @@ export const createProfiles = async ({
     | CreateX12PartnershipCommandOutput
     | GetX12PartnershipCommandOutput
     | undefined;
-  const partnershipId = `${localProfile.profileId}_${remoteProfile.profileId}`;
+  const partnershipId = `${localProfile.profileId!}_${remoteProfile.profileId!}`;
 
   const PARTNERSHIP_IDS: string[] = [partnershipId];
 
@@ -186,7 +186,7 @@ const ensureOutboundTransaction = async ({
 
   if (rule === undefined)
     throw new Error(
-      `Failed to create rule for ${guide.target!.transactionSet}`
+      `Failed to create rule for ${guide.target!.transactionSet!}`
     );
 
   return rule;

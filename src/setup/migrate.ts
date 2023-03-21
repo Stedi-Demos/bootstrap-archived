@@ -1,5 +1,6 @@
 import { migrator } from "../lib/migration/config.js";
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   console.log("Migrating Bootstrap...");
 

@@ -1,4 +1,5 @@
-import { Umzug, JSONStorage } from "umzug";
+/* eslint-disable  */
+import { Umzug } from "umzug";
 import { StashStorage } from "./stashStorage.js";
 
 export const migrator = new Umzug({

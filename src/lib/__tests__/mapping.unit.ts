@@ -18,7 +18,7 @@ test("should return undefined for object with only a deeply nested empty object"
     a: {
       b: {
         c: {},
-      }
+      },
     },
   };
   t.deepEqual(removeEmptyObjects(input), undefined);
@@ -31,14 +31,14 @@ test("should _only_ remove empty nested objects", (t) => {
       b2: {},
       b3: true,
       b4: 4,
-    }
+    },
   };
   t.deepEqual(removeEmptyObjects(input), {
     a: {
       b1: "c1",
       b3: true,
-      b4:4,
-    }
+      b4: 4,
+    },
   });
 });
 
@@ -71,9 +71,9 @@ test("should remove nested empty array objects from array", (t) => {
         array: {
           empty: {
             value: {},
-          }
-        }
-      }
+          },
+        },
+      },
     },
   ];
   t.deepEqual(removeEmptyObjects(input), [
@@ -86,7 +86,7 @@ test("should remove nested empty array objects from array", (t) => {
 test("should not remove null values", (t) => {
   const input = {
     a: null,
-  }
+  };
   t.deepEqual(removeEmptyObjects(input), {
     a: null,
   });
@@ -96,7 +96,7 @@ test("should not remove Date values", (t) => {
   const someDate = new Date(123456);
   const input = {
     a: someDate,
-  }
+  };
   t.deepEqual(removeEmptyObjects(input), {
     a: someDate,
   });
@@ -125,15 +125,12 @@ test("should recursively remove all nested empty objects", (t) => {
           array: {
             empty: {
               value: {},
-            }
-          }
-        }
+            },
+          },
+        },
       },
     ],
-    f: [
-      {},
-      {},
-    ],
+    f: [{}, {}],
     g: null,
     h: {
       someDate,
@@ -144,8 +141,8 @@ test("should recursively remove all nested empty objects", (t) => {
       nested: {
         empty: {
           value: {},
-        }
-      }
+        },
+      },
     },
   };
 

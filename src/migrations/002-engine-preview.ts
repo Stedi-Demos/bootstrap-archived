@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   DeleteValueCommand,
   ListValuesCommand,
@@ -31,6 +32,7 @@ import {
   isAckTransactionSet,
 } from "../lib/types/Depreacted.js";
 import { ensureGuideExists, parseGuideId } from "../support/guide.js";
+import { DocumentType } from "@aws-sdk/types";
 
 const stash = stashClient();
 const partners = partnersClient();
@@ -51,7 +53,7 @@ export const up = async () => {
   for (const stashPartnership of stashPartnerships) {
     const txnSetWithProfile = stashPartnership.transactionSets.find(
       (txnSet) => "sendingPartnerId" in txnSet
-    ) as TransactionSetWithGuideId;
+    ) as TransactionSetWithGuideId | undefined;
 
     if (txnSetWithProfile === undefined)
       throw new Error("Failed to find transactionSet with profiles");
@@ -126,10 +128,10 @@ export const up = async () => {
       await stash.send(
         new SetValueCommand({
           keyspaceName: PARTNERS_KEYSPACE_NAME,
-          key: `destinations|${partnershipId}|${ackRule.transactionSetIdentifier}`,
+          key: `destinations|${partnershipId}|${ackRule.transactionSetIdentifier!}`,
           value: {
             description: ackConfig.description!,
-            destinations: ackConfig.destinations,
+            destinations: ackConfig.destinations as DocumentType,
           },
         })
       );
@@ -206,8 +208,8 @@ export const up = async () => {
         );
       }
 
-      saveTransactionSetDestinations(
-        `destinations|${partnershipId}|${rule.transactionSetIdentifier}`,
+      await saveTransactionSetDestinations(
+        `destinations|${partnershipId}|${rule.transactionSetIdentifier!}`,
         {
           description: transactionSet.description!,
           destinations: transactionSet.destinations,

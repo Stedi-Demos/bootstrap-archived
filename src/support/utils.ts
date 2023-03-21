@@ -1,13 +1,23 @@
 import fs from "fs";
 import dotenv from "dotenv";
 
-const DEFAULT_RESOURCE_ID_BASE_PATH = "./src/resources";
 const DEFAULT_DOT_ENV_FILE_PATH = "./.env";
 
-type ResourceFile = {
+interface ResourceFile {
   basePath: string;
   fileName?: string;
-};
+}
+
+export interface ResourceDetails {
+  name: string;
+  id: string;
+}
+
+// TODO: replace this with dynamic directory listing
+export const getEnabledTransactionSets = (): string[] => [
+  "X12-5010-850",
+  "X12-5010-855",
+];
 
 export const functionNameFromPath = (fnPath: string): string => {
   // get function name excluding extension

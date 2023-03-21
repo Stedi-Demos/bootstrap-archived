@@ -12,12 +12,12 @@ const deleteItemsWithPrefix = async (
   items: ObjectListOutput[],
   prefix: string
 ) => {
-  const keysToDelete = items?.reduce((keysToDelete: string[], item) => {
+  const keysToDelete = items.reduce((keysToDelete: string[], item) => {
     return item.key?.startsWith(prefix)
       ? keysToDelete.concat(item.key)
       : keysToDelete;
   }, []);
-  for await (const key of keysToDelete || []) {
+  for await (const key of keysToDelete) {
     await buckets.send(
       new DeleteObjectCommand({
         bucketName,

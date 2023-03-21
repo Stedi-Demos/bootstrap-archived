@@ -9,8 +9,8 @@ const partners = partnersClient();
 
 export const loadProfile = async (
   profileId: string
-): Promise<NoUndefined<GetX12ProfileCommandOutput>> => {
+): Promise<NoUndefined<GetX12ProfileCommandOutput> | undefined> => {
   return (await partners.send(
     new GetX12ProfileCommand({ profileId })
-  )) as NoUndefined<GetX12ProfileCommandOutput>;
+  )) as NoUndefined<GetX12ProfileCommandOutput | undefined>;
 };

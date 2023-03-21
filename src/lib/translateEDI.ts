@@ -1,3 +1,4 @@
+import { DocumentType } from "@aws-sdk/types";
 import {
   Parsed,
   TranslateJsonToX12Command,
@@ -10,7 +11,7 @@ import { EdiTranslateWriteEnvelope } from "./types/EdiTranslateWriteEnvelope.js"
 const translate = translateClient();
 
 export const translateJsonToEdi = async (
-  input: any,
+  input: unknown,
   guideId: string | undefined,
   envelope: EdiTranslateWriteEnvelope,
   useBuiltInGuide?: boolean
@@ -18,7 +19,7 @@ export const translateJsonToEdi = async (
   console.log({ guideId });
 
   if (useBuiltInGuide && is997GuidelessJson(input)) {
-    const x12ToolsResult = await x12Tools.generate997(input, envelope);
+    const x12ToolsResult = x12Tools.generate997(input, envelope);
     return x12ToolsResult;
   }
 
@@ -31,7 +32,7 @@ export const translateJsonToEdi = async (
   const translateResult = await translate.send(
     new TranslateJsonToX12Command({
       guideId,
-      input,
+      input: input as DocumentType,
       envelope,
     })
   );
@@ -61,9 +62,10 @@ export const translateEdiToJson = async (
   return translateResult.output;
 };
 
-const is997GuidelessJson = (input: any) => {
+const is997GuidelessJson = (input: unknown): input is x12Tools.Ack997 => {
   return (
-    input?.heading?.transaction_set_header_ST
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    (input as any)?.heading?.transaction_set_header_ST
       ?.transaction_set_identifier_code_01 === "997"
   );
 };

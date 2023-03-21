@@ -16,6 +16,7 @@ import {
 } from "@stedi/sdk-client-functions";
 import { OutboundEvent } from "../../../../lib/types/OutboundEvent.js";
 import { DestinationAck } from "../../../../lib/types/Destination.js";
+import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
 
 const stash = mockStashClient();
 const guides = mockGuideClient();
@@ -45,6 +46,7 @@ test.serial(
   async (t) => {
     stash
       .on(GetValueCommand, {
+        keyspaceName: PARTNERS_KEYSPACE_NAME,
         key: `destinations|${partnershipId}|acknowledgments`,
       }) // mock destinations lookup
       .resolvesOnce({

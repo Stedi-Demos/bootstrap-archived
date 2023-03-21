@@ -24,7 +24,7 @@ export const createSampleStashRecords = async ({
 
   // outbound 850 from THISISME to ANOTHERMERCH
   await saveTransactionSetDestinations(
-    `destinations|${partnershipId}|${rule850.transactionSetIdentifier}`,
+    `destinations|${partnershipId}|${rule850.transactionSetIdentifier!}`,
     {
       description: "Purchase Orders sent to ANOTHERMERCH",
       destinations: [
@@ -41,7 +41,7 @@ export const createSampleStashRecords = async ({
 
   // inbound 855 from ANOTHERMERCH to THISISME
   await saveTransactionSetDestinations(
-    `destinations|${partnershipId}|${rule855.transactionSetIdentifier}`,
+    `destinations|${partnershipId}|${rule855.transactionSetIdentifier!}`,
     {
       description: "Purchase Order Acknowledgements received from ANOTHERMERCH",
       destinations: [
@@ -57,7 +57,7 @@ export const createSampleStashRecords = async ({
 
   // outbound 997s to ANOTHERMERCH
   await saveTransactionSetDestinations(
-    `destinations|${partnershipId}|${rule997.transactionSetIdentifier}`,
+    `destinations|${partnershipId}|${rule997.transactionSetIdentifier!}`,
     {
       description: "Outbound 997 Acknowledgements",
       destinations: [

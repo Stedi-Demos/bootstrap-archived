@@ -1,6 +1,7 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
+import { DocumentType } from "@aws-sdk/types";
 import {
   TransactionSetDestinations,
   TransactionSetDestinationsSchema,
@@ -24,7 +25,7 @@ export const saveTransactionSetDestinations = async (
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: id,
-      value: parseResult.data,
+      value: parseResult.data as DocumentType,
     })
   );
 

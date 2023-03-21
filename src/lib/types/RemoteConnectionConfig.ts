@@ -45,6 +45,8 @@ export const RemotePollerConfigSchema = z.strictObject({
 
 export type RemotePollerConfig = z.infer<typeof RemotePollerConfigSchema>;
 
-export const RemotePollerConfigMapSchema = z.record(RemotePollerConfigSchema);
+export const RemotePollerConfigMapSchema = z.record(
+  RemotePollerConfigSchema.or(z.undefined())
+);
 
 export type RemotePollerConfigMap = z.infer<typeof RemotePollerConfigMapSchema>;

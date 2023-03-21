@@ -5,10 +5,10 @@ export type NoUndefined<T> = T extends Function | Date
   ? null
   : T extends undefined
   ? never
-  : T extends Array<unknown>
+  : T extends unknown[]
   ? ProcessArrayInternal<T>
   : {
-      [K in keyof T]: T[K] extends Array<unknown> | undefined | null
+      [K in keyof T]: T[K] extends unknown[] | undefined | null
         ? ProcessArrayInternal<T[K]>
         : T[K] extends object | null | undefined
         ? NoUndefined<T[K]>
@@ -17,12 +17,12 @@ export type NoUndefined<T> = T extends Function | Date
         : Exclude<T[K], undefined>;
     };
 
-type ProcessArrayInternal<T extends Array<unknown> | undefined | null> =
-  T extends Array<infer ArrayType>
+type ProcessArrayInternal<T extends unknown[] | undefined | null> =
+  T extends (infer ArrayType)[]
     ? number extends T["length"]
       ? ArrayType extends object
-        ? Array<NoUndefined<ArrayType>>
-        : Array<ArrayType>
+        ? NoUndefined<ArrayType>[]
+        : ArrayType[]
       : 1 extends T["length"]
       ? [T[0] extends object ? NoUndefined<T[0]> : T[0]]
       : 2 extends T["length"]

@@ -1,6 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ListValuesCommand, SetValueCommand } from "@stedi/sdk-client-stash";
+import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
-import { stashClient as stashClient } from "../lib/clients/stash.js";
 
 const stash = stashClient();
 
@@ -8,7 +14,7 @@ export const up = async () => {
   const partnerships = await loadPartnerships();
 
   for (const partnership of partnerships) {
-    if ("transactionSets" in partnership === false) {
+    if (!("transactionSets" in partnership)) {
       console.dir(partnership, { depth: null });
       throw new Error("Partnership is missing required key 'transactionSets'");
     }
@@ -17,7 +23,7 @@ export const up = async () => {
 
     partnership.transactionSets = partnership.transactionSets.map(
       (txnSet: any) => {
-        if ("guideIds" in txnSet === false || !Array.isArray(txnSet.guideIds)) {
+        if (!("guideIds" in txnSet) || !Array.isArray(txnSet.guideIds)) {
           console.dir(txnSet, { depth: null });
           throw new Error(
             "Transaction Set key 'guideIds', is either missing or not an array"

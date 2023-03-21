@@ -41,7 +41,7 @@ export const DestinationSftpSchema = z.strictObject({
 const DestinationFunctionSchema = z.strictObject({
   type: z.literal("function"),
   functionName: z.string(),
-  additionalInput: z.any().optional(),
+  additionalInput: z.unknown().optional(),
 });
 
 const DestinationAs2Schema = DestinationBucketSchema.extend({

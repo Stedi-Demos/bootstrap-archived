@@ -14,15 +14,15 @@ export const lookupFunctionalIdentifierCode = (
 export function lookupTransactionSets(functionalGroup: string): string[] {
   const txn = Object.entries(functionalIdentifierCodeLookup)
     .filter(([_txn, fg]) => fg === functionalGroup)
-    ?.map(([txn]) => txn);
+    .map(([txn]) => txn);
 
-  if (txn === undefined)
+  if (!txn.length)
     throw new Error(`No transaction set found for '${functionalGroup}'`);
 
   return txn;
 }
 
-const functionalIdentifierCodeLookup: Record<string, string> = {
+const functionalIdentifierCodeLookup: Record<string, string | undefined> = {
   "100": "PG",
   "101": "NL",
   "102": "AC",

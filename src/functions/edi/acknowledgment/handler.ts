@@ -21,7 +21,6 @@ const stash = stashClient();
 export const handler = async (
   event: EngineFunctionalGroupTranslationSucceededEvent
 ) => {
-  console.log(JSON.stringify(event, null, 2));
   const executionId = generateExecutionId(event);
   try {
     await recordNewExecution(executionId, event);
@@ -39,6 +38,7 @@ const send997Acknowledgement = async (
   event: EngineFunctionalGroupTranslationSucceededEvent
 ) => {
   const { partnershipId } = event.detail.partnership;
+
   const ackConfigResult = await stash.send(
     new GetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
@@ -46,14 +46,14 @@ const send997Acknowledgement = async (
     })
   );
 
-  const ackConfig: DestinationAck = DestinationAckSchema.parse(
-    ackConfigResult.value
-  );
-
-  if (!ackConfig) {
+  if (!ackConfigResult.value) {
     // acknowledgment not configured
     return;
   }
+
+  const ackConfig: DestinationAck = DestinationAckSchema.parse(
+    ackConfigResult.value
+  );
 
   const { functionalIdentifierCode, controlNumber } =
     event.detail.envelopes.functionalGroup;
@@ -62,6 +62,7 @@ const send997Acknowledgement = async (
   const { usageIndicatorCode } = event.detail.envelopes.interchange;
 
   if (
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     ackConfig.generateFor.filter(Set.prototype.has, new Set(transactionSetIds))
       .length === 0
   ) {

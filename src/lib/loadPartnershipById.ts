@@ -12,7 +12,7 @@ export const loadPartnershipById = async ({
 }: {
   partnershipId: string;
 }): Promise<NoUndefined<GetX12PartnershipCommandOutput>> => {
- console.log({ partnershipId });
+  console.log({ partnershipId });
   return (await partners.send(
     new GetX12PartnershipCommand({ partnershipId })
   )) as NoUndefined<GetX12PartnershipCommandOutput>;

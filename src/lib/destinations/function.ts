@@ -9,7 +9,7 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be function)");
   }
 
-  return await invokeFunction(input.destination!.functionName, {
+  return await invokeFunction(input.destination.functionName, {
     additionalInput: input.destination.additionalInput,
     payload: input.destinationPayload,
   });

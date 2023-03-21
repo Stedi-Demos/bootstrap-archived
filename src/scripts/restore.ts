@@ -3,11 +3,12 @@ import { existsSync, readFileSync } from "fs";
 import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const filename = process.argv[2] ?? "./backup.json";
   const stash = stashClient();
 
-  if (existsSync(filename) === false) {
+  if (!existsSync(filename)) {
     console.error(`No file found at path '${filename}'`);
     process.exit(1);
   }

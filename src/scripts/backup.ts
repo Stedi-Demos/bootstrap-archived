@@ -3,6 +3,7 @@ import { writeFileSync } from "fs";
 import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const filename = process.argv[2] ?? "./backup.json";
   const stash = stashClient();

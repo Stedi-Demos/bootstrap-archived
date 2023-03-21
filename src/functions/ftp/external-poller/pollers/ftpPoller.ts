@@ -26,8 +26,8 @@ export class FtpPoller extends RemotePoller {
     await this.client.access(connectionDetails.config);
   }
 
-  async disconnect(): Promise<void> {
-    this.client.close();
+  disconnect() {
+    return Promise.resolve(this.client.close());
   }
 
   async getRemoteFileDetails(
@@ -132,7 +132,7 @@ export class FtpPoller extends RemotePoller {
   private extractFileDetails(file: ftp.FileInfo): Omit<FileDetails, "path"> {
     return {
       name: file.name,
-      lastModifiedTime: file.modifiedAt?.getTime() || 0,
+      lastModifiedTime: file.modifiedAt?.getTime() ?? 0,
     };
   }
 

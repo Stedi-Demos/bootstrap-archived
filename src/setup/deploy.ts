@@ -12,6 +12,8 @@ import { functionsClient } from "../lib/clients/functions.js";
 import { waitUntilEventToFunctionBindingCreateComplete } from "@stedi/sdk-client-events";
 import { DocumentType } from "@aws-sdk/types";
 import { eventsClient } from "../lib/clients/events.js";
+import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
+import { maxWaitTime } from "./contants.js";
 
 const functions = functionsClient();
 const events = eventsClient();
@@ -47,7 +49,8 @@ const createOrUpdateEventBinding = async (
 
   // Ensure that required guides and mappings env vars are defined for all enabled transactions
 
-  const promises: Promise<unknown>[] = functionPaths.map(async (fnPath) => {
+  const FUNCTION_NAMES: string[] = [];
+  let promises: Promise<unknown>[] = functionPaths.map(async (fnPath) => {
     const functionName = functionNameFromPath(fnPath);
 
     console.log(`Deploying ${functionName}`);
@@ -70,9 +73,10 @@ const createOrUpdateEventBinding = async (
       );
 
       await waitUntilFunctionCreateComplete(
-        { client: functions, maxWaitTime: 90 },
+        { client: functions, maxWaitTime },
         { functionName }
       );
+      FUNCTION_NAMES.push(functionName);
 
       console.log(`Done ${functionName}`);
     } catch (e) {
@@ -80,8 +84,15 @@ const createOrUpdateEventBinding = async (
     }
   });
 
+  console.log("Waiting for function deploys to complete");
+  await Promise.all(promises);
+
+  promises = [];
+  console.log(`Creating event bindings`);
+
   // deploying event bindings
   //
+  const EVENT_BINDING_NAMES: string[] = [];
   createOrUpdateEventBinding(
     "edi-inbound",
     {
@@ -93,15 +104,18 @@ const createOrUpdateEventBinding = async (
     },
     "all-received-txns"
   );
+  EVENT_BINDING_NAMES.push("all-received-txns");
 
   promises.push(
     waitUntilEventToFunctionBindingCreateComplete(
-      { client: events, maxWaitTime: 90 },
+      { client: events, maxWaitTime },
       { eventToFunctionBindingName: "all-received-txns" }
     )
   );
 
-  await Promise.all(promises);
+  console.log("Waiting for event binding deploys to complete");
+
+  await updateResourceMetadata({ FUNCTION_NAMES, EVENT_BINDING_NAMES });
 
   console.log(`Deploy completed at: ${new Date().toLocaleString()}`);
 })();

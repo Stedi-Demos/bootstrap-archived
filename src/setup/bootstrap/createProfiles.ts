@@ -12,6 +12,7 @@ import {
   OutboundX12TransactionSummary,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../../lib/clients/partners.js";
+import { updateResourceMetadata } from "../../support/bootstrapMetadata.js";
 import { parseGuideId } from "../../support/guide.js";
 
 const partners = partnersClient();
@@ -39,10 +40,12 @@ export const createProfiles = async ({
   };
 
   console.log("Creating X12 Trading Partner Profile in Partners API");
+  const PROFILE_IDS: string[] = [];
 
   for (const profile of [localProfile, remoteProfile]) {
     try {
       await partners.send(new CreateX12ProfileCommand(profile));
+      PROFILE_IDS.push(profile.profileId!);
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -60,6 +63,8 @@ export const createProfiles = async ({
     | GetX12PartnershipCommandOutput
     | undefined;
   const partnershipId = `${localProfile.profileId}_${remoteProfile.profileId}`;
+
+  const PARTNERSHIP_IDS: string[] = [partnershipId];
 
   try {
     partnership = await partners.send(
@@ -84,6 +89,8 @@ export const createProfiles = async ({
       console.log("Partnership already exists");
     } else throw error;
   }
+
+  await updateResourceMetadata({ PROFILE_IDS, PARTNERSHIP_IDS });
 
   // create transaction set rules
 

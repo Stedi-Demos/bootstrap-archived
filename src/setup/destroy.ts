@@ -9,8 +9,15 @@ import {
   DeleteKeyspaceCommand,
   GetValueCommand,
 } from "@stedi/sdk-client-stash";
-import { DeleteFunctionCommand } from "@stedi/sdk-client-functions";
-import { BootstrapMetadataSchema } from "../lib/types/BootstrapMetadata.js";
+import {
+  DeleteFunctionCommand,
+  waitForFunctionDeleteComplete,
+  waitUntilFunctionDeleteComplete,
+} from "@stedi/sdk-client-functions";
+import {
+  BootstrapMetadata,
+  BootstrapMetadataSchema,
+} from "../lib/types/BootstrapMetadata.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 import { stashClient } from "../lib/clients/stash.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
@@ -25,8 +32,16 @@ import {
   ListX12ProfilesCommand,
 } from "@stedi/sdk-client-partners";
 import { parseGuideId } from "../support/guide.js";
+import { eventsClient } from "../lib/clients/events.js";
+import {
+  DeleteEventToFunctionBindingCommand,
+  waitUntilEventToFunctionBindingCreateComplete,
+  waitUntilEventToFunctionBindingDeleteComplete,
+} from "@stedi/sdk-client-events";
+import { maxWaitTime } from "./contants.js";
 
 const stash = stashClient();
+const events = eventsClient();
 const buckets = bucketsClient();
 const functions = functionsClient();
 const guides = guidesClient();
@@ -35,50 +50,53 @@ const partners = partnersClient();
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
 
+  // get metadata from stash
+  let resources: BootstrapMetadata["resources"] = {};
+  try {
+    const bootstrapMetadata = await stash.send(
+      new GetValueCommand({
+        keyspaceName: "partners-configuration",
+        key: "bootstrap|metadata",
+      })
+    );
+
+    resources = BootstrapMetadataSchema.parse(
+      bootstrapMetadata.value
+    ).resources;
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "KeyspaceNotFoundError"
+    )
+      console.log("Metadata not found, skipping deletion of resources");
+    else throw error;
+  }
+
   // partnerships
   console.log("Deleting Partnerships");
-  const { items: partnerships } = await partners.send(
-    new ListX12PartnershipsCommand({})
-  );
-
-  if (partnerships !== undefined && partnerships.length > 0) {
-    for (const partnership of partnerships) {
-      await partners.send(
-        new DeleteX12PartnershipCommand({
-          partnershipId: partnership.partnershipId,
-        })
-      );
-    }
+  for (const partnershipId of resources.PARTNERSHIP_IDS ?? []) {
+    await partners.send(
+      new DeleteX12PartnershipCommand({
+        partnershipId,
+      })
+    );
   }
 
   // profiles
   console.log("Deleting Profiles");
-  const { items: profiles } = await partners.send(
-    new ListX12ProfilesCommand({})
-  );
-
-  if (profiles !== undefined && profiles.length > 0) {
-    for (const profile of profiles) {
-      await partners.send(
-        new DeleteX12ProfileCommand({ profileId: profile.profileId })
-      );
-    }
+  for (const profileId of resources.PROFILE_IDS ?? []) {
+    await partners.send(new DeleteX12ProfileCommand({ profileId }));
   }
-
-  // get metadata from stash
-  const bootstrapMetadata = await stash.send(
-    new GetValueCommand({
-      keyspaceName: "partners-configuration",
-      key: "bootstrap|metadata",
-    })
-  );
-  const { resources } = BootstrapMetadataSchema.parse(bootstrapMetadata.value);
 
   // Delete Buckets
   console.log("Deleting Buckets");
-  // TODO - uncomment
+  // TODO Cannot destroy sFTP bucket as it's v1
   // await emptyAndDeleteBucket(resources.SFTP_BUCKET_NAME ?? "");
-  // await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME ?? "");
+
+  if (resources.EXECUTIONS_BUCKET_NAME !== undefined)
+    await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME);
 
   // Delete Guides
   console.log("Deleting Guides");
@@ -114,13 +132,31 @@ const partners = partnersClient();
     }
   }
 
+  // Delete Event Bindings
+  console.log("Deleting Event Bindings");
+  for (const eventToFunctionBindingName of resources.EVENT_BINDING_NAMES ??
+    []) {
+    await events.send(
+      new DeleteEventToFunctionBindingCommand({
+        eventToFunctionBindingName,
+      })
+    );
+
+    await waitUntilEventToFunctionBindingDeleteComplete(
+      { client: events, maxWaitTime },
+      { eventToFunctionBindingName }
+    );
+  }
+
   // Delete Functions
   console.log("Deleting Functions");
-  const functionPaths = getFunctionPaths();
-  for (const path of functionPaths) {
-    const functionName = functionNameFromPath(path);
+  for (const functionName of resources.FUNCTION_NAMES ?? []) {
     try {
       await functions.send(new DeleteFunctionCommand({ functionName }));
+      await waitUntilFunctionDeleteComplete(
+        { client: functions, maxWaitTime },
+        { functionName }
+      );
     } catch (error) {
       if (
         typeof error === "object" &&

@@ -6,9 +6,7 @@ import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 const createOrUpdateFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ) => {
   try {
     await updateFunction(functionName, functionPackage, environmentVariables);
@@ -17,6 +15,7 @@ const createOrUpdateFunction = async (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const functionPaths = getFunctionPaths(process.argv[2]);
 
@@ -33,8 +32,8 @@ const createOrUpdateFunction = async (
     try {
       const functionPackage = new Uint8Array(code);
       const environmentVariables = dotenv.config().parsed ?? {};
-      environmentVariables["NODE_OPTIONS"] = "--enable-source-maps";
-      environmentVariables["STEDI_FUNCTION_NAME"] = functionName;
+      environmentVariables.NODE_OPTIONS = "--enable-source-maps";
+      environmentVariables.STEDI_FUNCTION_NAME = functionName;
 
       const result = await createOrUpdateFunction(
         functionName,
@@ -45,8 +44,14 @@ const createOrUpdateFunction = async (
       console.log(`Done ${functionName}`);
 
       return result;
-    } catch (e) {
-      console.error(`Could not update deploy ${functionName}. Error ${e}`);
+    } catch (e: unknown) {
+      console.error(
+        `Could not update deploy ${functionName}. Error: ${JSON.stringify(
+          e,
+          null,
+          2
+        )}`
+      );
     }
   });
 

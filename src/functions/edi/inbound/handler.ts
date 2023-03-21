@@ -324,10 +324,10 @@ const extractInterchangeData = (
   }
 
   const senderId = `${
-    interchange.envelope.senderQualifier
+    interchange.envelope.senderQualifier ?? ""
   }/${interchange.envelope.senderId.trim()}`;
   const receiverId = `${
-    interchange.envelope.receiverQualifier
+    interchange.envelope.receiverQualifier ?? ""
   }/${interchange.envelope.receiverId.trim()}`;
 
   return {

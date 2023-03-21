@@ -15,6 +15,7 @@ import { sftpClient } from "../lib/clients/sftp.js";
 const buckets = bucketsClient();
 const sftp = sftpClient();
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   console.log("Configuring buckets...");
 
@@ -55,7 +56,7 @@ const sftp = sftpClient();
       (bucket) => bucket.bucketName === executionsBucketName
     )
   ) {
-    buckets.send(
+    await buckets.send(
       new CreateBucketCommand({
         bucketName: executionsBucketName,
       })

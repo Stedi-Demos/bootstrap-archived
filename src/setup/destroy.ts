@@ -24,6 +24,7 @@ const buckets = bucketsClient();
 const functions = functionsClient();
 const guides = guidesClient();
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   console.log("Deleting all resources provisioned by bootstrap");
 

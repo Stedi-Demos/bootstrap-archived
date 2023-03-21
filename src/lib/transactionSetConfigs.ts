@@ -6,34 +6,34 @@ import {
   isTransactionSetWithoutGuideId,
   Partnership,
   TransactionSetWithGuideId,
-  TransactionSetWithoutGuideId
+  TransactionSetWithoutGuideId,
 } from "./types/PartnerRouting.js";
 
-type ResolveTransactionSetConfigInput = {
+interface ResolveTransactionSetConfigInput {
   partnership: Partnership;
   sendingPartnerId: string;
   receivingPartnerId: string;
-};
+}
 
-type GroupedTransactionSets = {
+interface GroupedTransactionSets {
   transactionSetConfigsWithoutGuideIds: TransactionSetWithoutGuideId[];
   transactionSetConfigsWithGuideIds: TransactionSetWithGuideId[];
-};
+}
 
 export const getTransactionSetConfigsForPartnership = ({
   partnership,
   sendingPartnerId,
   receivingPartnerId,
 }: ResolveTransactionSetConfigInput): Partnership["transactionSets"] => {
-  const transactionSetConfigs = partnership.transactionSets.filter(
-    (config) => {
-      // ack transaction set does not include partner ids (they are inferred from interchange being acknowledged)
-      return isAckTransactionSet(config) ||
-        (isNonAckTransactionSet(config) &&
-          config.sendingPartnerId === sendingPartnerId &&
-          config.receivingPartnerId === receivingPartnerId)
-    }
-  );
+  const transactionSetConfigs = partnership.transactionSets.filter((config) => {
+    // ack transaction set does not include partner ids (they are inferred from interchange being acknowledged)
+    return (
+      isAckTransactionSet(config) ||
+      (isNonAckTransactionSet(config) &&
+        config.sendingPartnerId === sendingPartnerId &&
+        config.receivingPartnerId === receivingPartnerId)
+    );
+  });
 
   if (transactionSetConfigs.length === 0)
     throw new Error(
@@ -45,12 +45,16 @@ export const getTransactionSetConfigsForPartnership = ({
 
 export const resolveTransactionSetConfig = (
   transactionSetConfigs: TransactionSetWithGuideId[],
-  guideId: string,
+  guideId: string
 ): Partnership["transactionSets"][0] => {
-  const transactionSetConfig = transactionSetConfigs.find((config) => config.guideId === guideId);
+  const transactionSetConfig = transactionSetConfigs.find(
+    (config) => config.guideId === guideId
+  );
 
   if (transactionSetConfig === undefined) {
-    throw new Error(`no matching transaction set config found for guide id: '${guideId}'`);
+    throw new Error(
+      `no matching transaction set config found for guide id: '${guideId}'`
+    );
   }
 
   return transactionSetConfig;
@@ -59,26 +63,30 @@ export const resolveTransactionSetConfig = (
 export const groupTransactionSetConfigsByType = (
   transactionSetConfigs: Partnership["transactionSets"]
 ): GroupedTransactionSets => {
-  return transactionSetConfigs.reduce((groupedConfigs: GroupedTransactionSets, currentConfig ) => {
-    if (isTransactionSetWithGuideId(currentConfig)) {
-      groupedConfigs.transactionSetConfigsWithGuideIds.push(currentConfig);
-    } else if (isTransactionSetWithoutGuideId(currentConfig)) {
-      groupedConfigs.transactionSetConfigsWithoutGuideIds.push(currentConfig);
-    } else {
-      throw new Error("invalid transaction set configuration encountered");
-    }
+  return transactionSetConfigs.reduce(
+    (groupedConfigs: GroupedTransactionSets, currentConfig) => {
+      if (isTransactionSetWithGuideId(currentConfig)) {
+        groupedConfigs.transactionSetConfigsWithGuideIds.push(currentConfig);
+      } else if (isTransactionSetWithoutGuideId(currentConfig)) {
+        groupedConfigs.transactionSetConfigsWithoutGuideIds.push(currentConfig);
+      } else {
+        throw new Error("invalid transaction set configuration encountered");
+      }
 
-    return groupedConfigs
-  }, {
-    transactionSetConfigsWithoutGuideIds: [],
-    transactionSetConfigsWithGuideIds: [],
-  });
+      return groupedConfigs;
+    },
+    {
+      transactionSetConfigsWithoutGuideIds: [],
+      transactionSetConfigsWithGuideIds: [],
+    }
+  );
 };
 
 export const getAckTransactionConfig = (
   transactionSetConfigs: TransactionSetWithoutGuideId[]
 ): AckTransactionSet => {
-  const ackTransactionSetList = transactionSetConfigs.filter(isAckTransactionSet);
+  const ackTransactionSetList =
+    transactionSetConfigs.filter(isAckTransactionSet);
   const ackTransactionSetCount = ackTransactionSetList.length;
   if (ackTransactionSetCount !== 1) {
     throw new Error(

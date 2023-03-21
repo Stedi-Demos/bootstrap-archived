@@ -7,9 +7,9 @@ const processFunctionInput = (input?: string) => {
 
 // parse input as object if possible, otherwise leave as string
 const parsedObjectOrString = (input: string) => {
-  let result = input;
+  let result: string | object = input;
   try {
-    result = JSON.parse(input);
+    result = JSON.parse(input) as string | object;
   } catch (e) {
     // no-op
   }
@@ -19,7 +19,7 @@ const parsedObjectOrString = (input: string) => {
 
 void (async () => {
   const functionName = process.argv[2];
-  if (functionName === undefined || functionName.trim().startsWith("--")) {
+  if (!functionName || functionName.trim().startsWith("--")) {
     console.error("The function name must be the first argument provided.");
     process.exit(1);
   }
@@ -35,12 +35,10 @@ void (async () => {
     console.log(`Invoking function '${functionName}' synchronously.`);
     const response = await invokeFunction(functionName, input);
 
-    let result: any;
+    let result: unknown;
     try {
       // if response payload is present, try to parse as JSON
-      result = response
-        ? JSON.parse(response)
-        : undefined;
+      result = response ? JSON.parse(response) : undefined;
     } catch (e) {
       // if response is not JSON, leave it as-is
       result = response;

@@ -3,16 +3,16 @@ import { guidesClient } from "./clients/guides.js";
 
 const guides = guidesClient();
 
-type GuideSummary = {
+interface GuideSummary {
   guideId: string;
   release: string;
-};
+}
 
-type ResolveGuideInput = {
+interface ResolveGuideInput {
   guideIdsForPartnership: string[];
   transactionSetType: string;
   release: string | undefined;
-};
+}
 
 export const resolveGuide = async ({
   guideIdsForPartnership,

@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
 
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
@@ -11,7 +15,7 @@ import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
   generateDestinationFilename,
-  groupDeliveryResults
+  groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
 import { loadPartnership } from "../../../lib/loadPartnership.js";
 import { resolveGuide } from "../../../lib/resolveGuide.js";
@@ -63,13 +67,16 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       receivingPartnerId,
     });
 
-    const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(transactionSetConfigs);
+    const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(
+      transactionSetConfigs
+    );
 
     // load the guide for the transaction set
     const guideSummary = await resolveGuide({
-      guideIdsForPartnership: groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
-        (config) => config.guideId
-      ),
+      guideIdsForPartnership:
+        groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
+          (config) => config.guideId
+        ),
       transactionSetType,
       release,
     });
@@ -147,7 +154,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             envelope
           );
 
-          const destinationFilename = generateDestinationFilename(isaControlNumber, transactionSetType, "edi");
+          const destinationFilename = generateDestinationFilename(
+            isaControlNumber,
+            transactionSetType,
+            "edi"
+          );
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
@@ -165,8 +176,8 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         executionId,
         new ErrorWithContext(
           `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
-          deliveryResultsByStatus,
-        ),
+          deliveryResultsByStatus
+        )
       );
     }
 
@@ -189,7 +200,8 @@ const determineTransactionSetType = (event: OutboundEvent): string => {
   );
 };
 
-const determineRelease = (event: OutboundEvent): string | undefined => event.metadata.release;
+const determineRelease = (event: OutboundEvent): string | undefined =>
+  event.metadata.release;
 
 const normalizeGuideJson = (guideJson: any): any[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },
@@ -232,8 +244,7 @@ const validateTransactionSetControlNumbers = (guideJson: any) => {
       t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
     );
     if (controlNumberValue !== expectedControlNumber) {
-      const message =
-        `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;
+      const message = `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;
       console.log(message);
       throw new Error(message);
     }

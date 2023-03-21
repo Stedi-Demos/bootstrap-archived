@@ -26,14 +26,18 @@ export const ensureMappingExists = async (
 
   try {
     return await createMapping(mapping);
-  } catch (e) {
-    const error = e as any;
+  } catch (error: unknown) {
     // workaround until Mappings SDK returns the necessary error metadata
     // if (!(e instanceof ResourceConflictException)) {
-    if (error.code !== "entity_already_exists") {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "entity_already_exists"
+    ) {
       // re-throw all errors except resource conflict
       throw new Error(
-        `Error creating mapping: ${JSON.stringify(serializeError(e))}`
+        `Error creating mapping: ${JSON.stringify(serializeError(error))}`
       );
     }
 
@@ -78,7 +82,7 @@ const findMappingIdByName = async (
   }
 
   return (
-    foundMapping?.id ||
+    foundMapping?.id ??
     (await findMappingIdByName(mappingName, mappingsList.nextPageToken))
   );
 };

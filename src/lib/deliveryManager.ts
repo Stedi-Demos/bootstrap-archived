@@ -9,34 +9,34 @@ import * as fn from "./destinations/function.js";
 import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
 
-export type DeliveryResult = {
+export interface DeliveryResult {
   type: Destination["destination"]["type"];
-  payload: any;
-};
+  payload: unknown;
+}
 
-export type ProcessSingleDeliveryInput = {
+export interface ProcessSingleDeliveryInput {
   destination: Destination["destination"];
   payload: object | string;
   mappingId?: string;
   destinationFilename: string;
-};
+}
 
-export type ProcessDeliveriesInput = {
+export interface ProcessDeliveriesInput {
   destinations: Destination[];
   payload: object | string;
   destinationFilename: string;
-};
+}
 
-export type DeliverToDestinationInput = {
+export interface DeliverToDestinationInput {
   destination: Destination["destination"];
-  destinationPayload: any;
+  destinationPayload: string | object;
   destinationFilename: string;
-};
+}
 
 const deliveryFnForDestinationType: {
   [type in Destination["destination"]["type"]]: (
     input: DeliverToDestinationInput
-  ) => Promise<any>;
+  ) => Promise<unknown>;
 } = {
   as2: as2.deliverToDestination,
   bucket: bucket.deliverToDestination,
@@ -48,7 +48,7 @@ const deliveryFnForDestinationType: {
 export const processSingleDelivery = async (
   input: ProcessSingleDeliveryInput
 ): Promise<DeliveryResult> => {
-  const destinationPayload =
+  const destinationPayload: string | object =
     input.mappingId !== undefined
       ? await invokeMapping(input.mappingId, input.payload)
       : input.payload;
@@ -97,20 +97,27 @@ export const processDeliveries = async (
   return deliveryResultsByStatus.fulfilled.map((r) => r.value);
 };
 
+interface GroupedDeliveryResultSettledResult {
+  fulfilled: PromiseFulfilledResult<DeliveryResult>[];
+  rejected: PromiseRejectedResult[];
+}
+
 export const groupDeliveryResults = (
   deliveryResults: PromiseSettledResult<DeliveryResult>[]
-): Record<"fulfilled" | "rejected", any[]> => {
+): GroupedDeliveryResultSettledResult => {
   return deliveryResults.reduce(
-    (
-      groupedResults: Record<"fulfilled" | "rejected", any[]>,
-      { status, ...rest }
-    ) => {
+    (groupedResults: GroupedDeliveryResultSettledResult, group) => {
       // for rejected promises, serialize the reason
-      const result =
-        status === "rejected"
-          ? { reason: serializeError(rest) }
-          : { value: rest };
-      groupedResults[status].push(result);
+
+      if (group.status === "rejected") {
+        const { status, ...rest } = group;
+        groupedResults.rejected.push({
+          reason: serializeError(rest),
+          status,
+        });
+      } else {
+        groupedResults.fulfilled.push(group);
+      }
       return groupedResults;
     },
     { fulfilled: [], rejected: [] }
@@ -126,7 +133,9 @@ export const generateDestinationFilename = (
   return extension ? `${baseFilename}.${extension}` : baseFilename;
 };
 
-export const payloadAsString = (destinationPayload: any): string => {
+export const payloadAsString = (
+  destinationPayload: object | string
+): string => {
   return typeof destinationPayload === "object"
     ? JSON.stringify(destinationPayload)
     : destinationPayload;

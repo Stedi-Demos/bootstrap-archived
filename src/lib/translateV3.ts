@@ -8,8 +8,9 @@ import {
 } from "@stedi/sdk-client-edi-translate";
 
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
+import { DocumentType } from "@aws-sdk/types";
 
-let _translateClient: EDITranslateClient;
+let _translateClient: EDITranslateClient | undefined;
 
 export const translateClient = () => {
   if (_translateClient === undefined) {
@@ -29,17 +30,19 @@ export const translateClient = () => {
 };
 
 export const translateJsonToEdi = async (
-  input: any,
+  input: unknown,
   guideId: string,
-  envelope: any
+  envelope: unknown
 ): Promise<string> => {
-  const translateResult = await translateClient().send(new TranslateJsonToX12Command({
-    guideId,
-    input,
-    envelope
-  }));
+  const translateResult = await translateClient().send(
+    new TranslateJsonToX12Command({
+      guideId,
+      input: input as DocumentType,
+      envelope: envelope as DocumentType,
+    })
+  );
 
-  if(!translateResult.output) {
+  if (!translateResult.output) {
     throw new Error("translation did not return any output");
   }
 
@@ -48,12 +51,14 @@ export const translateJsonToEdi = async (
 
 export const translateEdiToJson = async (
   input: string,
-  guideId: string,
+  guideId: string
 ): Promise<Parsed> => {
-  const translateResult = await translateClient().send(new TranslateX12ToJsonCommand({
-    input,
-    guideId,
-  }));
+  const translateResult = await translateClient().send(
+    new TranslateX12ToJsonCommand({
+      input,
+      guideId,
+    })
+  );
 
   if (!translateResult.output) {
     throw new Error("translation did not return any output");

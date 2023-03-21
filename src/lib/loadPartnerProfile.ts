@@ -20,7 +20,7 @@ type Profile = Omit<
 export const loadPartnerProfile = async (
   partnerId: string
 ): Promise<Profile> => {
-  if (process.env["USE_BETA"] === "true") {
+  if (process.env.USE_BETA === "true") {
     // load x12 Trading Partner Profile (pre-GA)
     const profile = await partners.send(
       new GetX12ProfileCommand({
@@ -28,7 +28,7 @@ export const loadPartnerProfile = async (
       })
     );
 
-    if (profile === undefined)
+    if (profile.id === undefined)
       throw new Error(
         `No partner profile found for '${partnerId}' in Partners API`
       );

@@ -4,15 +4,15 @@ import dotenv from "dotenv";
 const DEFAULT_RESOURCE_ID_BASE_PATH = "./src/resources";
 const DEFAULT_DOT_ENV_FILE_PATH = "./.env";
 
-type ResourceFile = {
+interface ResourceFile {
   basePath: string;
   fileName?: string;
-};
+}
 
-export type ResourceDetails = {
+export interface ResourceDetails {
   name: string;
   id: string;
-};
+}
 
 // TODO: replace this with dynamic directory listing
 export const getEnabledTransactionSets = (): string[] => [

@@ -118,6 +118,9 @@ const createOrUpdateEventBinding = async (
     {
       source: ["stedi.engine"],
       "detail-type": ["functional_group.translation_succeeded"],
+      detail: {
+        direction: ["RECEIVED"],
+      },
     },
     "all-received-functional-groups"
   );

@@ -7,7 +7,10 @@ import {
 import { bucketsClient } from "../../../lib/clients/buckets.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { TransactionEventSchema } from "../../../lib/types/TransactionEvent.js";
-import { GetObjectCommand } from "@stedi/sdk-client-buckets";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@stedi/sdk-client-buckets";
 import consumers from "stream/consumers";
 import { Readable } from "node:stream";
 import { loadDestinations } from "../../../lib/loadDestinations.js";
@@ -71,14 +74,11 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     // await destination deliveries
     await processDeliveries(processDeliveriesInput);
 
-    // Delete the input file (could also archive elsewhere if desired)
-    // TODO: source object is needed in event
-    // await buckets.send(
-    //   new DeleteObjectCommand({
-    //     bucketName: transactionEvent.detail.input.bucketName,
-    //     key: transactionEvent.detail.input.key,
-    //   })
-    // );
+    // Delete the input file (it is archived by engine)
+    await ensureFileIsDeleted(
+      transactionEvent.detail.input.bucketName,
+      transactionEvent.detail.input.key
+    );
 
     await markExecutionAsSuccessful(executionId);
 
@@ -87,5 +87,20 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     const error = ErrorWithContext.fromUnknown(e);
 
     return failedExecution(executionId, error);
+  }
+};
+
+export const ensureFileIsDeleted = async (bucketName: string, key: string) => {
+  try {
+    await buckets.send(new DeleteObjectCommand({ bucketName, key }));
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceNotFoundException"
+    )
+      return;
+    else throw error;
   }
 };

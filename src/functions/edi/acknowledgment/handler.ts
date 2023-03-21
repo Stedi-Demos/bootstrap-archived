@@ -50,7 +50,6 @@ const send997Acknowledgement = async (
     ackConfigResult.value
   );
 
-  console.log("ackConfig", JSON.stringify(ackConfig, null, 2));
   if (!ackConfig) {
     // acknowledgment not configured
     return;
@@ -71,7 +70,7 @@ const send997Acknowledgement = async (
   }
 
   await invokeFunction(
-    "outbound",
+    "edi-outbound",
     {
       metadata: {
         transactionSet: "997",

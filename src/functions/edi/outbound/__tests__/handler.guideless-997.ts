@@ -8,7 +8,7 @@ import {
   mockTranslateClient,
 } from "../../../../lib/testing/testHelpers.js";
 import { handler } from "../handler.js";
-import sampleOutboundEvent from "../../../../resources/X12/5010/850/outbound.json" assert { type: "json" };
+import sampleOutboundEvent from "../../../../resources/X12/5010/997/outbound.json" assert { type: "json" };
 import {
   GetX12PartnershipCommand,
   GetX12PartnershipOutput,
@@ -29,7 +29,6 @@ const partners = mockPartnersClient();
 const stash = mockStashClient();
 const translate = mockTranslateClient();
 
-const guideId = "850-guide-id";
 const partnershipId = "this-is-me_another-merchant";
 
 test.beforeEach(() => {
@@ -44,7 +43,7 @@ test.afterEach.always(() => {
   translate.reset();
 });
 
-test("translate guide json to X12 and delivers to destination", async (t) => {
+test("translate 997 guide json without a guide and delivers to destination", async (t) => {
   partners
     // load partnership
     .on(GetX12PartnershipCommand as any, {
@@ -68,9 +67,8 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
       },
       outboundTransactions: [
         {
-          transactionSetIdentifier: "850",
-          transactionId: "850-transaction-rule-id",
-          guideId,
+          transactionSetIdentifier: "997",
+          transactionId: "997-transaction-rule-id",
           release: "008010",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -86,14 +84,14 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
       controlNumberType: "interchange",
     })
     .resolvesOnce({
-      x12ControlNumber: 1916,
+      x12ControlNumber: 1167,
     } satisfies IncrementX12ControlNumberOutput as any)
     // increment group control number
     .on(IncrementX12ControlNumberCommand as any, {
       controlNumberType: "group",
     })
     .resolvesOnce({
-      x12ControlNumber: 1916,
+      x12ControlNumber: 1167,
     } satisfies IncrementX12ControlNumberOutput as any)
     .on(GetX12ProfileCommand as any, {
       profileId: "this-is-me",
@@ -124,11 +122,11 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
     // loading destinations
     .on(GetValueCommand, {
       keyspaceName: PARTNERS_KEYSPACE_NAME,
-      key: `destinations|${partnershipId}|850`,
+      key: `destinations|${partnershipId}|997`,
     })
     .resolvesOnce({
       value: {
-        description: "850 Outbound",
+        description: "997 Outbound",
         destinations: [
           {
             destination: {
@@ -147,7 +145,20 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
 
   // mock webhook request
   const webhookRequest = nock("https://example.com")
-    .post("/webhook")
+    .post("/webhook", (body: string) => {
+      // assert on elements other than date and time
+      t.assert(
+        body.includes(
+          "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *"
+        ) &&
+          body.includes("*^*00801*1167*0*I*>~GS*FA*meId*merchId*") &&
+          body.includes(
+            "*1167*X*008010~ST*997*0001~AK1*PO*1921~AK9*A*1*1*1~SE*4*0001~GE*1*1167~IEA*1*1167~"
+          ),
+        "EDI message is valid"
+      );
+      return true;
+    })
     .reply(200, { ok: true });
 
   const response = await handler(sampleOutboundEvent as any);

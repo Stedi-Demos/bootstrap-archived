@@ -1,4 +1,7 @@
 import * as z from "zod";
+import { EventInterchangeSchema } from "./EventInterchange.js";
+import { EventPartnershipSchema } from "./EventPartnership.js";
+import { EventFunctionalGroupSchema } from "./EventFunctionalGroup.js";
 
 export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
 export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
@@ -15,28 +18,8 @@ export const TransactionEventSchema = z.object({
     version: z.literal("2023-02-13"),
     direction: z.literal("SENT").or(z.literal("RECEIVED")),
     envelopes: z.object({
-      interchange: z.object({
-        acknowledgmentRequestedCode: z.string(),
-        controlNumber: z.number(),
-        date: z.string(),
-        receiverId: z.string(),
-        receiverQualifier: z.string(),
-        senderId: z.string(),
-        senderQualifier: z.string(),
-        time: z.string(),
-        usageIndicatorCode: UsageIndicatorCodeSchema,
-        versionNumberCode: z.string(),
-      }),
-      functionalGroup: z.object({
-        applicationReceiverCode: z.string(),
-        applicationSenderCode: z.string(),
-        controlNumber: z.number(),
-        date: z.string(),
-        functionalIdentifierCode: z.string(),
-        release: z.string(),
-        responsibleAgencyCode: z.string(),
-        time: z.string(),
-      }),
+      interchange: EventInterchangeSchema,
+      functionalGroup: EventFunctionalGroupSchema,
     }),
     transaction: z.object({
       controlNumber: z.number(),
@@ -57,25 +40,8 @@ export const TransactionEventSchema = z.object({
       bucketName: z.string(),
       key: z.string(),
     }),
-    partnership: z.object({
-      partnershipId: z.string(),
-      sender: z.object({
-        isa: z.object({
-          qualifier: z.string(),
-          id: z.string(),
-        }),
-        profileId: z.string(),
-      }),
-      receiver: z.object({
-        isa: z.object({
-          qualifier: z.string(),
-          id: z.string(),
-        }),
-        profileId: z.string(),
-      }),
-    }),
+    partnership: EventPartnershipSchema,
   }),
 });
 
 export type TransactionEvent = z.infer<typeof TransactionEventSchema>;
-

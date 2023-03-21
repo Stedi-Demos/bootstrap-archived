@@ -11,6 +11,17 @@ export const lookupFunctionalIdentifierCode = (
   return code;
 };
 
+export function lookupTransactionSets(functionalGroup: string): string[] {
+  const txn = Object.entries(functionalIdentifierCodeLookup)
+    .filter(([_txn, fg]) => fg === functionalGroup)
+    ?.map(([txn]) => txn);
+
+  if (txn === undefined)
+    throw new Error(`No transaction set found for '${functionalGroup}'`);
+
+  return txn;
+}
+
 const functionalIdentifierCodeLookup: Record<string, string> = {
   "100": "PG",
   "101": "NL",

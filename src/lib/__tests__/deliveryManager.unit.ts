@@ -9,7 +9,10 @@ import {
 } from "../testing/testHelpers.js";
 import { processSingleDelivery } from "../deliveryManager.js";
 import nock from "nock";
-import { InvokeFunctionCommand } from "@stedi/sdk-client-functions";
+import {
+  InvocationType,
+  InvokeFunctionCommand,
+} from "@stedi/sdk-client-functions";
 
 const as2Client = mockAs2Client();
 const buckets = mockBucketClient();
@@ -101,6 +104,7 @@ test("delivery via function invokes Stedi function with both payload and additio
 
   t.deepEqual(functions.calls()[0].args[0].input, {
     functionName,
+    invocationType: InvocationType.SYNCHRONOUS,
     payload: {
       additionalInput,
       payload,

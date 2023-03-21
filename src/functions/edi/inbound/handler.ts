@@ -27,18 +27,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
     await recordNewExecution(executionId, event);
 
     // parse the incoming event against the TransactionEvent schema
-    const parseResult = TransactionEventSchema.safeParse(event);
-
-    // skip processing anything that doesn't match (including non-transaction events)
-    if (!parseResult.success) {
-      console.log("invalid event", parseResult);
-      return {};
-    }
-
-    const transactionEvent = parseResult.data;
-
-    // skip EDI we're sending (this will be excluded by better EventBrdige rule pattern in future)
-    if (transactionEvent.detail.direction === "SENT") return {};
+    const transactionEvent = TransactionEventSchema.parse(event);
 
     // load the translated Guide JSON from the bucket
     const getObjectResponse = await buckets.send(

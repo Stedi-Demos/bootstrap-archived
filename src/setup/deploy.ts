@@ -2,17 +2,19 @@ import dotenv from "dotenv";
 import { compile, packForDeployment } from "../support/compile.js";
 import {
   createFunction,
-  deleteFunction,
+  createFunctionEventBinding,
   updateFunction,
+  updateFunctionEventBinding,
 } from "../lib/functions.js";
 import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
-import {
-  waitUntilFunctionCreateComplete,
-  waitUntilFunctionDeleteComplete,
-} from "@stedi/sdk-client-functions";
+import { waitUntilFunctionCreateComplete } from "@stedi/sdk-client-functions";
 import { functionsClient } from "../lib/clients/functions.js";
+import { waitUntilEventToFunctionBindingCreateComplete } from "@stedi/sdk-client-events";
+import { DocumentType } from "@aws-sdk/types";
+import { eventsClient } from "../lib/clients/events.js";
 
 const functions = functionsClient();
+const events = eventsClient();
 
 const createOrUpdateFunction = async (
   functionName: string,
@@ -21,18 +23,22 @@ const createOrUpdateFunction = async (
     [key: string]: string;
   }
 ) => {
-  // console.log("Deleting function now: ", functionName);
-  // await deleteFunction(functionName);
-  // await waitUntilFunctionDeleteComplete(
-  //   { client: functions, maxWaitTime: 90 },
-  //   { functionName }
-  // );
-  // console.log("Create function: ", functionName);
-
   try {
     await updateFunction(functionName, functionPackage, environmentVariables);
   } catch (e) {
     await createFunction(functionName, functionPackage, environmentVariables);
+  }
+};
+
+const createOrUpdateEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  bindingName: string
+) => {
+  try {
+    await updateFunctionEventBinding(functionName, eventPattern, bindingName);
+  } catch (e) {
+    await createFunctionEventBinding(functionName, eventPattern, bindingName);
   }
 };
 
@@ -41,14 +47,16 @@ const createOrUpdateFunction = async (
 
   // Ensure that required guides and mappings env vars are defined for all enabled transactions
 
-  const promises = functionPaths.map(async (fnPath) => {
+  const promises: Promise<unknown>[] = functionPaths.map(async (fnPath) => {
     const functionName = functionNameFromPath(fnPath);
 
     console.log(`Deploying ${functionName}`);
 
+    // compiling function code
     const jsPath = await compile(fnPath);
     const code = await packForDeployment(jsPath);
 
+    // deploying functions
     try {
       const functionPackage = new Uint8Array(code);
       const environmentVariables = dotenv.config().parsed ?? {};
@@ -71,6 +79,27 @@ const createOrUpdateFunction = async (
       console.error(`Could not update deploy ${functionName}. Error ${e}`);
     }
   });
+
+  // deploying event bindings
+  //
+  createOrUpdateEventBinding(
+    "edi-inbound",
+    {
+      source: ["stedi.engine"],
+      "detail-type": ["transaction.processed"],
+      detail: {
+        direction: ["RECEIVED"],
+      },
+    },
+    "all-received-txns"
+  );
+
+  promises.push(
+    waitUntilEventToFunctionBindingCreateComplete(
+      { client: events, maxWaitTime: 90 },
+      { eventToFunctionBindingName: "all-received-txns" }
+    )
+  );
 
   await Promise.all(promises);
 

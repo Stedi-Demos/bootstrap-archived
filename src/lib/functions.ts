@@ -13,11 +13,17 @@ import {
 import { bucketsClient } from "./clients/buckets.js";
 import { functionsClient } from "./clients/functions.js";
 import { requiredEnvVar } from "./environment.js";
+import {
+  CreateEventToFunctionBindingCommand,
+  Events,
+  UpdateEventToFunctionBindingCommand,
+  waitUntilEventToFunctionBindingCreateComplete,
+} from "@stedi/sdk-client-events";
+import { eventsClient } from "./clients/events.js";
 
 const functions = functionsClient();
 const buckets = bucketsClient();
-
-type FunctionInvocationId = string;
+const events = eventsClient();
 
 export const invokeFunction = async (
   functionName: string,
@@ -104,6 +110,34 @@ export const deleteFunction = async (
   return functions.send(
     new DeleteFunctionCommand({
       functionName,
+    })
+  );
+};
+
+export const createFunctionEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  eventToFunctionBindingName: string
+) => {
+  return events.send(
+    new CreateEventToFunctionBindingCommand({
+      eventPattern,
+      functionName,
+      eventToFunctionBindingName,
+    })
+  );
+};
+
+export const updateFunctionEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  eventToFunctionBindingName: string
+) => {
+  return events.send(
+    new UpdateEventToFunctionBindingCommand({
+      eventPattern,
+      functionName,
+      eventToFunctionBindingName,
     })
   );
 };

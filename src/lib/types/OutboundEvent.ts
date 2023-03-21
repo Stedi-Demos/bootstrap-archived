@@ -12,7 +12,7 @@ export const OutboundEventSchema = z.strictObject({
         "selects a guide with a specific release when multiple guides are configured for the same transaction set"
       ),
   }),
-  payload: z.any(),
+  payload: z.unknown(),
 });
 
 export type OutboundEvent = z.infer<typeof OutboundEventSchema>;

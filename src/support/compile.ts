@@ -90,9 +90,9 @@ const getFilePathsRecursively = (dir: string): string[] => {
   for (let file of list) {
     file = path.resolve(dir, file);
 
-    const stat = fs.lstatSync(file);
+    const stat: fs.Stats = fs.lstatSync(file);
 
-    if (stat && stat.isDirectory()) {
+    if (stat.isDirectory()) {
       results = results.concat(getFilePathsRecursively(file));
     } else {
       results.push(file);

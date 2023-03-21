@@ -10,6 +10,7 @@ import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
 
 const buckets = bucketsClient();
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const executionsBucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
@@ -34,11 +35,11 @@ const buckets = bucketsClient();
   );
 
   const currentNotificationFunctionCount =
-    existingBucketConfig?.notifications?.functions?.length || 0;
+    existingBucketConfig.notifications?.functions?.length ?? 0;
 
   if (currentNotificationFunctionCount !== 0) {
     const notificationFunctionNames =
-      existingBucketConfig?.notifications?.functions?.map(
+      existingBucketConfig.notifications?.functions?.map(
         (fn) => fn.functionName
       );
     const bucketNotificationListOutput = JSON.stringify(

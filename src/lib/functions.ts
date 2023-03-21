@@ -15,7 +15,7 @@ type FunctionInvocationId = string;
 
 export const invokeFunction = async (
   functionName: string,
-  input: any
+  input: unknown
 ): Promise<string | undefined> => {
   const result = await functions.send(
     new InvokeFunctionCommand({
@@ -31,7 +31,7 @@ export const invokeFunction = async (
 
 export const invokeFunctionAsync = async (
   functionName: string,
-  input?: any
+  input?: unknown
 ): Promise<FunctionInvocationId> => {
   const requestPayload = input ? Buffer.from(JSON.stringify(input)) : undefined;
 
@@ -51,9 +51,7 @@ export const invokeFunctionAsync = async (
 export const createFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ): Promise<CreateFunctionCommandOutput> => {
   return functions.send(
     new CreateFunctionCommand({
@@ -68,9 +66,7 @@ export const createFunction = async (
 export const updateFunction = async (
   functionName: string,
   functionPackage: Uint8Array,
-  environmentVariables?: {
-    [key: string]: string;
-  }
+  environmentVariables?: Record<string, string>
 ): Promise<UpdateFunctionCommandOutput> => {
   return functions.send(
     new UpdateFunctionCommand({

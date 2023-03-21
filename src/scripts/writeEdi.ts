@@ -5,8 +5,9 @@ import { invokeFunction } from "../lib/functions.js";
 const DEFAULT_LOOP_COUNT = 1;
 const DEFAULT_850_PAYLOAD = JSON.parse(
   fs.readFileSync("./src/resources/X12/5010/850/outbound.json", "utf-8")
-);
+) as unknown;
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const functionName = "edi-outbound";
   const loopCount: number = parseInt(process.argv[2]) || DEFAULT_LOOP_COUNT;
@@ -34,7 +35,8 @@ const DEFAULT_850_PAYLOAD = JSON.parse(
   // exit with non-successful response if any failures were encountered
   if (
     invocationResults.some(
-      (result) => result && JSON.parse(result).hasOwnProperty("failureRecord")
+      (result) =>
+        result && (JSON.parse(result) as object).hasOwnProperty("failureRecord")
     )
   ) {
     console.log("errors encountered during processing");

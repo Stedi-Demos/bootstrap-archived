@@ -14,18 +14,24 @@ import { bucketsClient } from "./clients/buckets.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
-let _executionsBucketClient: BucketsClient;
-let _infiniteLoopCheckPassed: boolean = false;
+let _executionsBucketClient: BucketsClient | undefined;
+let _infiniteLoopCheckPassed = false;
 
-export type FailureRecord = { bucketName?: string; key: string };
-export type FailureResponse = {
+export interface FailureRecord {
+  bucketName?: string;
+  key: string;
+}
+export interface FailureResponse {
   statusCode: number;
   message: string;
   failureRecord: FailureRecord;
   error: ErrorObject;
-};
+}
 
-export const recordNewExecution = async (executionId: string, input: any) => {
+export const recordNewExecution = async (
+  executionId: string,
+  input: unknown
+) => {
   const client = await executionsBucketClient();
   const result = await client.send(
     new PutObjectCommand({
@@ -34,8 +40,8 @@ export const recordNewExecution = async (executionId: string, input: any) => {
       body: new TextEncoder().encode(JSON.stringify(input)),
     })
   );
-  if (result)
-    console.log({ action: "recordNewExecution", executionId, result });
+
+  console.log({ action: "recordNewExecution", executionId, result });
 };
 
 export const markExecutionAsSuccessful = async (executionId: string) => {
@@ -47,12 +53,11 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
     })
   );
 
-  if (inputResult)
-    console.log({
-      action: "markExecutionAsSuccessful",
-      executionId,
-      inputResult,
-    });
+  console.log({
+    action: "markExecutionAsSuccessful",
+    executionId,
+    inputResult,
+  });
 
   // async invokes automatically retries on failure, so
   // we should attempt to cleanup any leftover failure results
@@ -64,12 +69,12 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
     })
   );
 
-  if (previousFailure)
-    console.log({
-      action: "markExecutionAsSuccessful",
-      executionId,
-      previousFailure,
-    });
+  console.log({
+    action: "markExecutionAsSuccessful",
+    executionId,
+    previousFailure,
+  });
+
   return { inputResult, previousFailure };
 };
 
@@ -79,8 +84,9 @@ export const failedExecution = async (
 ): Promise<FailureResponse> => {
   const rawError = serializeError(errorWithContext);
   const failureRecord = await markExecutionAsFailed(executionId, rawError);
-  const statusCode =
-    (errorWithContext as any)?.["$metadata"]?.httpStatusCode || 500;
+  const statusCode: number =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    ((errorWithContext as any)?.$metadata?.httpStatusCode as number) || 500;
   const message = "execution failed";
   return { statusCode, message, failureRecord, error: rawError };
 };
@@ -99,13 +105,12 @@ const markExecutionAsFailed = async (
     })
   );
 
-  if (result)
-    console.log({ action: "markExecutionAsFailed", executionId, result });
+  console.log({ action: "markExecutionAsFailed", executionId, result });
 
   return { bucketName, key };
 };
 
-export const generateExecutionId = (event: any) =>
+export const generateExecutionId = (event: unknown) =>
   hash({
     functionName: functionName(),
     event,

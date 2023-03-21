@@ -11,7 +11,7 @@ export const lookupFunctionalIdentifierCode = (
   return code;
 };
 
-const functionalIdentifierCodeLookup: Record<string, string> = {
+const functionalIdentifierCodeLookup: Record<string, string | undefined> = {
   "100": "PG",
   "101": "NL",
   "102": "AC",

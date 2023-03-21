@@ -15,7 +15,8 @@
     "execute": "ts-node-esm ./src/scripts/execute.ts",
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
     "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",
-    "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava"
+    "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava",
+    "lint": "eslint src/**/*.ts --fix"
   },
   "author": "",
   "license": "ISC",
@@ -37,6 +38,8 @@
     "@types/node-fetch": "^2.6.2",
     "@types/object-hash": "^3.0.2",
     "@types/ssh2-sftp-client": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.1.0",
     "aws-sdk-client-mock": "2.0.1",
     "basic-ftp": "^5.0.2",
@@ -44,6 +47,9 @@
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
     "esbuild": "^0.16.16",
+    "eslint": "^8.36.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "jszip": "^3.10.1",
     "mockdate": "^3.0.5",
     "nock": "^13.3.0",

@@ -58,7 +58,7 @@ const createGuide = async (guide: CreateGuideInput): Promise<string> => {
   return createGuideResponse.id;
 };
 
-const publishGuide = async (guideId: string): Promise<any> => {
+const publishGuide = async (guideId: string): Promise<unknown> => {
   return await guides.send(
     new PublishGuideCommand({
       id: guideId,
@@ -85,7 +85,7 @@ const findGuideIdByName = async (
   }
 
   return (
-    foundGuide?.id ||
+    foundGuide?.id ??
     (await findGuideIdByName(guideName, guidesList.nextPageToken))
   );
 };

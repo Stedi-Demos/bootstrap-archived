@@ -70,3 +70,9 @@ export const TransactionSetDestinationsSchema = z.strictObject({
 export type TransactionSetDestinations = z.infer<
   typeof TransactionSetDestinationsSchema
 >;
+
+export const DestinationAckSchema = z.strictObject({
+  generateFor: z.array(z.string().describe("Transaction Set ID")),
+});
+
+export type DestinationAck = z.infer<typeof DestinationAckSchema>;

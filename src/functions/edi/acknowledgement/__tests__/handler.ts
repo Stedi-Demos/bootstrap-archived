@@ -14,8 +14,8 @@ import {
   InvocationType,
   InvokeFunctionCommand,
 } from "@stedi/sdk-client-functions";
-import { StashPartnerDestinationAcks } from "../types.js";
 import { OutboundEvent } from "../../../../lib/types/OutboundEvent.js";
+import { DestinationAck } from "../../../../lib/types/Destination.js";
 
 const stash = mockStashClient();
 const guides = mockGuideClient();
@@ -51,7 +51,7 @@ test.serial(
         key: `destinations|${partnershipId}|acknowledgements`,
         value: {
           generateFor: ["850"],
-        } satisfies StashPartnerDestinationAcks,
+        } satisfies DestinationAck,
       });
 
     functions
@@ -129,7 +129,7 @@ test.serial(
         key: `destinations|${partnershipId}|acknowledgements`,
         value: {
           generateFor: ["810"],
-        } satisfies StashPartnerDestinationAcks,
+        } satisfies DestinationAck,
       });
 
     functions

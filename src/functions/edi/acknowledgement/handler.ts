@@ -1,7 +1,4 @@
-import {
-  EngineFunctionalGroupTranslationSucceededEvent,
-  StashPartnerDestinationAcks,
-} from "./types.js";
+import { EngineFunctionalGroupTranslationSucceededEvent } from "./types.js";
 import { stashClient } from "../../../lib/clients/stash.js";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
@@ -14,6 +11,10 @@ import {
   recordNewExecution,
 } from "../../../lib/execution.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import {
+  DestinationAck,
+  DestinationAckSchema,
+} from "../../../lib/types/Destination.js";
 
 const stash = stashClient();
 
@@ -45,9 +46,9 @@ const send997Acknowledgement = async (
     })
   );
 
-  const ackConfig = ackConfigResult.value as
-    | StashPartnerDestinationAcks
-    | undefined;
+  const ackConfig: DestinationAck = DestinationAckSchema.parse(
+    ackConfigResult.value
+  );
 
   if (!ackConfig) {
     // acknowledgements not configured

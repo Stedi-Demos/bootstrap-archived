@@ -44,8 +44,3 @@ export const EngineFunctionalGroupTranslationSucceededEventSchema =
 export type EngineFunctionalGroupTranslationSucceededEvent = z.infer<
   typeof EngineFunctionalGroupTranslationSucceededEventSchema
 >;
-
-type TransactionSetId = string;
-export interface StashPartnerDestinationAcks {
-  generateFor: TransactionSetId[];
-}

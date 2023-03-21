@@ -45,10 +45,10 @@ test.serial(
   async (t) => {
     stash
       .on(GetValueCommand, {
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
         value: {
           generateFor: ["850"],
         } satisfies DestinationAck,
@@ -101,7 +101,7 @@ test.serial(
   async (t) => {
     stash
       .on(GetValueCommand, {
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
       }) // mock destinations lookup
       .resolvesOnce({});
 
@@ -123,10 +123,10 @@ test.serial(
   async (t) => {
     stash
       .on(GetValueCommand, {
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
         value: {
           generateFor: ["810"],
         } satisfies DestinationAck,

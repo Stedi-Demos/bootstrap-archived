@@ -113,6 +113,23 @@ const createOrUpdateEventBinding = async (
     )
   );
 
+  createOrUpdateEventBinding(
+    "edi-acknowledgment",
+    {
+      source: ["stedi.engine"],
+      "detail-type": ["functional_group.translation_succeeded"],
+    },
+    "all-received-functional-groups"
+  );
+  EVENT_BINDING_NAMES.push("all-received-functional-groups");
+
+  promises.push(
+    waitUntilEventToFunctionBindingCreateComplete(
+      { client: events, maxWaitTime },
+      { eventToFunctionBindingName: "all-received-functional-groups" }
+    )
+  );
+
   console.log("Waiting for event binding deploys to complete");
 
   await updateResourceMetadata({ FUNCTION_NAMES, EVENT_BINDING_NAMES });

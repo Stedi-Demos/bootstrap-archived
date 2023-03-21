@@ -42,7 +42,7 @@ const send997Acknowledgement = async (
   const ackConfigResult = await stash.send(
     new GetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
-      key: `destinations|${partnershipId}|acknowledgements`,
+      key: `destinations|${partnershipId}|acknowledgments`,
     })
   );
 
@@ -50,8 +50,9 @@ const send997Acknowledgement = async (
     ackConfigResult.value
   );
 
+  console.log("ackConfig", JSON.stringify(ackConfig, null, 2));
   if (!ackConfig) {
-    // acknowledgements not configured
+    // acknowledgment not configured
     return;
   }
 
@@ -65,7 +66,7 @@ const send997Acknowledgement = async (
     ackConfig.generateFor.filter(Set.prototype.has, new Set(transactionSetIds))
       .length === 0
   ) {
-    // acknowledgements not configured for associated transaction sets
+    // acknowledgments not configured for associated transaction sets
     return;
   }
 

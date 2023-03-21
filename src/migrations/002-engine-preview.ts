@@ -219,7 +219,7 @@ export const up = async () => {
     await stash.send(
       new SetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `destinations|${partnershipId}|acknowledgements`,
+        key: `destinations|${partnershipId}|acknowledgments`,
         value: {
           generateFor: generate997For,
         },

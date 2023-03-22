@@ -170,7 +170,7 @@ const partners = partnersClient();
   console.log("Done");
 })();
 
-async function emptyAndDeleteBucket(bucketName: string) {
+async function _emptyAndDeleteBucket(bucketName: string) {
   await emptyBucket(bucketName);
   await buckets.send(new DeleteBucketCommand({ bucketName }));
 }

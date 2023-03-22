@@ -1,4 +1,4 @@
-import { serializeError } from "serialize-error";
+import { ErrorObject, serializeError } from "serialize-error";
 
 import { invokeMapping } from "./mappings.js";
 import { Destination } from "./types/Destination.js";
@@ -8,6 +8,7 @@ import * as bucket from "./destinations/bucket.js";
 import * as fn from "./destinations/function.js";
 import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
+import * as stash from "./destinations/stash.js";
 
 export interface DeliveryResult {
   type: Destination["destination"]["type"];
@@ -43,6 +44,7 @@ const deliveryFnForDestinationType: {
   function: fn.deliverToDestination,
   sftp: sftp.deliverToDestination,
   webhook: webhook.deliverToDestination,
+  stash: stash.deliverToDestination,
 };
 
 export const processSingleDelivery = async (
@@ -85,7 +87,7 @@ export const processDeliveries = async (
     })
   );
 
-  const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
+  const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, input);
   const rejectedCount = deliveryResultsByStatus.rejected.length;
   if (rejectedCount > 0) {
     throw new ErrorWithContext(
@@ -94,29 +96,37 @@ export const processDeliveries = async (
     );
   }
 
-  return deliveryResultsByStatus.fulfilled.map((r) => r.value);
+  return deliveryResultsByStatus.fulfilled;
 };
 
 interface GroupedDeliveryResultSettledResult {
-  fulfilled: PromiseFulfilledResult<DeliveryResult>[];
-  rejected: PromiseRejectedResult[];
+  fulfilled: DeliveryResult[];
+  rejected: {
+    error: ErrorObject;
+    destination: Destination;
+    payload: string | object;
+  }[];
 }
 
 export const groupDeliveryResults = (
-  deliveryResults: PromiseSettledResult<DeliveryResult>[]
+  deliveryResults: PromiseSettledResult<DeliveryResult>[],
+  input: Omit<ProcessDeliveriesInput, "destinationFilename">
 ): GroupedDeliveryResultSettledResult => {
   return deliveryResults.reduce(
-    (groupedResults: GroupedDeliveryResultSettledResult, group) => {
+    (groupedResults: GroupedDeliveryResultSettledResult, group, index) => {
       // for rejected promises, serialize the reason
 
       if (group.status === "rejected") {
-        const { status, ...rest } = group;
+        const destination = input.destinations[index]!;
+
         groupedResults.rejected.push({
-          reason: serializeError(rest),
-          status,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          error: serializeError(group.reason),
+          destination,
+          payload: input.payload,
         });
       } else {
-        groupedResults.fulfilled.push(group);
+        groupedResults.fulfilled.push(group.value);
       }
       return groupedResults;
     },

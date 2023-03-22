@@ -48,13 +48,13 @@ test("delivery via as2 uploads file to bucket and starts as2 file transfer comma
     destinationFilename,
   });
 
-  t.deepEqual(buckets.calls()[0].args[0].input, {
+  t.deepEqual(buckets.calls()[0]!.args[0].input, {
     bucketName,
     key: `${path}/${destinationFilename}`,
     body: payload,
   });
 
-  t.deepEqual(as2Client.calls()[0].args[0].input, {
+  t.deepEqual(as2Client.calls()[0]!.args[0].input, {
     connectorId,
     sendFilePaths: [`/${bucketName}/${path}/${destinationFilename}`],
   });
@@ -76,7 +76,7 @@ test("delivery via bucket uploads file to bucket in specified path", async (t) =
     destinationFilename,
   });
 
-  t.deepEqual(buckets.calls()[0].args[0].input, {
+  t.deepEqual(buckets.calls()[0]!.args[0].input, {
     bucketName,
     key: `${path}/${destinationFilename}`,
     body: payload,
@@ -102,7 +102,7 @@ test("delivery via function invokes Stedi function with both payload and additio
     destinationFilename: "unused",
   });
 
-  t.deepEqual(functions.calls()[0].args[0].input, {
+  t.deepEqual(functions.calls()[0]!.args[0].input, {
     functionName,
     invocationType: InvocationType.SYNCHRONOUS,
     payload: {

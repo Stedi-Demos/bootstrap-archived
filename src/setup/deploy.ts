@@ -138,6 +138,23 @@ const createOrUpdateEventBinding = async (
     )
   );
 
+  void createOrUpdateEventBinding(
+    "events-file-error",
+    {
+      source: ["stedi.engine"],
+      "detail-type": ["engine.file_error"],
+    },
+    "engine-file-errors"
+  );
+  EVENT_BINDING_NAMES.push("engine-file-errors");
+
+  promises.push(
+    waitUntilEventToFunctionBindingCreateComplete(
+      { client: events, maxWaitTime },
+      { eventToFunctionBindingName: "engine-file-errors" }
+    )
+  );
+
   console.log("Waiting for event binding deploys to complete");
   await promises;
 

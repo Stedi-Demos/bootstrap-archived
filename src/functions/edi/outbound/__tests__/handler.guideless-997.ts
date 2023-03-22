@@ -8,7 +8,7 @@ import {
   mockTranslateClient,
 } from "../../../../lib/testing/testHelpers.js";
 import { handler } from "../handler.js";
-import sampleOutboundEvent from "../../../../resources/X12/5010/997/outbound.json" assert { type: "json" };
+import sampleOutboundEvent from "../__fixtures__/guideless-997.js";
 import {
   GetX12PartnershipCommand,
   GetX12PartnershipOutput,

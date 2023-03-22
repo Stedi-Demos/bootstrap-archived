@@ -8,7 +8,7 @@ import {
 
 const stash = stashClient();
 
-export const loadDestinations = async ({
+export const loadTransactionDestinations = async ({
   partnershipId,
   transactionSetIdentifier,
 }: {
@@ -32,6 +32,7 @@ export const loadDestinations = async ({
       error.name === "ResourceNotFoundException"
     )
       return { destinations: [] };
-    else throw error;
+
+    throw error;
   }
 };

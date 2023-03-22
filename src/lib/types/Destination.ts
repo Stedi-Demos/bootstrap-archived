@@ -49,6 +49,12 @@ const DestinationAs2Schema = DestinationBucketSchema.extend({
   connectorId: z.string(),
 });
 
+const DestinationStashSchema = z.strictObject({
+  type: z.literal("stash"),
+  keyspaceName: z.string(),
+  keyPrefix: z.string().optional(),
+});
+
 export const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),
   destination: z.discriminatedUnion("type", [
@@ -57,6 +63,7 @@ export const DestinationSchema = z.strictObject({
     DestinationFunctionSchema,
     DestinationSftpSchema,
     DestinationWebhookSchema,
+    DestinationStashSchema,
   ]),
 });
 
@@ -71,8 +78,35 @@ export type TransactionSetDestinations = z.infer<
   typeof TransactionSetDestinationsSchema
 >;
 
+export const destinationAckKey = (partnershipId: string) =>
+  `destinations|${partnershipId}|acknowledgements`;
+
 export const DestinationAckSchema = z.strictObject({
   generateFor: z.array(z.string().describe("Transaction Set ID")),
 });
 
 export type DestinationAck = z.infer<typeof DestinationAckSchema>;
+
+export const destinationExecutionErrorKey = "destinations|errors|execution";
+
+export const destinationFileErrorEventsKey = "destinations|errors|file_error";
+
+const DestinationErrorSchema = z.strictObject({
+  description: z.string().optional(),
+  mappingId: z.string().optional(),
+  destination: z.discriminatedUnion("type", [
+    DestinationFunctionSchema,
+    DestinationWebhookSchema,
+    DestinationStashSchema,
+    DestinationBucketSchema,
+  ]),
+});
+
+export const DestinationErrorEventsSchema = z.strictObject({
+  description: z.string().optional(),
+  destinations: z.array(DestinationErrorSchema),
+});
+
+export type DestinationErrorEvents = z.infer<
+  typeof DestinationErrorEventsSchema
+>;

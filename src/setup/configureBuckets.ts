@@ -47,7 +47,7 @@ import { sftpClient } from "../lib/clients/sftp.js";
   }
 
   // Use a separate bucket for tracking function executions
-  const stediAccountId = user.bucketName.split("-sftp")[0];
+  const stediAccountId = user.bucketName.split("-sftp")[0]!;
   const executionsBucketName = `${stediAccountId}-executions`;
 
   const bucketsList = await buckets.send(new ListBucketsCommand({}));

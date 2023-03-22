@@ -91,12 +91,39 @@ export const up = async () => {
       throw new Error("localProfile or partnerProfile is invalid");
 
     // create local profile in Partners API
-    await partners.send(new CreateX12ProfileCommand(localProfile));
-    migratedStashProfileKeys.push(localProfile.profileId);
+    try {
+      await partners.send(new CreateX12ProfileCommand(localProfile));
+
+      migratedStashProfileKeys.push(localProfile.profileId);
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        error.name === "ResourceConflictException"
+      ) {
+        console.log(
+          `Local profile '${partnerProfile.profileId}' already exists, skipping creation.`
+        );
+      } else throw error;
+    }
 
     // create partner profile in Partners API
-    await partners.send(new CreateX12ProfileCommand(partnerProfile));
-    migratedStashProfileKeys.push(partnerProfile.profileId);
+    try {
+      await partners.send(new CreateX12ProfileCommand(partnerProfile));
+      migratedStashProfileKeys.push(partnerProfile.profileId);
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        error.name === "ResourceConflictException"
+      ) {
+        console.log(
+          `Partner profile '${partnerProfile.profileId}' already exists, skipping creation.`
+        );
+      } else throw error;
+    }
 
     const generate997For: string[] = [];
 

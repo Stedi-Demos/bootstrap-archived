@@ -90,16 +90,18 @@ const partners = partnersClient();
   console.log("Deleting Buckets");
   // TODO Cannot destroy sFTP bucket as it's v1
   // await emptyAndDeleteBucket(resources.SFTP_BUCKET_NAME ?? "");
-
-  if (resources.EXECUTIONS_BUCKET_NAME !== undefined)
-    await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME);
+  // if (resources.EXECUTIONS_BUCKET_NAME !== undefined)
+  //   await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME);
 
   // Delete Guides
   console.log("Deleting Guides");
   for (const gId of resources.GUIDE_IDS ?? []) {
     const guideId = parseGuideId(gId);
-    await guides.send(new DeleteGuideCommand({ id: `LIVE_${guideId}` }));
-    await guides.send(new DeleteGuideCommand({ id: `DRFT_${guideId}` }));
+    for (const id of [`LIVE_${guideId}`, `DRFT_${guideId}`]) {
+      try {
+        await guides.send(new DeleteGuideCommand({ id }));
+      } catch (error) {}
+    }
   }
 
   // Delete Stash keyspaces

@@ -1,12 +1,19 @@
+import { GetGuideCommand, ListGuidesCommand } from "@stedi/sdk-client-guides";
 import { ListValuesCommand, ValueOutput } from "@stedi/sdk-client-stash";
-import { writeFileSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
+import { guidesClient } from "../lib/clients/guides.js";
 import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
+import { parseGuideId } from "../support/guide.js";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
-  const filename = process.argv[2] ?? "./backup.json";
+  const dirname = process.argv[2] ?? "./backup/";
+  const filename = `${dirname}/stash.json`;
   const stash = stashClient();
+  const guides = guidesClient();
+
+  mkdirSync(`${dirname}/guides`, { recursive: true });
 
   const PartnersKeyspsace: ValueOutput[] = [];
 
@@ -29,5 +36,18 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
   }
 
   writeFileSync(filename, JSON.stringify({ PartnersKeyspsace }, null, 2));
-  console.log(`Backup completed to '${filename}'`);
+
+  const { items: allGuides } = await guides.send(new ListGuidesCommand({}));
+  for (const guideSummary of allGuides ?? []) {
+    const guide = await guides.send(
+      new GetGuideCommand({ id: guideSummary.id })
+    );
+
+    writeFileSync(
+      `${dirname}/guides/${parseGuideId(guide.id!)}.json`,
+      JSON.stringify(guide, null, 2)
+    );
+  }
+
+  console.log(`Backup completed to '${dirname}'`);
 })();

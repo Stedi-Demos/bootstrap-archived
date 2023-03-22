@@ -90,6 +90,7 @@ export const PartnerProfileSchema = z.strictObject({
   partnerInterchangeQualifier: z.string(),
   partnerInterchangeId: z.string(),
   partnerApplicationId: z.string(),
+  engineProfileType: z.literal("local").or(z.literal("partner")).optional(),
 });
 
 export type PartnerProfile = z.infer<typeof PartnerProfileSchema>;

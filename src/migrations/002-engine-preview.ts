@@ -63,25 +63,55 @@ export const up = async () => {
       txnSetWithProfile.sendingPartnerId
     );
 
-    // prepare "local" profile in Partners API
-    const localProfile: CreateX12ProfileCommandInput = {
-      profileId: txnSetWithProfile.sendingPartnerId,
-      profileType: "local",
-      interchangeQualifier: sendingStashProfile.partnerInterchangeQualifier,
-      interchangeId: sendingStashProfile.partnerInterchangeId.padEnd(15, " "),
-    };
-
     // get "receiving" profile from Stash
     const receivingStashProfile = findStashProfile(
       txnSetWithProfile.receivingPartnerId
     );
 
+    const [localStashProfile, ...unexpectedLocals] = [
+      sendingStashProfile,
+      receivingStashProfile,
+    ].filter((stashProfile) => stashProfile.engineProfileType === "local");
+
+    if (unexpectedLocals.length > 0)
+      throw new Error(
+        `Only one profile within a partnership should be designated as "engineProfileType: local", partnership: '${stashPartnership.id!}'`
+      );
+
+    if (localStashProfile === undefined)
+      throw new Error(
+        `One profile within a partnership must be designated as "engineProfileType: local", partnership: '${stashPartnership.id!}'`
+      );
+
+    const partnerStashProfile = [
+      sendingStashProfile,
+      receivingStashProfile,
+    ].find(
+      (stashProfile) =>
+        (stashProfile.engineProfileType === "partner" ||
+          stashProfile.engineProfileType === undefined) &&
+        stashProfile.id !== localStashProfile.id
+    );
+
+    if (partnerStashProfile === undefined)
+      throw new Error(
+        `One profile within a partnership must be designated as "engineProfileType: partner", partnership: '${stashPartnership.id!}'`
+      );
+
+    // prepare "local" profile in Partners API
+    const localProfile: CreateX12ProfileCommandInput = {
+      profileId: localStashProfile.id.replace("profile|", ""),
+      profileType: "local",
+      interchangeQualifier: localStashProfile.partnerInterchangeQualifier,
+      interchangeId: localStashProfile.partnerInterchangeId.padEnd(15, " "),
+    };
+
     // prepare "partner" profile in Partners API
     const partnerProfile: CreateX12ProfileCommandInput = {
-      profileId: txnSetWithProfile.receivingPartnerId,
+      profileId: partnerStashProfile.id.replace("profile|", ""),
       profileType: "partner",
-      interchangeQualifier: receivingStashProfile.partnerInterchangeQualifier,
-      interchangeId: receivingStashProfile.partnerInterchangeId.padEnd(15, " "),
+      interchangeQualifier: partnerStashProfile.partnerInterchangeQualifier,
+      interchangeId: partnerStashProfile.partnerInterchangeId.padEnd(15, " "),
     };
 
     if (
@@ -92,6 +122,7 @@ export const up = async () => {
 
     // create local profile in Partners API
     try {
+      console.log(localProfile);
       await partners.send(new CreateX12ProfileCommand(localProfile));
 
       migratedStashProfileKeys.push(localProfile.profileId);

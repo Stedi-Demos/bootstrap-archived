@@ -46,7 +46,7 @@ const pkg = {
   description:
     "This package contains the dependencies needed at runtime, that cannot be bundled",
   dependencies: {
-    "@stedi/x12-tools": "^1.0.0",
+    "@stedi/x12-tools": "^1.9.1",
     "ssh2-sftp-client": "^9.0.4",
   },
 };
@@ -108,6 +108,11 @@ const getZipOfFolder = (dir: string): JSZip => {
   // returns a JSZip instance filled with contents of dir.
 
   const allPaths = getFilePathsRecursively(dir);
+
+  if (!allPaths.some((path) => path.includes("node_modules/")))
+    throw new Error(
+      "There was an issue installing the dependencies using your local npm installation, please check your .npmrc and try again."
+    );
 
   const zip = new JSZip();
   for (const filePath of allPaths) {

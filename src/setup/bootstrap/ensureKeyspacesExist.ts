@@ -33,6 +33,7 @@ const ensureKeyspace = async (keyspaceName: string) => {
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   console.log("Creating keyspaces...");
   const keyspaceNames = [

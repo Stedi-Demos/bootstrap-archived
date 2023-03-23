@@ -4,7 +4,7 @@ import {
 } from "@stedi/sdk-client-partners";
 import { DEFAULT_SDK_CLIENT_PROPS } from "../constants.js";
 
-let _partnersClient: PartnersClient;
+let _partnersClient: PartnersClient | undefined;
 
 export const partnersClient = () => {
   if (_partnersClient === undefined) {
@@ -12,7 +12,7 @@ export const partnersClient = () => {
       ...DEFAULT_SDK_CLIENT_PROPS,
     };
 
-    if (process.env["USE_PREVIEW"] !== undefined)
+    if (process.env.USE_PREVIEW !== undefined)
       config.endpoint =
         "https://partners.us.preproduction.stedi.com/2022-01-01";
 

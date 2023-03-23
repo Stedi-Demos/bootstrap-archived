@@ -6,11 +6,11 @@ import {
   payloadAsString,
 } from "../deliveryManager.js";
 
-type WebhookDeliveryResult = {
+interface WebhookDeliveryResult {
   method: WebhookVerb;
   url: string;
   status: number;
-};
+}
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput

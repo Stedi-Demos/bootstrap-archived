@@ -11,7 +11,7 @@ export const buildArchivalPath = ({
 
   let filename: string;
   if (currentFilenameParts.length > 1) {
-    const extension = currentFilenameParts.pop();
+    const extension = currentFilenameParts.pop()!;
     const filenameWithoutExtension = currentFilenameParts.join(".");
     filename = `${currentKeyParts.join(
       "/"

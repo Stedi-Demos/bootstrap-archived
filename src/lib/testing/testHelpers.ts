@@ -10,8 +10,9 @@ import { FunctionsClient } from "@stedi/sdk-client-functions";
 import { GuidesClient } from "@stedi/sdk-client-guides";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
+import { MappingsClient } from "@stedi/sdk-client-mappings";
 
-const executionsBucket = process.env["EXECUTIONS_BUCKET_NAME"] ?? "";
+const executionsBucket = process.env.EXECUTIONS_BUCKET_NAME ?? "";
 
 /**
  * Creates a mocked Stedi As2Client
@@ -83,4 +84,8 @@ export const mockTranslateClient = () => {
  */
 export const mockGuideClient = () => {
   return mockClient(GuidesClient);
+};
+
+export const mockMappingsClient = () => {
+  return mockClient(MappingsClient);
 };

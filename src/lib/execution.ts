@@ -11,6 +11,11 @@ import {
 import { requiredEnvVar } from "./environment.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 import { bucketsClient } from "./clients/buckets.js";
+import { loadExecutionErrorDestinations } from "./loadExecutionErrorDestinations.js";
+import {
+  processDeliveries,
+  ProcessDeliveriesInput,
+} from "./deliveryManager.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
@@ -84,19 +89,36 @@ export const failedExecution = async (
 ): Promise<FailureResponse> => {
   const rawError = serializeError(errorWithContext);
   const failureRecord = await markExecutionAsFailed(executionId, rawError);
+
   const statusCode: number =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     ((errorWithContext as any)?.$metadata?.httpStatusCode as number) || 500;
   const message = "execution failed";
-  return { statusCode, message, failureRecord, error: rawError };
+  const failureResponse = {
+    statusCode,
+    message,
+    failureRecord,
+    error: rawError,
+  };
+  try {
+    await sendFailureToDestinations(failureResponse, executionId);
+  } catch (e) {
+    await markExecutionAsFailed(
+      executionId,
+      serializeError(e),
+      `failure-error-destination.json`
+    );
+  }
+  return failureResponse;
 };
 
 const markExecutionAsFailed = async (
   executionId: string,
-  error: ErrorObject
+  error: ErrorObject,
+  objectKey = "failure.json"
 ): Promise<FailureRecord> => {
   const client = await executionsBucketClient();
-  const key = `functions/${functionName()}/${executionId}/failure.json`;
+  const key = `functions/${functionName()}/${executionId}/${objectKey}`;
   const result = await client.send(
     new PutObjectCommand({
       bucketName,
@@ -115,6 +137,22 @@ export const generateExecutionId = (event: unknown) =>
     functionName: functionName(),
     event,
   });
+
+// Used inside error path, do not throw
+export const sendFailureToDestinations = async (
+  failure: FailureResponse,
+  executionId: string
+): Promise<void> => {
+  const errorDestinations = await loadExecutionErrorDestinations();
+
+  const processDeliveriesInput: ProcessDeliveriesInput = {
+    destinations: errorDestinations.destinations,
+    payload: failure,
+    destinationFilename: `${executionId}-${new Date().toUTCString()}`,
+  };
+
+  await processDeliveries(processDeliveriesInput);
+};
 
 const functionName = () => requiredEnvVar("STEDI_FUNCTION_NAME");
 

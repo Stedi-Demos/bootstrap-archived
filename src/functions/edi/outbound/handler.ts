@@ -169,7 +169,10 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       )
     );
 
-    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
+    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
+      destinations: transactionSetConfig.destinations,
+      payload: outboundEvent.payload as string | object,
+    });
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(

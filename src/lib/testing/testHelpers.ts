@@ -10,6 +10,7 @@ import { GuidesClient } from "@stedi/sdk-client-guides";
 import { PartnersClient } from "@stedi/sdk-client-partners";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
+import { MappingsClient } from "@stedi/sdk-client-mappings";
 
 const executionsBucket = process.env.EXECUTIONS_BUCKET_NAME ?? "";
 
@@ -87,4 +88,8 @@ export const mockGuideClient = () => {
 export const mockPartnersClient = () => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
   return mockClient(PartnersClient as any);
+};
+
+export const mockMappingsClient = () => {
+  return mockClient(MappingsClient);
 };

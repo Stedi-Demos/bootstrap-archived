@@ -68,7 +68,7 @@ test.serial(
     t.is(functions.commandCalls(InvokeFunctionCommand).length, 1);
     const { payload, metadata } = functions.commandCalls(
       InvokeFunctionCommand
-    )[0].args[0].input.payload as OutboundEvent;
+    )[0]!.args[0].input.payload as OutboundEvent;
     t.deepEqual(payload, {
       heading: {
         functional_group_response_header_AK1: {

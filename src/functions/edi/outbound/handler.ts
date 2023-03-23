@@ -23,10 +23,10 @@ import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteEnvelope.js";
 import { loadProfile } from "../../../lib/loadProfileById.js";
-import { loadDestinations } from "../../../lib/loadDestinations.js";
 import { partnersClient } from "../../../lib/clients/partners.js";
 import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
 import assert from "node:assert";
+import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 
 const partners = partnersClient();
 
@@ -67,7 +67,7 @@ export const handler = async (
         `Transaction set not found in partnership configuration for '${transactionSetIdentifier}'`
       );
 
-    const transactionSetDestinations = await loadDestinations({
+    const transactionSetDestinations = await loadTransactionDestinations({
       partnershipId: event.metadata.partnershipId,
       transactionSetIdentifier,
     });
@@ -162,7 +162,10 @@ export const handler = async (
       )
     );
 
-    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
+    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
+      payload: outboundEvent,
+      destinations: transactionSetDestinations.destinations,
+    });
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(
@@ -178,7 +181,7 @@ export const handler = async (
 
     return {
       statusCode: 200,
-      deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
+      deliveryResults: deliveryResultsByStatus.fulfilled,
     };
   } catch (e) {
     console.error(e);
@@ -226,7 +229,7 @@ const extractTransactionSetIdentifierFromGuideJson = (
     throw new Error("unable to determine transaction set type from input");
   }
 
-  const [result] = uniqueTransactionSets.values();
+  const result = uniqueTransactionSets.values().next().value as string;
 
   return result;
 };

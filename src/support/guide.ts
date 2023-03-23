@@ -17,7 +17,7 @@ import { guidesClient } from "../lib/clients/guides.js";
 const guides = guidesClient();
 
 export const parseGuideId = (fullGuideId: string): string =>
-  fullGuideId.includes("_") ? fullGuideId.split("_")[1] : fullGuideId;
+  fullGuideId.includes("_") ? fullGuideId.split("_")[1]! : fullGuideId;
 
 export const ensureGuideExists = async (
   guidePath: string

@@ -13,7 +13,7 @@ import { parseGuideId } from "../support/guide.js";
   const stash = stashClient();
   const guides = guidesClient();
 
-  if (existsSync(dirname) === false) {
+  if (!existsSync(dirname)) {
     console.error(`No directroy found at path '${dirname}'`);
     process.exit(1);
   }
@@ -28,12 +28,12 @@ import { parseGuideId } from "../support/guide.js";
   console.log("Restoring Guides...");
   const guideFiles = readdirSync(`${dirname}/guides`);
   for (const guideFile of guideFiles) {
-    const [oldGuidId] = guideFile.split(".");
+    const [oldGuidId] = guideFile.split(".") as [string];
     const guideRaw = readFileSync(`${dirname}/guides/${guideFile}`, "utf-8");
     const guideBody = JSON.parse(guideRaw);
 
     try {
-      const guide = await guides.send(new CreateGuideCommand(guideBody as any));
+      const guide = await guides.send(new CreateGuideCommand(guideBody));
 
       stashRaw = stashRaw.replace(oldGuidId, parseGuideId(guide.id!));
     } catch (error) {

@@ -14,7 +14,7 @@ import {
 } from "@stedi/sdk-client-buckets";
 import consumers from "stream/consumers";
 import { Readable } from "node:stream";
-import { loadDestinations } from "../../../lib/loadDestinations.js";
+import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 import {
   generateDestinationFilename,
   processDeliveries,
@@ -50,7 +50,7 @@ export const handler = async (
     const guideJSON = JSON.parse(fileContents) as object;
 
     // get the destinations for this transaction set
-    const { destinations } = await loadDestinations({
+    const { destinations } = await loadTransactionDestinations({
       partnershipId: transactionEvent.detail.partnership.partnershipId,
       transactionSetIdentifier:
         transactionEvent.detail.transaction.transactionSetIdentifier,

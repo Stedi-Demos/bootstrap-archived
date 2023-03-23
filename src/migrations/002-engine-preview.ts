@@ -31,7 +31,6 @@ import {
   TransactionSetWithGuideId,
   isAckTransactionSet,
 } from "../lib/types/Depreacted.js";
-import { parseGuideId } from "../support/guide.js";
 import { DocumentType } from "@aws-sdk/types";
 
 const stash = stashClient();

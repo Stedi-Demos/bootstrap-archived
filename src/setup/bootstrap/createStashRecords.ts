@@ -12,12 +12,10 @@ export const createSampleStashRecords = async ({
   partnershipId,
   rule850,
   rule855,
-  rule997,
 }: {
   partnershipId: string;
   rule850: OutboundX12TransactionSummary;
   rule855: InboundX12TransactionSummary;
-  rule997: InboundX12TransactionSummary;
 }) => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";
@@ -56,21 +54,18 @@ export const createSampleStashRecords = async ({
   );
 
   // outbound 997s to ANOTHERMERCH
-  await saveTransactionSetDestinations(
-    `destinations|${partnershipId}|${rule997.transactionSetIdentifier!}`,
-    {
-      description: "Outbound 997 Acknowledgements",
-      destinations: [
-        {
-          destination: {
-            bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
-            path: "trading_partners/ANOTHERMERCH/outbound",
-            type: "bucket",
-          },
+  await saveTransactionSetDestinations(`destinations|${partnershipId}|997`, {
+    description: "Outbound 997 Acknowledgements",
+    destinations: [
+      {
+        destination: {
+          bucketName: requiredEnvVar("SFTP_BUCKET_NAME"),
+          path: "trading_partners/ANOTHERMERCH/outbound",
+          type: "bucket",
         },
-      ],
-    }
-  );
+      },
+    ],
+  });
 
   await stashClient().send(
     new SetValueCommand({

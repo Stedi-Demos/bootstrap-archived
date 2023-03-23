@@ -139,6 +139,7 @@ const createOrUpdateEventBinding = async (
   );
 
   console.log("Waiting for event binding deploys to complete");
+  await promises;
 
   await updateResourceMetadata({ FUNCTION_NAMES, EVENT_BINDING_NAMES });
 

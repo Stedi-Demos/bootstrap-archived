@@ -2,6 +2,7 @@ import { GetGuideCommandOutput } from "@stedi/sdk-client-guides";
 import {
   CreateInboundX12TransactionCommand,
   CreateOutboundX12TransactionCommand,
+  CreateOutboundX12TransactionCommandInput,
   CreateX12PartnershipCommand,
   CreateX12PartnershipCommandOutput,
   CreateX12ProfileCommand,
@@ -20,11 +21,9 @@ const partners = partnersClient();
 export const createProfiles = async ({
   guide850,
   guide855,
-  guide997,
 }: {
   guide850: GetGuideCommandOutput;
   guide855: GetGuideCommandOutput;
-  guide997: GetGuideCommandOutput;
 }) => {
   const localProfile: CreateX12ProfileCommandInput = {
     profileId: "this-is-me",
@@ -44,8 +43,8 @@ export const createProfiles = async ({
 
   for (const profile of [localProfile, remoteProfile]) {
     try {
-      await partners.send(new CreateX12ProfileCommand(profile));
       PROFILE_IDS.push(profile.profileId!);
+      await partners.send(new CreateX12ProfileCommand(profile));
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -136,7 +135,6 @@ export const createProfiles = async ({
   });
 
   const rule997 = await ensureOutboundTransaction({
-    guide: guide997,
     partnership,
   });
 
@@ -147,23 +145,37 @@ const ensureOutboundTransaction = async ({
   guide,
   partnership,
 }: {
-  guide: GetGuideCommandOutput;
+  guide?: GetGuideCommandOutput;
   partnership:
     | CreateX12PartnershipCommandOutput
     | GetX12PartnershipCommandOutput;
 }) => {
   let rule: OutboundX12TransactionSummary | undefined;
+  let transactionSet: string;
 
   try {
-    rule = await partners.send(
-      new CreateOutboundX12TransactionCommand({
+    let params: CreateOutboundX12TransactionCommandInput;
+
+    if (guide) {
+      transactionSet = guide.target!.transactionSet!;
+      params = {
         partnershipId: partnership.partnershipId,
         timeZone: "UTC",
         release: guide.target!.release,
         transactionSetIdentifier: guide.target!.transactionSet,
         guideId: parseGuideId(guide.id!),
-      })
-    );
+      };
+    } else {
+      transactionSet = "997";
+      params = {
+        partnershipId: partnership.partnershipId,
+        timeZone: "UTC",
+        release: "005010",
+        transactionSetIdentifier: "997",
+      };
+    }
+
+    rule = await partners.send(new CreateOutboundX12TransactionCommand(params));
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -177,7 +189,7 @@ const ensureOutboundTransaction = async ({
     ) {
       if ("outboundTransactions" in partnership) {
         rule = partnership.outboundTransactions?.find(
-          (txn) => txn.transactionSetIdentifier === guide.target!.transactionSet
+          (txn) => txn.transactionSetIdentifier === transactionSet
         );
       } else
         throw new Error("Partnership does not contain outboundTransactions");
@@ -185,9 +197,7 @@ const ensureOutboundTransaction = async ({
   }
 
   if (rule === undefined)
-    throw new Error(
-      `Failed to create rule for ${guide.target!.transactionSet!}`
-    );
+    throw new Error(`Failed to create rule for ${transactionSet!}`);
 
   return rule;
 };

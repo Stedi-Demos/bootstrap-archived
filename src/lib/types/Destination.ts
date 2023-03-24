@@ -44,6 +44,8 @@ const DestinationFunctionSchema = z.strictObject({
   additionalInput: z.any().optional(),
 });
 
+export type DestinationFunction = z.infer<typeof DestinationFunctionSchema>;
+
 const DestinationAs2Schema = DestinationBucketSchema.extend({
   type: z.literal("as2"),
   connectorId: z.string(),

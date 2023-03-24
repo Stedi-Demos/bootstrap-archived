@@ -24,7 +24,7 @@ export const handler = async (
   const executionId = generateExecutionId(event);
   try {
     await recordNewExecution(executionId, event);
-    await send997Acknowledgement(event);
+    await send997Acknowledgment(event);
     await markExecutionAsSuccessful(executionId);
 
     return {};
@@ -34,7 +34,7 @@ export const handler = async (
   }
 };
 
-const send997Acknowledgement = async (
+const send997Acknowledgment = async (
   event: EngineFunctionalGroupTranslationSucceededEvent
 ) => {
   const { partnershipId } = event.detail.partnership;

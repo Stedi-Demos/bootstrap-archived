@@ -1,7 +1,7 @@
 import { EngineFileError } from "../../../../lib/types/FileError";
 
 export const sampleFileErrorEvent: EngineFileError = {
-  "detail-type": "engine.file_error",
+  "detail-type": "file.error",
   source: "stedi.engine",
   detail: {
     version: "2023-02-13",

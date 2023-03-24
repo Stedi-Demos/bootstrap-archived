@@ -51,7 +51,7 @@ test.serial(
       .resolvesOnce({
         value: {
           description:
-            "Purchase Order Acknowledgements received from ANOTHERMERCH",
+            "Purchase Order Acknowledgments received from ANOTHERMERCH",
           destinations: [
             {
               destination: {

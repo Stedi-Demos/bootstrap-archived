@@ -39,7 +39,7 @@ test.afterEach.always(() => {
 });
 
 test.serial(
-  `processes incoming engine.file_error event, sending event to configured destinations`,
+  `processes incoming engine file.error event, sending event to configured destinations`,
   async (t) => {
     stash
       .on(GetValueCommand, {

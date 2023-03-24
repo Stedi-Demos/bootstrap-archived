@@ -142,7 +142,7 @@ const createOrUpdateEventBinding = async (
     "events-file-error",
     {
       source: ["stedi.engine"],
-      "detail-type": ["engine.file_error"],
+      "detail-type": ["file.error"],
     },
     "engine-file-errors"
   );

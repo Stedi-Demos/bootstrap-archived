@@ -18,7 +18,7 @@ export const EngineFileErrorSchema = z.object({
     }),
     errors: z.array(z.unknown()),
   }),
-  "detail-type": z.literal("engine.file_error"),
+  "detail-type": z.literal("file.error"),
   source: z.literal("stedi.engine"),
 });
 

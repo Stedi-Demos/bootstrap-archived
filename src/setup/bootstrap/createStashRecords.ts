@@ -41,7 +41,7 @@ export const createSampleStashRecords = async ({
   await saveTransactionSetDestinations(
     `destinations|${partnershipId}|${rule855.transactionSetIdentifier!}`,
     {
-      description: "Purchase Order Acknowledgements received from ANOTHERMERCH",
+      description: "Purchase Order Acknowledgments received from ANOTHERMERCH",
       destinations: [
         {
           destination: {
@@ -55,7 +55,7 @@ export const createSampleStashRecords = async ({
 
   // outbound 997s to ANOTHERMERCH
   await saveTransactionSetDestinations(`destinations|${partnershipId}|997`, {
-    description: "Outbound 997 Acknowledgements",
+    description: "Outbound 997 Acknowledgments",
     destinations: [
       {
         destination: {

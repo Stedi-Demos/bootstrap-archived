@@ -23,6 +23,7 @@
     "@stedi/sdk-client-as2": "^0.1.38",
     "@stedi/sdk-client-buckets": "^0.1.38",
     "@stedi/sdk-client-edi-translate": "^0.1.38",
+    "@stedi/sdk-client-engines": "^0.1.39",
     "@stedi/sdk-client-events": "^0.1.38",
     "@stedi/sdk-client-functions": "^0.1.38",
     "@stedi/sdk-client-guides": "^0.1.38",

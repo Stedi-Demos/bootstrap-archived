@@ -1,7 +1,7 @@
 import { StashClient, StashClientConfig } from "@stedi/sdk-client-stash";
 import { DEFAULT_SDK_CLIENT_PROPS } from "../constants.js";
 
-let _stashClient: StashClient;
+let _stashClient: StashClient | undefined;
 
 export const stashClient = () => {
   if (_stashClient === undefined) {
@@ -9,7 +9,7 @@ export const stashClient = () => {
       ...DEFAULT_SDK_CLIENT_PROPS,
     };
 
-    if (process.env["USE_PREVIEW"] !== undefined)
+    if (process.env.USE_PREVIEW !== undefined)
       config.endpoint = "https://stash.us.preproduction.stedi.com/2022-04-20";
 
     _stashClient = new StashClient(config);

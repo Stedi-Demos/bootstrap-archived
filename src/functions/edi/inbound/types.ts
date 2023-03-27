@@ -1,27 +1,27 @@
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
-export type FilteredKey = {
+export interface FilteredKey {
   key: string;
   reason: string;
-};
+}
 
-export type KeyToProcess = {
+export interface KeyToProcess {
   bucketName: string;
   key: string;
-};
+}
 
-export type GroupedEventKeys = {
+export interface GroupedEventKeys {
   filteredKeys: FilteredKey[];
   keysToProcess: KeyToProcess[];
-};
+}
 
-type ProcessingError = {
+interface ProcessingError {
   key: string;
   error: ErrorWithContext;
-};
+}
 
-export type ProcessingResults = {
+export interface ProcessingResults {
   filteredKeys: FilteredKey[];
   processingErrors: ProcessingError[];
   processedKeys: string[];
-};
+}

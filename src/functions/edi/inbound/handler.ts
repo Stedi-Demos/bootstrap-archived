@@ -16,7 +16,7 @@ import {
 } from "../../../lib/execution.js";
 import {
   Convert,
-  Record as BucketNotificationRecord,
+  S3Record as BucketNotificationRecord,
 } from "../../../lib/types/BucketNotificationEvent.js";
 import { bucketsClient } from "../../../lib/clients/buckets.js";
 import {
@@ -43,11 +43,14 @@ import { AckDeliveryInput, deliverAck } from "../../../lib/acks.js";
 import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { archiveFile } from "../../../lib/archive/archiveFile.js";
+import { FailureResponse } from "../../../lib/execution.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const buckets = bucketsClient();
 
-export const handler = async (event: any): Promise<Record<string, any>> => {
+export const handler = async (
+  event: unknown
+): Promise<ProcessingResults | FailureResponse> => {
   const executionId = generateExecutionId(event);
 
   try {
@@ -171,7 +174,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
               const ediJson = await processEdi(guideSummary.guideId, edi);
 
-              const filenamePrefix = interchange?.envelope?.controlNumber
+              const filenamePrefix = interchange.envelope?.controlNumber
                 ? interchange.envelope.controlNumber
                 : Date.now();
 
@@ -315,7 +318,7 @@ const extractInterchangeData = (
     throw new Error("invalid interchange: unable to extract envelope");
   }
 
-  if (!interchange.envelope?.senderId || !interchange.envelope?.receiverId) {
+  if (!interchange.envelope.senderId || !interchange.envelope.receiverId) {
     throw new Error("invalid interchange: unable to extract interchange ids");
   }
 

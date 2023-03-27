@@ -1,31 +1,30 @@
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 
-export type SkippedItem = {
+export interface SkippedItem {
   path: string;
   name: string;
   reason: string;
-};
+}
 
-export type FileDetails = {
+export interface FileDetails {
   path: string;
   name: string;
   lastModifiedTime: number;
-};
+}
 
-export type RemoteFileDetails = {
+export interface RemoteFileDetails {
   filesToProcess: FileDetails[];
   processingErrors?: ProcessingError[];
   skippedItems?: SkippedItem[];
-};
+}
 
-export type ProcessingError = {
+export interface ProcessingError {
   path: string;
   error: ErrorWithContext;
-};
+}
 
-export type RemotePollingResults = {
+export interface RemotePollingResults {
   processedFiles: FileDetails[];
   skippedItems: SkippedItem[];
   processingErrors: ProcessingError[];
-};
-
+}

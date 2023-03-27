@@ -3,15 +3,24 @@ import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 
 export abstract class RemotePoller {
-  abstract getRemoteFileDetails(remotePath: string, remoteFiles?: string[]): Promise<RemoteFileDetails>;
+  abstract getRemoteFileDetails(
+    remotePath: string,
+    remoteFiles?: string[]
+  ): Promise<RemoteFileDetails>;
 
-  abstract downloadFile(destination: DestinationBucket, file: FileDetails): Promise<void>;
+  abstract downloadFile(
+    destination: DestinationBucket,
+    file: FileDetails
+  ): Promise<void>;
 
   abstract deleteFile(file: FileDetails): Promise<void>;
 
   abstract disconnect(): Promise<void>;
 
-  protected getFullFilePath = (file: FileDetails): string => `${file.path}/${file.name}`;
+  protected getFullFilePath = (file: FileDetails): string =>
+    `${file.path}/${file.name}`;
 
-  static getPoller: (connectionDetails: ConnectionDetails) => Promise<RemotePoller>;
+  static getPoller: (
+    connectionDetails: ConnectionDetails
+  ) => Promise<RemotePoller>;
 }

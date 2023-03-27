@@ -25,7 +25,8 @@
         "**/__fixtures__/*",
         "**/setup/**",
         "**/scripts/**",
-        "**/support/**"
+        "**/support/**",
+        "**/migration/**"
       ],
       "rules": {
         "@typescript-eslint/no-unsafe-argument": "off",

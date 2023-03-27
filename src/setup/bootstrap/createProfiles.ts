@@ -26,7 +26,7 @@ export const createProfiles = async () => {
     },
   ];
 
-  if (process.env["USE_BETA"] === "true") {
+  if (process.env.USE_BETA === "true") {
     const partners = partnersClient();
     console.log("[BETA] Creating X12 Trading Partner Profile in Partners API");
 

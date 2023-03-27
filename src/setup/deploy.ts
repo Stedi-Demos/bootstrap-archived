@@ -92,6 +92,8 @@ const createOrUpdateEventBinding = async (
   console.log("Waiting for function deploys to complete");
   await Promise.all(promises);
 
+  await updateResourceMetadata({ FUNCTION_NAMES });
+
   promises = [];
   console.log(`Creating event bindings`);
 
@@ -158,7 +160,7 @@ const createOrUpdateEventBinding = async (
   console.log("Waiting for event binding deploys to complete");
   await Promise.all(promises);
 
-  await updateResourceMetadata({ FUNCTION_NAMES, EVENT_BINDING_NAMES });
+  await updateResourceMetadata({ EVENT_BINDING_NAMES });
 
   console.log(`Deploy completed at: ${new Date().toLocaleString()}`);
 })();

@@ -11,6 +11,9 @@ import {
 } from "@stedi/sdk-client-buckets";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { randomBytes } from "crypto";
+import { updateResourceMetadata } from "./bootstrapMetadata.js";
+import dotenv from "dotenv";
+import { updateDotEnvFile } from "./utils.js";
 
 const engine = engineClient();
 const buckets = bucketsClient();
@@ -20,7 +23,6 @@ export const ensureEngineIsRunning = async () => {
   try {
     await engine.send(new DescribeEngineCommand({ engineName }));
   } catch (error) {
-    console.log(error);
     if (
       typeof error === "object" &&
       error !== null &&
@@ -57,6 +59,18 @@ export const ensureEngineIsRunning = async () => {
         { client: engine, maxWaitTime },
         { engineName }
       );
+
+      await updateResourceMetadata({
+        ENGINE_INGESTION_BUCKET_NAME: bucketName,
+      });
+
+      const existingEnvVars = dotenv.config().parsed ?? {};
+      updateDotEnvFile({
+        ...existingEnvVars,
+        ...{ ENGINE_INGESTION_BUCKET_NAME: bucketName },
+      });
+    } else {
+      console.log(error);
     }
   }
 };

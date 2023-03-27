@@ -94,7 +94,8 @@ const partners = partnersClient();
   //   await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME);
 
   // TODO: Cannot destroy engine bucket without destroying engine first,
-  // engine cannot be destroyed
+  // engine cannot be destroyed without emptying the engine artifacts bucket,
+  // which has a non-public name
   // if (resources.ENGINE_INGESTION_BUCKET_NAME !== undefined)
   //   await emptyAndDeleteBucket(resources.ENGINE_INGESTION_BUCKET_NAME);
 

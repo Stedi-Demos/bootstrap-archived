@@ -116,15 +116,16 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             transactionSetConfigs
           );
 
-          // keep track of transaction sets in interchange to determine whether to send ack
-          const transactionSetConfigsForInterchange: TransactionSet[] = [];
-
           const guideIdsForPartnership =
             groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
               (config) => config.guideId
             );
 
           for (const functionalGroup of interchange.functionalGroups) {
+            // keep track of transaction sets in interchange to determine whether to send ack
+            const transactionSetConfigsForFunctionalGroup: TransactionSet[] =
+              [];
+
             const functionalGroupSegments =
               extractFunctionalGroupData(functionalGroup);
 
@@ -167,11 +168,13 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
                 guideSummary.guideId
               );
 
-              transactionSetConfigsForInterchange.push(transactionSetConfig);
+              transactionSetConfigsForFunctionalGroup.push(
+                transactionSetConfig
+              );
 
               const ediJson = await processEdi(guideSummary.guideId, edi);
 
-              const filenamePrefix = interchange?.envelope?.controlNumber
+              const filenamePrefix = interchange.envelope?.controlNumber
                 ? interchange.envelope.controlNumber
                 : Date.now();
 
@@ -188,31 +191,27 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
               };
               await processDeliveries(processDeliveriesInput);
             }
-          }
 
-          // if any of the transaction sets included an ack configuration, send ack for interchange
-          const transactionSetConfigWithAck =
-            transactionSetConfigsForInterchange.find(
-              (config) => "acknowledgmentConfig" in config
-            );
+            // if any of the transaction sets included an ack configuration, send ack for functional group
+            const transactionSetConfigWithAck =
+              transactionSetConfigsForFunctionalGroup.find(
+                (config) => "acknowledgmentConfig" in config
+              );
 
-          if (transactionSetConfigWithAck) {
-            const ackTransactionSetConfig = getAckTransactionConfig(
-              groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
-            );
+            if (transactionSetConfigWithAck) {
+              const ackTransactionSetConfig = getAckTransactionConfig(
+                groupedTransactionSetConfigs.transactionSetConfigsWithoutGuideIds
+              );
 
-            // note: sendingPartnerId and receivingPartnerId are flip-flopped from interchange being ack'd
-            const ackDeliveryInput: AckDeliveryInput = {
-              ackTransactionSet: ackTransactionSetConfig,
-              interchange,
-              edi: fileContents.slice(
-                interchange.span.start,
-                interchange.span.end
-              ),
-              sendingPartnerId: receivingPartnerId,
-              receivingPartnerId: sendingPartnerId,
-            };
-            await deliverAck(ackDeliveryInput);
+              const ackDeliveryInput: AckDeliveryInput = {
+                ackTransactionSet: ackTransactionSetConfig,
+                interchange,
+                functionalGroup,
+                sendingPartnerId,
+                receivingPartnerId,
+              };
+              await deliverAck(ackDeliveryInput);
+            }
           }
         }
 

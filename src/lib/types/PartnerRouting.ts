@@ -2,11 +2,7 @@ import z from "zod";
 
 import { DestinationSchema } from "./Destination.js";
 
-export const UsageIndicatorCodeSchema = z.enum([
-  "P",
-  "T",
-  "I",
-]);
+export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
 
 export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 
@@ -59,7 +55,9 @@ const TransactionSetWithoutGuideIdSchema = z.union([
   BaseGuideTransactionSetSchema,
 ]);
 
-export type TransactionSetWithoutGuideId = z.infer<typeof TransactionSetWithoutGuideIdSchema>;
+export type TransactionSetWithoutGuideId = z.infer<
+  typeof TransactionSetWithoutGuideIdSchema
+>;
 
 // transaction sets with `guideId`:
 // - no `release` or `transactionSetIdentifier` (inferred from guide)
@@ -67,7 +65,9 @@ const TransactionSetWithGuideIdSchema = NonAckTransactionSetSchema.extend({
   guideId: z.string(),
 });
 
-export type TransactionSetWithGuideId = z.infer<typeof TransactionSetWithGuideIdSchema>;
+export type TransactionSetWithGuideId = z.infer<
+  typeof TransactionSetWithGuideIdSchema
+>;
 
 const TransactionSetSchema = z.union([
   TransactionSetWithGuideIdSchema,
@@ -115,13 +115,17 @@ export const isTransactionSetWithoutGuideId = (
 export const isAckTransactionSet = (
   transactionSet: TransactionSet
 ): transactionSet is AckTransactionSet => {
-  return "transactionSetIdentifier" in transactionSet
-    && transactionSet.transactionSetIdentifier === "997";
+  return (
+    "transactionSetIdentifier" in transactionSet &&
+    transactionSet.transactionSetIdentifier === "997"
+  );
 };
 
 export const isNonAckTransactionSet = (
   transactionSet: TransactionSet
 ): transactionSet is AckTransactionSet => {
-  return "sendingPartnerId" in transactionSet
-    && "receivingPartnerId" in transactionSet;
+  return (
+    "sendingPartnerId" in transactionSet &&
+    "receivingPartnerId" in transactionSet
+  );
 };

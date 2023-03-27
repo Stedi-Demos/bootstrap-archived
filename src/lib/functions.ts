@@ -18,6 +18,7 @@ import {
   UpdateEventToFunctionBindingCommand,
 } from "@stedi/sdk-client-events";
 import { eventsClient } from "./clients/events.js";
+import { ErrorWithContext } from "./errorWithContext.js";
 
 const functions = functionsClient();
 const buckets = bucketsClient();
@@ -35,6 +36,12 @@ export const invokeFunction = async (
       invocationType,
     })
   );
+
+  if (result.error) {
+    throw new ErrorWithContext("function invocation error", {
+      result,
+    });
+  }
 
   return result.payload;
 };

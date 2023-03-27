@@ -9,10 +9,7 @@ import {
 } from "../testing/testHelpers.js";
 import { processSingleDelivery } from "../deliveryManager.js";
 import nock from "nock";
-import {
-  InvocationType,
-  InvokeFunctionCommand,
-} from "@stedi/sdk-client-functions";
+import { InvokeFunctionCommand } from "@stedi/sdk-client-functions";
 
 const as2Client = mockAs2Client();
 const buckets = mockBucketClient();
@@ -30,130 +27,194 @@ test.afterEach.always(() => {
   sinon.reset();
 });
 
-test("delivery via as2 uploads file to bucket and starts as2 file transfer command", async (t) => {
-  const bucketName = "test-as2-bucket";
-  const path = "my-as2-trading-partner/outbound";
-  const destinationFilename = "850-0001.edi";
-  const connectorId = "my-as2-connector-id";
-  const payload = "file-contents";
+test.serial(
+  "delivery via as2 uploads file to bucket and starts as2 file transfer command",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "my-as2-trading-partner/outbound";
+    const destinationFilename = "850-0001.edi";
+    const connectorId = "my-as2-connector-id";
+    const payload = "file-contents";
 
-  await processSingleDelivery({
-    destination: {
-      type: "as2",
+    await processSingleDelivery({
+      destination: {
+        type: "as2",
+        bucketName,
+        path,
+        connectorId,
+      },
+      payload: "file-contents",
+      destinationFilename,
+    });
+
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
-      path,
+      key: `${path}/${destinationFilename}`,
+      body: payload,
+    });
+
+    t.deepEqual(as2Client.calls()[0]!.args[0].input, {
       connectorId,
-    },
-    payload: "file-contents",
-    destinationFilename,
-  });
+      sendFilePaths: [`/${bucketName}/${path}/${destinationFilename}`],
+    });
+  }
+);
 
-  t.deepEqual(buckets.calls()[0]!.args[0].input, {
-    bucketName,
-    key: `${path}/${destinationFilename}`,
-    body: payload,
-  });
+test.serial(
+  "delivery via bucket uploads file to bucket in specified path",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "my-as2-trading-partner/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
 
-  t.deepEqual(as2Client.calls()[0]!.args[0].input, {
-    connectorId,
-    sendFilePaths: [`/${bucketName}/${path}/${destinationFilename}`],
-  });
-});
-
-test("delivery via bucket uploads file to bucket in specified path", async (t) => {
-  const bucketName = "test-as2-bucket";
-  const path = "my-as2-trading-partner/outbound";
-  const destinationFilename = "850-0001.edi";
-  const payload = "file-contents";
-
-  await processSingleDelivery({
-    destination: {
-      type: "bucket",
-      bucketName,
-      path,
-    },
-    payload,
-    destinationFilename,
-  });
-
-  t.deepEqual(buckets.calls()[0]!.args[0].input, {
-    bucketName,
-    key: `${path}/${destinationFilename}`,
-    body: payload,
-  });
-});
-
-test("delivery via function invokes Stedi function with both payload and additionalInput", async (t) => {
-  const functionName = "test-function";
-  const payload = "file-contents";
-  const additionalInput = {
-    extraKey: "extra-value",
-  };
-
-  functions.on(InvokeFunctionCommand, { functionName }).resolvesOnce({});
-
-  await processSingleDelivery({
-    destination: {
-      type: "function",
-      functionName,
-      additionalInput,
-    },
-    payload,
-    destinationFilename: "unused",
-  });
-
-  t.deepEqual(functions.calls()[0]!.args[0].input, {
-    functionName,
-    invocationType: InvocationType.SYNCHRONOUS,
-    payload: {
-      additionalInput,
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+      },
       payload,
-    },
-  });
-});
+      destinationFilename,
+    });
 
-test("delivery via sftp uploads to remote sftp at expected path", async (t) => {
-  const host = "test-host.sftp.com";
-  const port = 22;
-  const username = "test-user";
-  const password = "test-password";
-  const remotePath = "/outbound";
-  const destinationFilename = "850-0001.edi";
-  const payload = "file-contents";
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
+      bucketName,
+      key: `${path}/${destinationFilename}`,
+      body: payload,
+    });
+  }
+);
 
-  await processSingleDelivery({
-    destination: {
-      type: "sftp",
-      connectionDetails: {
+test.serial(
+  "delivery via function fails when payload is string but additionalInput object is configured",
+  async (t) => {
+    const functionName = "test-function";
+    const payload = "file-contents";
+    const additionalInput = {
+      extraKey: "extra-value",
+    };
+
+    await t.throwsAsync(
+      async () =>
+        await processSingleDelivery({
+          destination: {
+            type: "function",
+            functionName,
+            additionalInput,
+          },
+          payload,
+          destinationFilename: "unused",
+        }),
+      {
+        instanceOf: Error,
+        message:
+          "additionalInput for function destination not supported with string payload",
+      }
+    );
+  }
+);
+
+test.serial(
+  "delivery via function invokes Stedi function with payload with no additionalInput",
+  async (t) => {
+    const functionName = "test-function";
+    const payload = { key: "value" };
+
+    functions.on(InvokeFunctionCommand, { functionName }).resolvesOnce({});
+
+    await processSingleDelivery({
+      destination: {
+        type: "function",
+        functionName,
+      },
+      payload,
+      destinationFilename: "unused",
+    });
+
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
+      functionName,
+      invocationType: "Synchronous",
+      payload,
+    });
+  }
+);
+
+test.serial(
+  "delivery via function invokes Stedi function with both payload and additionalInput",
+  async (t) => {
+    const functionName = "test-function";
+    const payload = { key: "value" };
+    const additionalInput = { extraKey: "extra-value" };
+
+    functions.on(InvokeFunctionCommand, { functionName }).resolvesOnce({});
+
+    await processSingleDelivery({
+      destination: {
+        type: "function",
+        functionName,
+        additionalInput,
+      },
+      payload,
+      destinationFilename: "unused",
+    });
+
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
+      functionName,
+      invocationType: "Synchronous",
+      payload: {
+        ...payload,
+        ...additionalInput,
+      },
+    });
+  }
+);
+
+test.serial(
+  "delivery via sftp uploads to remote sftp at expected path",
+  async (t) => {
+    const host = "test-host.sftp.com";
+    const port = 22;
+    const username = "test-user";
+    const password = "test-password";
+    const remotePath = "/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "sftp",
+        connectionDetails: {
+          host,
+          port,
+          username,
+          password,
+        },
+        remotePath,
+      },
+      destinationFilename,
+      payload,
+    });
+
+    t.assert(
+      sftpStub.connect.calledOnceWith({
         host,
         port,
         username,
         password,
-      },
-      remotePath,
-    },
-    destinationFilename,
-    payload,
-  });
+      })
+    );
+    t.assert(
+      sftpStub.put.calledOnceWith(
+        Buffer.from(payload),
+        `${remotePath}/${destinationFilename}`
+      )
+    );
+    t.assert(sftpStub.end.calledOnceWith());
+  }
+);
 
-  t.assert(
-    sftpStub.connect.calledOnceWith({
-      host,
-      port,
-      username,
-      password,
-    })
-  );
-  t.assert(
-    sftpStub.put.calledOnceWith(
-      Buffer.from(payload),
-      `${remotePath}/${destinationFilename}`
-    )
-  );
-  t.assert(sftpStub.end.calledOnceWith());
-});
-
-test("delivery via webhook sends payload to expected url", async (t) => {
+test.serial("delivery via webhook sends payload to expected url", async (t) => {
   const payload = "file-contents";
   const baseUrl = "https://webhook.site";
   const endpoint = "/test-endpoint";

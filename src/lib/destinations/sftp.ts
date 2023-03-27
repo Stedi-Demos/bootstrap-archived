@@ -5,12 +5,12 @@ import {
   payloadAsString,
 } from "../deliveryManager.js";
 
-type SftpDeliveryResult = {
+interface SftpDeliveryResult {
   host: string;
   username: string;
   remotePath: string;
-  contents: any;
-};
+  contents: unknown;
+}
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput

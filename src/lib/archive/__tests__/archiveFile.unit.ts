@@ -2,7 +2,6 @@ import test from "ava";
 import { archiveFile } from "../archiveFile.js";
 import { reset, set } from "mockdate";
 import { mockBucketClient } from "../../testing/testHelpers.js";
-import { requiredEnvVar } from "../../environment.js";
 
 const buckets = mockBucketClient();
 

@@ -185,7 +185,7 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
 
     return {
       statusCode: 200,
-      deliveryResults: deliveryResultsByStatus.fulfilled.map((r) => r.value),
+      deliveryResults: deliveryResultsByStatus.fulfilled,
     };
   } catch (e) {
     const errorWithContext = ErrorWithContext.fromUnknown(e);

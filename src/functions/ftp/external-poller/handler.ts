@@ -7,10 +7,11 @@ import {
 import { requiredEnvVar } from "../../../lib/environment.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
 import {
-  failedExecution, FailureResponse,
+  failedExecution,
+  FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
-  recordNewExecution
+  recordNewExecution,
 } from "../../../lib/execution.js";
 import {
   RemotePollerConfig,
@@ -31,10 +32,12 @@ const stashClient = new StashClient({
   apiKey: requiredEnvVar("STEDI_API_KEY"),
 });
 
-const getRemotePoller = async (remotePollerConfig: RemotePollerConfig): Promise<RemotePoller> => {
-  switch(remotePollerConfig.connectionDetails.protocol) {
+const getRemotePoller = async (
+  remotePollerConfig: RemotePollerConfig
+): Promise<RemotePoller> => {
+  switch (remotePollerConfig.connectionDetails.protocol) {
     case "ftp":
-      return await FtpPoller.getPoller(remotePollerConfig.connectionDetails)
+      return await FtpPoller.getPoller(remotePollerConfig.connectionDetails);
     case "sftp":
       return await SftpPoller.getPoller(remotePollerConfig.connectionDetails);
   }
@@ -47,7 +50,7 @@ export const handler = async (
   const executionId = generateExecutionId({ executionTime });
 
   await recordNewExecution(executionId, { executionTime });
-  await console.log("starting", {
+  console.log("starting", {
     executionId,
     payload: JSON.stringify({ executionTime }),
   });
@@ -61,10 +64,10 @@ export const handler = async (
     );
 
     // `FtpPollerConfigMap.parse` handles failed stash lookup as well (value is undefined)
-    const remotePollerConfigMap: RemotePollerConfigMap = RemotePollerConfigMapSchema.parse(
-      stashResponse.value
-    );
-    const pollerConfig: RemotePollerConfig = remotePollerConfigMap[configId];
+    const remotePollerConfigMap: RemotePollerConfigMap =
+      RemotePollerConfigMapSchema.parse(stashResponse.value);
+    const pollerConfig: RemotePollerConfig | undefined =
+      remotePollerConfigMap[configId];
 
     if (!pollerConfig) {
       return failedExecution(
@@ -89,8 +92,8 @@ export const handler = async (
         executionId,
         new ErrorWithContext(
           "at least one processing error encountered during polling",
-          { results },
-        ),
+          { results }
+        )
       );
     }
 
@@ -128,14 +131,14 @@ const pollRemoteServer = async (
 
   const ftpPollingResults: RemotePollingResults = {
     processedFiles: [],
-    skippedItems: fileDetails.skippedItems || [],
-    processingErrors: fileDetails.processingErrors || [],
+    skippedItems: fileDetails.skippedItems ?? [],
+    processingErrors: fileDetails.processingErrors ?? [],
   };
 
   for await (const file of fileDetails.filesToProcess) {
     // if last poll time is not set, use `0` (epoch)
     // if remote file modifiedAt is not set, use current time
-    const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() || 0;
+    const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() ?? 0;
     const remoteFileTimestamp = file.lastModifiedTime;
     if (remoteFileTimestamp < lastPollTimestamp) {
       ftpPollingResults.skippedItems.push({
@@ -148,7 +151,8 @@ const pollRemoteServer = async (
 
     try {
       await remotePoller.downloadFile(remotePollerConfig.destination, file);
-      remotePollerConfig.deleteAfterProcessing && (await remotePoller.deleteFile(file));
+      remotePollerConfig.deleteAfterProcessing &&
+        (await remotePoller.deleteFile(file));
       ftpPollingResults.processedFiles.push(file);
     } catch (e) {
       const error = ErrorWithContext.fromUnknown(e);

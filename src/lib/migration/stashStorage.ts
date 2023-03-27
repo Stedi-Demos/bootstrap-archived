@@ -5,12 +5,12 @@ import { stashClient } from "../clients/stash.js";
 
 const stash = stashClient();
 
-export type StashStorageConstructorOptions = {
+export interface StashStorageConstructorOptions {
   /**
 	Stash Keypsace where the log is stored.
 	*/
   readonly keyspace?: string;
-};
+}
 
 export class StashStorage implements UmzugStorage {
   public readonly keyspace: string;

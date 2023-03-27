@@ -16,7 +16,7 @@
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
     "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",
     "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava",
-    "lint": "eslint src/**/*.ts --fix"
+    "lint": "npx eslint --fix \"src/**/*.ts\""
   },
   "author": "",
   "license": "ISC",

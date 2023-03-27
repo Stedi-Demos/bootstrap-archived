@@ -1,4 +1,5 @@
-import { Umzug, JSONStorage } from "umzug";
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+import { Umzug } from "umzug";
 import { StashStorage } from "./stashStorage.js";
 
 export const migrator = new Umzug({

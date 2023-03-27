@@ -6,10 +6,10 @@ import { PartnershipInput } from "../../lib/types/PartnerRouting.js";
 import { savePartnership } from "../../lib/savePartnership.js";
 import { stashClient } from "../../lib/clients/stash.js";
 
-type CreateSampleStashRecordsInput = {
+interface CreateSampleStashRecordsInput {
   guide850: string;
   guide855: string;
-};
+}
 
 export const createSampleStashRecords = async ({
   guide850,

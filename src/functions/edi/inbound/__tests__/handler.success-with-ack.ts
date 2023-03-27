@@ -10,7 +10,7 @@ import {
   mockStashClient,
   mockTranslateClient,
 } from "../../../../lib/testing/testHelpers.js";
-import { GetObjectCommand } from "@stedi/sdk-client-buckets";
+import { GetObjectCommand, PutObjectCommand } from "@stedi/sdk-client-buckets";
 import { TranslateX12ToJsonCommand } from "@stedi/sdk-client-edi-translate";
 import { Readable } from "stream";
 import fs from "node:fs";
@@ -134,6 +134,22 @@ for (const uploadDirectory of ["inbound", "processed"]) {
       t.assert(
         webhookRequest.isDone(),
         "delivered guide JSON to destination webhook"
+      );
+
+      const ackPutArgs = buckets.commandCalls(PutObjectCommand, {
+        bucketName: "test-ftp-bucket",
+      })[0]!.args[0].input;
+
+      t.assert(
+        ackPutArgs.key ===
+          "trading_partners/ANOTHERMERCH/outbound/000000009-997.edi"
+      );
+      t.assert(
+        ackPutArgs.body
+          ?.toString()
+          .match(
+            /ISA\*00\*          \*00\*          \*ZZ\*THISISME       \*14\*ANOTHERMERCH   \*\d{6}\*\d{4}\*\^\*00501\*000000009\*0\*T\*\>~GS\*FA\*READDEMO\*072271711TMS\*\d{8}\*\d{6}\*000000009\*X\*005010~ST\*997\*0001~AK1\*PR\*1746~AK9\*A\*1\*1\*1~SE\*4\*0001~GE\*1\*000000009~IEA\*1\*000000009~/
+          )?.length === 1
       );
 
       t.deepEqual(result, {

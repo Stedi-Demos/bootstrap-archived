@@ -55,7 +55,7 @@ test.serial(
               destination: {
                 type: "function",
                 functionName: "a-function",
-                additionalInput: "extra data",
+                additionalInput: { extraKey: "extraValue" },
               },
             },
             {
@@ -108,14 +108,9 @@ test.serial(
     await handler(sampleFileErrorEvent);
 
     t.is(functions.commandCalls(InvokeFunctionCommand).length, 1);
-    const { payload, additionalInput } = functions.commandCalls(
-      InvokeFunctionCommand
-    )[0]!.args[0].input.payload as {
-      payload: unknown;
-      additionalInput: unknown;
-    };
-    t.deepEqual(payload, sampleFileErrorEvent);
-    t.is(additionalInput, "extra data");
+    const { payload } = functions.commandCalls(InvokeFunctionCommand)[0]!
+      .args[0].input;
+    t.deepEqual(payload, { ...sampleFileErrorEvent, extraKey: "extraValue" });
 
     t.assert(webhookRequest.isDone());
 

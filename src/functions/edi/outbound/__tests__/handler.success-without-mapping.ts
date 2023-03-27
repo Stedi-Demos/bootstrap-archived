@@ -155,4 +155,18 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
   t.is(response.statusCode, 200, "completes successfully");
 
   t.assert(webhookRequest.isDone(), "webhook request was made");
+
+  const translateArgs = translate.commandCalls(TranslateJsonToX12Command)[0]!
+    .args[0].input;
+  t.is(
+    (translateArgs.envelope as any)!.groupHeader.applicationReceiverCode,
+    "merchId",
+    "default applicationId is used for receiver"
+  );
+
+  t.is(
+    (translateArgs.envelope as any)!.groupHeader.applicationSenderCode,
+    "meId",
+    "default applicationId is used for sender"
+  );
 });

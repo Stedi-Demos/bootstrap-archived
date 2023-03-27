@@ -30,12 +30,14 @@ export const createProfiles = async ({
     profileType: "local",
     interchangeQualifier: "ZZ",
     interchangeId: "THISISME".padEnd(15, " "),
+    defaultApplicationId: "THISISME",
   };
   const remoteProfile: CreateX12ProfileCommandInput = {
     profileId: "another-merchant",
     profileType: "partner",
     interchangeQualifier: "14",
     interchangeId: "ANOTHERMERCH".padEnd(15, " "),
+    defaultApplicationId: "ANOTHERMERCH",
   };
 
   console.log("Creating X12 Trading Partner Profile in Partners API");

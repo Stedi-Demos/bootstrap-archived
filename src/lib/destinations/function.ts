@@ -1,5 +1,6 @@
 import { DeliverToDestinationInput } from "../deliveryManager.js";
 import { invokeFunction } from "../functions.js";
+import { DestinationFunction } from "../types/Destination.js";
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
@@ -8,8 +9,24 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be function)");
   }
 
-  return await invokeFunction(input.destination.functionName, {
-    additionalInput: input.destination.additionalInput,
-    payload: input.destinationPayload,
-  });
+  const functionInput = buildFunctionInput(
+    input.destinationPayload,
+    input.destination.additionalInput
+  );
+  return await invokeFunction(input.destination.functionName, functionInput);
+};
+
+const buildFunctionInput = (
+  destinationPayload: DeliverToDestinationInput["destinationPayload"],
+  additionalInput?: DestinationFunction["additionalInput"]
+): string | unknown => {
+  if (additionalInput && typeof destinationPayload === "string") {
+    throw new Error(
+      "additionalInput for function destination not supported with string payload"
+    );
+  }
+
+  return typeof destinationPayload === "object"
+    ? { ...destinationPayload, ...additionalInput }
+    : destinationPayload;
 };

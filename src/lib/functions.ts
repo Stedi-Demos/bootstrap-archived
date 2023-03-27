@@ -8,6 +8,7 @@ import {
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
 import { functionsClient } from "./clients/functions.js";
+import { ErrorWithContext } from "./errorWithContext.js";
 
 const functions = functionsClient();
 
@@ -17,16 +18,25 @@ export const invokeFunction = async (
   functionName: string,
   input: unknown
 ): Promise<string | undefined> => {
-  const result = await functions.send(
+  const invokeFunctionOutput = await functions.send(
     new InvokeFunctionCommand({
       functionName,
       requestPayload: Buffer.from(JSON.stringify(input)),
     })
   );
 
-  return result.responsePayload
-    ? Buffer.from(result.responsePayload).toString()
+  const result = invokeFunctionOutput.responsePayload
+    ? Buffer.from(invokeFunctionOutput.responsePayload).toString()
     : undefined;
+
+  if (invokeFunctionOutput.invocationError) {
+    throw new ErrorWithContext("function invocation error", {
+      error: invokeFunctionOutput.invocationError,
+      result,
+    });
+  }
+
+  return result;
 };
 
 export const invokeFunctionAsync = async (

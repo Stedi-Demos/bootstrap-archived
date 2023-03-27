@@ -476,15 +476,8 @@ npm run destroy
               "type": "string"
             },
             "additionalInput": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "additionalProperties": true
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "required": ["type", "functionName"]

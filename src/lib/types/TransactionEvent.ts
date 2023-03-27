@@ -25,7 +25,7 @@ export const TransactionEventSchema = z.object({
       controlNumber: z.number(),
       id: z.string(),
       transactionSetIdentifier: z.string(),
-      ruleId: z.string(),
+      ruleId: z.string().optional(),
     }),
     metadata: z.object({
       processedAt: z.string(),

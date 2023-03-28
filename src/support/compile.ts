@@ -22,7 +22,7 @@ export const compile = async (
     outfile: outputPath,
     platform: "node",
     format: "esm",
-    target: "node16",
+    target: "node18",
     minify: false,
     sourcemap: true,
     bundle: true,

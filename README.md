@@ -55,7 +55,7 @@ includes:
 
 ## Requirements
 
-1. Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
+1. Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 18)_
 
 1. Clone the bootstrap repository and install the necessary dependencies:
 
@@ -430,7 +430,7 @@ npm run destroy
 
 <details><summary>JSON Schema (click to expand):</summary>
 
-```
+```json
 {
   "type": "object",
   "properties": {
@@ -442,7 +442,7 @@ npm run destroy
         {
           "type": "object",
           "properties": {
-            "type":  {
+            "type": {
               "const": "as2"
             },
             "connectorId": {
@@ -454,7 +454,7 @@ npm run destroy
         {
           "type": "object",
           "properties": {
-            "type":  {
+            "type": {
               "const": "bucket"
             },
             "bucketName": {
@@ -469,7 +469,7 @@ npm run destroy
         {
           "type": "object",
           "properties": {
-            "type":  {
+            "type": {
               "const": "function"
             },
             "functionName": {
@@ -484,8 +484,8 @@ npm run destroy
         },
         {
           "type": "object",
-            "properties": {
-            "type":  {
+          "properties": {
+            "type": {
               "const": "sftp"
             },
             "connectionDetails": {
@@ -505,7 +505,7 @@ npm run destroy
                   "type": "string"
                 }
               },
-              "required": ["host","username","password"]
+              "required": ["host", "username", "password"]
             },
             "remotePath": {
               "type": "string",
@@ -517,7 +517,7 @@ npm run destroy
         {
           "type": "object",
           "properties": {
-            "type":  {
+            "type": {
               "const": "webhook"
             },
             "url": {
@@ -568,13 +568,17 @@ key: `destinations|${partnershipId}|${transactionSetId}`
 
 value (JSON Schema):
 
-```
+```json
 {
   "type": "object",
   "properties": {
     "description": {
       "type": "string"
     },
+    "usageIndicator": {
+      "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
+      "enum": ["P","T","I"]
+    }
     "destinations": {
       "type": "array",
       "items": {
@@ -592,7 +596,7 @@ key: `destinations|${partnershipId}|acknowledgments`
 
 value (JSON Schema):
 
-```
+```json
 {
   "type": "object",
   "properties": {
@@ -614,7 +618,7 @@ key: `destinations|errors|execution`
 
 value (JSON Schema):
 
-```
+```json
 {
   "type": "object",
   "properties": {
@@ -638,7 +642,7 @@ key: `destinations|errors|execution`
 
 value (JSON Schema):
 
-```
+```json
 {
   "type": "object",
   "properties": {

@@ -10,7 +10,7 @@ export const compile = async (
   buildPath: string,
   debug = false
 ): Promise<string> => {
-  const pathParts = buildPath.replace("/src/", "/dist/").split("/");
+  const pathParts = buildPath.replace("/src/", "/dist/src/").split("/");
   pathParts.pop(); // discard input file name
 
   pathParts.push("index.mjs");

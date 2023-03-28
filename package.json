@@ -70,7 +70,7 @@
   "ava": {
     "typescript": {
       "rewritePaths": {
-        "src/": "dist/"
+        "src/": "dist/src/"
       },
       "compile": "tsc"
     }

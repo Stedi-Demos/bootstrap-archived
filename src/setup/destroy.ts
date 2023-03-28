@@ -1,10 +1,6 @@
 import { DeleteBucketCommand } from "@stedi/sdk-client-buckets";
 import { DeleteGuideCommand } from "@stedi/sdk-client-guides";
-import {
-  PARTNERS_KEYSPACE_NAME,
-  OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-  INBOUND_CONTROL_NUMBER_KEYSPACE_NAME,
-} from "../lib/constants.js";
+import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import {
   DeleteKeyspaceCommand,
   GetValueCommand,
@@ -41,6 +37,10 @@ const buckets = bucketsClient();
 const functions = functionsClient();
 const guides = guidesClient();
 const partners = partnersClient();
+
+// legacy keyspace names, no longer used
+const OUTBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "outbound-control-numbers";
+const INBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "inbound-control-numbers";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {

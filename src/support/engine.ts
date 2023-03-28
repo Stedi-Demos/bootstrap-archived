@@ -16,7 +16,6 @@ import { randomBytes } from "crypto";
 import { updateResourceMetadata } from "./bootstrapMetadata.js";
 import dotenv from "dotenv";
 import { updateDotEnvFile } from "./utils.js";
-import { up } from "../migrations/001-single-guide-id-for-transaction-sets.js";
 
 const engine = engineClient();
 const buckets = bucketsClient();

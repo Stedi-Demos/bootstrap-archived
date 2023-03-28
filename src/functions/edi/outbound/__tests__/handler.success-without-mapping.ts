@@ -87,6 +87,7 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
     })
     .resolvesOnce({
       x12ControlNumber: 1916,
+      controlNumberType: "interchange",
     } satisfies IncrementX12ControlNumberOutput as any)
     // increment group control number
     .on(IncrementX12ControlNumberCommand as any, {
@@ -94,6 +95,7 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
     })
     .resolvesOnce({
       x12ControlNumber: 1916,
+      controlNumberType: "group",
     } satisfies IncrementX12ControlNumberOutput as any)
     .on(GetX12ProfileCommand as any, {
       profileId: "this-is-me",

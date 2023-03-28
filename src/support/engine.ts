@@ -2,7 +2,9 @@ import { engineClient } from "../lib/clients/engine.js";
 import {
   CreateEngineCommand,
   DescribeEngineCommand,
+  UpdateEngineCommand,
   waitUntilEngineCreateComplete,
+  waitUntilEngineUpdateComplete,
 } from "@stedi/sdk-client-engines";
 import { maxWaitTime } from "../setup/contants.js";
 import {
@@ -14,12 +16,14 @@ import { randomBytes } from "crypto";
 import { updateResourceMetadata } from "./bootstrapMetadata.js";
 import dotenv from "dotenv";
 import { updateDotEnvFile } from "./utils.js";
+import { up } from "../migrations/001-single-guide-id-for-transaction-sets.js";
 
 const engine = engineClient();
 const buckets = bucketsClient();
 
+export const engineName = "default";
+
 export const ensureEngineIsRunning = async () => {
-  const engineName = "default";
   try {
     await engine.send(new DescribeEngineCommand({ engineName }));
   } catch (error) {
@@ -73,4 +77,24 @@ export const ensureEngineIsRunning = async () => {
       console.log(error);
     }
   }
+};
+
+export const upgradeEngine = async () => {
+  await engine.send(new UpdateEngineCommand({ engineName }));
+
+  const update = await engine.send(new DescribeEngineCommand({ engineName }));
+
+  if (update.resourceDetail?.status === "UNDER_CHANGE")
+    console.log("Checking for engine updates...");
+  else {
+    console.log("Issue starting update");
+    return false;
+  }
+
+  const upgrade = await waitUntilEngineUpdateComplete(
+    { client: engine, maxWaitTime },
+    { engineName }
+  );
+
+  return upgrade.state === "SUCCESS";
 };

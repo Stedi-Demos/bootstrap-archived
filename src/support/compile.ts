@@ -4,7 +4,6 @@ import * as fs from "fs";
 import JSZip from "jszip";
 import os from "os";
 import path from "path";
-import packageJson from "../../package.json" assert { type: "json" };
 
 export const compile = async (
   buildPath: string,
@@ -47,8 +46,8 @@ const pkg = {
   description:
     "This package contains the dependencies needed at runtime, that cannot be bundled",
   dependencies: {
-    "@stedi/x12-tools": packageJson.devDependencies["@stedi/x12-tools"],
-    "ssh2-sftp-client": packageJson.devDependencies["ssh2-sftp-client"],
+    "@stedi/x12-tools": "^1.9.1",
+    "ssh2-sftp-client": "^9.0.4",
   },
 };
 

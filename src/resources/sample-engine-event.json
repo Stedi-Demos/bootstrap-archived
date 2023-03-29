@@ -40,14 +40,14 @@
       "sender": {
         "isa": {
           "qualifier": "14",
-          "id": "ANOTHERMERCH   "
+          "id": "ANOTHERMERCH"
         },
         "profileId": "another-merchant"
       },
       "receiver": {
         "isa": {
           "qualifier": "ZZ",
-          "id": "THISISME       "
+          "id": "THISISME"
         },
         "profileId": "this-is-me"
       }

@@ -71,6 +71,9 @@
     "useTabs": false
   },
   "ava": {
+    "environmentVariables": {
+      "STEDI_FUNCTION_NAME": "function-under-test"
+    },
     "typescript": {
       "rewritePaths": {
         "src/": "dist/src/"

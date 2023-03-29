@@ -68,13 +68,18 @@ export const handler = async (
       "json"
     );
 
+    const envelopeUsageIndicator =
+      transactionEvent.detail.envelopes.interchange.usageIndicatorCode;
+
     const processDeliveriesInput: ProcessDeliveriesInput = {
       destinations,
       payload: guideJSON,
       destinationFilename,
+      envelopeUsageIndicator,
     };
 
-    // await destination deliveries
+    // deliver to destination if usage indicator not set or matches the envelope
+
     await processDeliveries(processDeliveriesInput);
 
     // Delete the input file (it is archived by engine)

@@ -437,6 +437,10 @@ npm run destroy
     "mappingId": {
       "type": "string"
     },
+    "usageIndicatorCode": {
+      "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
+      "enum": ["P", "T", "I"]
+    },
     "destination": {
       "oneOf": [
         {
@@ -575,10 +579,6 @@ value (JSON Schema):
     "description": {
       "type": "string"
     },
-    "usageIndicator": {
-      "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
-      "enum": ["P","T","I"]
-    }
     "destinations": {
       "type": "array",
       "items": {

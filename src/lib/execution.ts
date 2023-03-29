@@ -108,7 +108,7 @@ export const failedExecution = async (
       `failure-error-destination.json`
     );
   }
-  return failureResponse;
+  throw new ErrorWithContext(message, { rawError });
 };
 
 const markExecutionAsFailed = async (
@@ -126,7 +126,12 @@ const markExecutionAsFailed = async (
     })
   );
 
-  console.log({ action: "markExecutionAsFailed", executionId, result });
+  console.log({
+    action: "markExecutionAsFailed",
+    executionId,
+    result,
+    error: JSON.stringify(error),
+  });
 
   return { bucketName, key };
 };

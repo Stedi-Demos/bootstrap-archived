@@ -131,13 +131,14 @@ const INBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "inbound-control-numbers";
         "name" in error &&
         error.name === "KeyspaceNotFoundError"
       )
-        console.log("Keyspace already deleted");
+        console.log(`Keyspace: ${keyspaceName} already deleted`);
       else throw error;
     }
   }
 
   // Delete Event Bindings
   console.log("Deleting Event Bindings");
+  const eventBindingPromises: unknown[] = [];
   for (const eventToFunctionBindingName of resources.EVENT_BINDING_NAMES ??
     []) {
     await events.send(
@@ -146,32 +147,39 @@ const INBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "inbound-control-numbers";
       })
     );
 
-    await waitUntilEventToFunctionBindingDeleteComplete(
-      { client: events, maxWaitTime },
-      { eventToFunctionBindingName }
+    eventBindingPromises.push(
+      waitUntilEventToFunctionBindingDeleteComplete(
+        { client: events, maxWaitTime },
+        { eventToFunctionBindingName }
+      )
     );
   }
 
+  await Promise.all(eventBindingPromises);
+
   // Delete Functions
   console.log("Deleting Functions");
+  const functionPromises: unknown[] = [];
   for (const functionName of resources.FUNCTION_NAMES ?? []) {
-    try {
-      await functions.send(new DeleteFunctionCommand({ functionName }));
-      await waitUntilFunctionDeleteComplete(
+    await functions.send(new DeleteFunctionCommand({ functionName }));
+    functionPromises.push(
+      waitUntilFunctionDeleteComplete(
         { client: functions, maxWaitTime },
         { functionName }
-      );
-    } catch (error) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "name" in error &&
-        error.name === "ResourceNotFoundException"
-      )
-        console.log("Function already deleted");
-      else throw error;
-    }
+      ).catch((error) => {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          error.name === "ResourceNotFoundException"
+        )
+          console.log("Function already deleted");
+        else throw error;
+      })
+    );
   }
+
+  await Promise.all(functionPromises);
 
   console.log("Done");
 })();

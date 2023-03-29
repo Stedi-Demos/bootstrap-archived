@@ -1,6 +1,7 @@
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
+import { ErrorWithContext } from "./errorWithContext.js";
 import {
   TransactionSetDestinations,
   TransactionSetDestinationsSchema,
@@ -31,7 +32,10 @@ export const loadTransactionDestinations = async ({
       "name" in error &&
       error.name === "ResourceNotFoundException"
     )
-      return { destinations: [] };
+      throw new ErrorWithContext("no transaction set configured", {
+        transactionSetIdentifier,
+        partnershipId,
+      });
 
     throw error;
   }

@@ -2,7 +2,7 @@
   "version": "0",
   "id": "15bade2b-5686-3f54-e548-b915c40581f2",
   "detail-type": "engine.inbound:2023-02-13",
-  "source": "stedi.engine",
+  "source": "stedi.core",
   "account": "217851219840",
   "time": "2023-03-03T16:04:17Z",
   "region": "us-east-1",
@@ -10,8 +10,13 @@
   "detail": {
     "version": "2023-02-13",
     "metadata": {
-      "interchange": { "controlNumber": "1746", "release": "005010" },
-      "group": { "controlNumber": "1746" },
+      "interchange": {
+        "controlNumber": "1746",
+        "release": "005010"
+      },
+      "group": {
+        "controlNumber": "1746"
+      },
       "processedAt": "2023-03-03T16:04:17.635Z"
     },
     "transaction": {
@@ -33,11 +38,17 @@
     "partnership": {
       "partnershipId": "this-is-me_another-merchant",
       "sender": {
-        "isa": { "qualifier": "14", "id": "ANOTHERMERCH   " },
+        "isa": {
+          "qualifier": "14",
+          "id": "ANOTHERMERCH   "
+        },
         "profileId": "another-merchant"
       },
       "receiver": {
-        "isa": { "qualifier": "ZZ", "id": "THISISME       " },
+        "isa": {
+          "qualifier": "ZZ",
+          "id": "THISISME       "
+        },
         "profileId": "this-is-me"
       }
     }

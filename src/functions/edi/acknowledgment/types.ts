@@ -4,8 +4,8 @@ import { EventInterchangeSchema } from "../../../lib/types/EventInterchange";
 
 export const EngineFunctionalGroupTranslationSucceededEventSchema =
   z.strictObject({
-    source: z.literal("stedi.engine"),
-    ["detail-type"]: z.literal("functional_group.translation_succeeded"),
+    source: z.literal("stedi.core"),
+    ["detail-type"]: z.literal("functional_group.processed"),
     detail: z.strictObject({
       version: z.literal("2023-02-13"),
       // TODO: not yet implemented in Engine 2023/03/20

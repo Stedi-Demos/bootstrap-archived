@@ -18,8 +18,8 @@ export const EngineFileErrorSchema = z.object({
     }),
     errors: z.array(z.unknown()),
   }),
-  "detail-type": z.literal("file.error"),
-  source: z.literal("stedi.engine"),
+  "detail-type": z.literal("file.failed"),
+  source: z.literal("stedi.core"),
 });
 
 export type EngineFileError = z.infer<typeof EngineFileErrorSchema>;

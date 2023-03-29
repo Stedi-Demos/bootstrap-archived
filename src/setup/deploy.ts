@@ -103,7 +103,7 @@ const createOrUpdateEventBinding = async (
   void createOrUpdateEventBinding(
     "edi-inbound",
     {
-      source: ["stedi.engine"],
+      source: ["stedi.core"],
       "detail-type": ["transaction.processed"],
       detail: {
         direction: ["RECEIVED"],
@@ -123,8 +123,8 @@ const createOrUpdateEventBinding = async (
   void createOrUpdateEventBinding(
     "edi-acknowledgment",
     {
-      source: ["stedi.engine"],
-      "detail-type": ["functional_group.translation_succeeded"],
+      source: ["stedi.core"],
+      "detail-type": ["functional_group.processed"],
       detail: {
         direction: ["RECEIVED"],
       },
@@ -143,8 +143,8 @@ const createOrUpdateEventBinding = async (
   void createOrUpdateEventBinding(
     "events-file-error",
     {
-      source: ["stedi.engine"],
-      "detail-type": ["file.error"],
+      source: ["stedi.core"],
+      "detail-type": ["file.failed"],
     },
     "engine-file-errors"
   );

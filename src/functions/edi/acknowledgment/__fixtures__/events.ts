@@ -2,8 +2,8 @@ import { EngineFunctionalGroupTranslationSucceededEvent } from "../types.js";
 
 export const sampleTranslationSucceededEvent: EngineFunctionalGroupTranslationSucceededEvent =
   {
-    "detail-type": "functional_group.translation_succeeded",
-    source: "stedi.engine",
+    "detail-type": "functional_group.processed",
+    source: "stedi.core",
     detail: {
       version: "2023-02-13",
       direction: "RECEIVED",

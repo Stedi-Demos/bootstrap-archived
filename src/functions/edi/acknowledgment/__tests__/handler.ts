@@ -42,7 +42,7 @@ test.afterEach.always(() => {
 });
 
 test.serial(
-  `processes incoming functional_group.translation_succeeded event, generating 997 for configured transaction sets`,
+  `processes incoming functional_group.processed event, generating 997 for configured transaction sets`,
   async (t) => {
     stash
       .on(GetValueCommand, {
@@ -99,7 +99,7 @@ test.serial(
 );
 
 test.serial(
-  `processes incoming functional_group.translation_succeeded event, skips generating 997 when no configuration is set`,
+  `processes incoming functional_group.processed event, skips generating 997 when no configuration is set`,
   async (t) => {
     stash
       .on(GetValueCommand, {
@@ -121,7 +121,7 @@ test.serial(
 );
 
 test.serial(
-  `processes incoming functional_group.translation_succeeded event, skips generating 997 when not configured for transaction set`,
+  `processes incoming functional_group.processed event, skips generating 997 when not configured for transaction set`,
   async (t) => {
     stash
       .on(GetValueCommand, {

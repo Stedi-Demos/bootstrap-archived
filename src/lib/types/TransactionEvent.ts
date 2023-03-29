@@ -9,7 +9,7 @@ export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
 export const TransactionEventSchema = z.object({
   version: z.string(),
   id: z.string(),
-  source: z.literal("stedi.engine"),
+  source: z.literal("stedi.core"),
   "detail-type": z.literal("transaction.processed"),
   time: z.string(),
   region: z.string(),

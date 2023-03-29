@@ -43,13 +43,13 @@ includes:
 
 ### Processed functional groups workflow
 
-1. The edi-acknowledgment function listens to Stedi Engine `functional_group.translation_succeeded` inbound events, which contains the found partnership, document direction, and envelope data for a single functional group.
+1. The edi-acknowledgment function listens to Stedi Engine `functional_group.processed` inbound events, which contains the found partnership, document direction, and envelope data for a single functional group.
 1. The function looks up 997 acknowledgment configuration for the specific Partnership and transaction set Ids in the functional group. Acknowledgment configuration is configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Acknowledgments](#acknowledgment-destinations) below.
 1. If transaction sets are in the functional group with 997 acknowledgments configured, a 997 Guide JSON file is generated and sent to the edi-outbound function.
 
 ### File error workflow
 
-1. The events-file-error function listens to Stedi Engine `file.error` events, which are created when there is an error processing a file.
+1. The events-file-error function listens to Stedi Engine `file.failed` events, which are created when there is an error processing a file.
 1. The function looks up file error destinations configured in Stash. See [File Error Destinations](#file-error-destinations) below.
 1. If destinations are configured, the error is forwarded to each destination.
 

@@ -2,7 +2,7 @@ export const sampleTransactionProcessedEvent = {
   version: "0",
   id: "fedbee6f-f48e-df69-f279-3fbc9fad6305",
   "detail-type": "transaction.processed",
-  source: "stedi.engine",
+  source: "stedi.core",
   account: "217851219840",
   time: "2023-03-16T14:19:17Z",
   region: "us-east-1",

@@ -1,6 +1,7 @@
 import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { DocumentType } from "@aws-sdk/types";
+import { ErrorWithContext } from "./errorWithContext";
 
 let _mappingsClient: MappingsClient | undefined;
 
@@ -17,22 +18,36 @@ export const invokeMapping = async (
   payload: unknown
 ): Promise<object> => {
   // Execute mapping to transform API JSON input to Guide schema-based JSON
-  const mapResult = await mappingsClient().send(
-    new MapDocumentCommand({
-      id: mappingId,
-      content: payload as DocumentType,
-    })
-  );
-  console.log(`mapping result: ${JSON.stringify(mapResult)}`);
-
-  if (!mapResult.content) {
-    throw new Error(
-      `map (id=${mappingId}) operation did not return any content`
+  try {
+    const mapResult = await mappingsClient().send(
+      new MapDocumentCommand({
+        id: mappingId,
+        content: payload as DocumentType,
+      })
     );
-  }
+    console.log(`mapping result: ${JSON.stringify(mapResult)}`);
 
-  // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
-  return removeEmptyObjects(mapResult.content) as object;
+    if (!mapResult.content) {
+      throw new Error(
+        `map (id=${mappingId}) operation did not return any content`
+      );
+    }
+
+    // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
+    return removeEmptyObjects(mapResult.content) as object;
+  } catch (e: unknown) {
+    if (
+      e &&
+      typeof e === "object" &&
+      "name" in e &&
+      e.name === "ForbiddenException"
+    ) {
+      throw new Error(
+        "Mapping request blocked. Detected potentially malicious payload."
+      );
+    }
+    throw new ErrorWithContext("Mapping request failed", { originalError: e });
+  }
 };
 
 export const removeEmptyObjects = (input: unknown): unknown => {

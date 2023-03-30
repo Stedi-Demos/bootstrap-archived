@@ -30,6 +30,7 @@ includes:
 1. The translated Guide JSON is sent to each destination.
    1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the Guide JSON will apply the mapping transformation before sending to the destination
 1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations)
+1. Function execution failures are retried 2 more times. If one out of 3 destinations return an error, the sucessful destination endpoints will receive multiple events and will need to handle at-least-once message delivery.
 
 ### Outbound EDI workflow
 
@@ -39,7 +40,8 @@ includes:
 1. [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) transforms the Guide JSON payload into an edi file.
 1. The function looks up configured destinations for the specific Partnership and transaction set ID.
    1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destination) below.
-1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations)
+1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations).
+1. Function execution failures are retried 2 more times. If one out of 3 destinations return an error, the sucessful destination endpoints will receive multiple events and will need to handle at-least-once message delivery.
 
 ### Processed functional groups workflow
 

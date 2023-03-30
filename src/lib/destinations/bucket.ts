@@ -17,7 +17,10 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be bucket)");
   }
 
-  const key = `${input.destination.path}/${input.destinationFilename}`;
+  // remove any leading slashes, if present, from bucket key prefix
+  const path = input.destination.path.replace(/^\/+/, "");
+
+  const key = `${path}/${input.destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

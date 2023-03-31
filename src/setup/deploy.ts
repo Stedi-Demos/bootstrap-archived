@@ -100,7 +100,7 @@ const createOrUpdateEventBinding = async (
   // deploying event bindings
   //
   const EVENT_BINDING_NAMES: string[] = [];
-  void createOrUpdateEventBinding(
+  await createOrUpdateEventBinding(
     "edi-inbound",
     {
       source: ["stedi.core"],
@@ -120,7 +120,7 @@ const createOrUpdateEventBinding = async (
     )
   );
 
-  void createOrUpdateEventBinding(
+  await createOrUpdateEventBinding(
     "edi-acknowledgment",
     {
       source: ["stedi.core"],
@@ -140,7 +140,7 @@ const createOrUpdateEventBinding = async (
     )
   );
 
-  void createOrUpdateEventBinding(
+  await createOrUpdateEventBinding(
     "events-file-error",
     {
       source: ["stedi.core"],

@@ -241,6 +241,56 @@ test.serial(
   }
 );
 
+test.serial(
+  "delivery via sftp includes privateKey and passphrase when connecting if included in config",
+  async (t) => {
+    const host = "test-host.sftp.com";
+    const port = 22;
+    const username = "test-user";
+    const password = "test-password";
+    const privateKey = "some-private-key-value";
+    const passphrase = "private-key-passphrase";
+    const remotePath = "/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "sftp",
+        connectionDetails: {
+          host,
+          port,
+          username,
+          password,
+          privateKey,
+          passphrase,
+        },
+        remotePath,
+      },
+      destinationFilename,
+      payload,
+    });
+
+    t.assert(
+      sftpStub.connect.calledOnceWith({
+        host,
+        port,
+        username,
+        password,
+        privateKey,
+        passphrase,
+      })
+    );
+    t.assert(
+      sftpStub.put.calledOnceWith(
+        Buffer.from(payload),
+        `${remotePath}/${destinationFilename}`
+      )
+    );
+    t.assert(sftpStub.end.calledOnceWith());
+  }
+);
+
 test.serial("delivery via webhook sends payload to expected url", async (t) => {
   const payload = "file-contents";
   const baseUrl = "https://webhook.site";

@@ -5,6 +5,8 @@ export const SftpConfigSchema = z.strictObject({
   port: z.number().default(22),
   username: z.string(),
   password: z.string(),
+  privateKey: z.string().optional(),
+  passphrase: z.string().optional(),
 });
 
 const WebhookVerbSchema = z.enum(["PATCH", "POST", "PUT"]);

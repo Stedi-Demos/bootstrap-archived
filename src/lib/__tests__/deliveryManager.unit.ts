@@ -87,6 +87,33 @@ test.serial(
 );
 
 test.serial(
+  "delivery via bucket removes preceding slashes from bucket path",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "//my-as2-trading-partner/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+      },
+      payload,
+      destinationFilename,
+    });
+
+    const expectedPath = "my-as2-trading-partner/outbound";
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
+      bucketName,
+      key: `${expectedPath}/${destinationFilename}`,
+      body: payload,
+    });
+  }
+);
+
+test.serial(
   "delivery via function fails when payload is string but additionalInput object is configured",
   async (t) => {
     const functionName = "test-function";

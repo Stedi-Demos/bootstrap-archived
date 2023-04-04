@@ -19,18 +19,24 @@ includes:
 
 ## Bootstrap Read and Write Workflow
 
+The [Stedi Core module](https://www.stedi.com/docs/stedi-core) ingests data and emits events with the results of its conversion and validation processing. For example, Stedi emits an event when it receives a new file or successfully processes a transaction set. 
+
+To create a custom end-to-end EDI system on Stedi, you need to automate tasks like adding files from your input buckets and reacting to the emitted events. For example, you may want to automatically forward translated EDI files to an API, FTP server, AS2 server, or a [Stedi function](https://www.stedi.com/docs/functions) to run custom code.
+
+Bootstrap contains opinionated Stedi functions that you can customize through configuration. The following sections describe these built-in functions. 
+
+
 ### Inbound EDI workflow
 
-1. The edi-inbound function listens to Stedi Core `transaction.processed` events, which contains the found partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
-1. The function reads the translated Guide JSON data from the Core output bucket.
-1. The function looks up configured destinations for the specific Partnership and transaction set ID.
+The `edi-inbound` function performs the following steps:
+1. Listen to Stedi Core `transaction.processed` events, which contain the partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
+1. Read the translated EDI-like JSON data from the Core output [Stedi bucket](https://www.stedi.com/products/buckets).
+1. Look up configured destinations for the specific partnership and transaction set ID. 
+   1. You can configure destinations in [Stedi Stash](https://www.stedi.com/products/stash). Refer to [Destinations](#destinations) for details.
 
-   1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destinations) below.
-
-1. The translated Guide JSON is sent to each destination.
-   1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the edi-inbound function will apply the mapping transformation to the Guide JSON before sending to the destination.
-1. Any failures in the process (such as invalid mappings or missing guides) are sent to [Execution Error Destinations](#execution-error-destinations).
-1. Function execution failures are retried 2 more times. This can result in destinations receiving multiple messages and will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication.
+1. Sends the EDI-like JSON  to each destination. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the `edi-inbound` function applies the mapping transformation to the Guide JSON before sending to the destination.
+1. Sends failures (such as invalid mappings or missing guides) to [Execution Error Destinations](#execution-error-destinations).
+1. Retries function execution failures 2 more times. Retries can result in destinations receiving multiple messages, so you will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication. TODO: Ross - how does someone handle this? Is there some separate setup or is this on their own with custom code? 
 
 ### Outbound EDI workflow
 
@@ -70,7 +76,7 @@ includes:
    npm ci
    ```
 
-1. Create a [Stedi account](https://www.stedi.com/auth/sign-up).
+1. Create a [Stedi account](https://www.stedi.com/auth/sign-up) and enable Core. Bootstrap does not overwrite existing Core settings or data.
 
 1. Rename the bootstrap's `.env.example` file to `.env` and update the following environment variables:
 

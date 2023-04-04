@@ -12,8 +12,6 @@ import sampleOutboundEvent from "../__fixtures__/guideless-997.js";
 import {
   GetX12PartnershipCommand,
   GetX12PartnershipOutput,
-  GetX12ProfileCommand,
-  GetX12ProfileOutput,
   IncrementX12ControlNumberCommand,
   IncrementX12ControlNumberOutput,
 } from "@stedi/sdk-client-partners";

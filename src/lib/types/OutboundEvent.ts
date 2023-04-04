@@ -12,7 +12,11 @@ export const OutboundEventSchema = z.strictObject({
       .optional()
       .describe("Built-in guide available for 997 transaction set"),
   }),
-  payload: z.unknown(),
+  payload: z
+    .unknown()
+    .describe(
+      "object matching the schema of the transaction set guide, or a payload to a mapping which will produce a valid object for the guide."
+    ),
 });
 
 export type OutboundEvent = z.infer<typeof OutboundEventSchema>;

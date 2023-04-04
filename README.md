@@ -1,17 +1,17 @@
 # Stedi EDI Bootstrap
 
 This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
-implementation demonstrates one way to build an integration for the common read and write EDI use cases. Your solution
-may differ, depending on your systems and requirements.
+implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution
+may differ depending on your systems and requirements.
 
 ## Hands-On Support
 
-We'd like to set up and customize the bootstrap repository with you. Working together helps us understand what Stedi
+We'd like to help set up and customize the bootstrap repository with you. Working together helps us understand what Stedi
 customers need and helps get your solution into production as quickly as possible. We offer free hands-on support that
 includes:
 
 - Help deploying the bootstrap workflows and customizing them for your use cases
-- Best practices for designing a scalable Stedi integration
+- Best practices for designing scalable connections between Stedi and your systems
 - EDI experts to answer your questions
 - Live troubleshooting over Slack or video call
 
@@ -22,25 +22,26 @@ includes:
 ### Inbound EDI workflow
 
 1. The edi-inbound function listens to Stedi Core `transaction.processed` events, which contains the found partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
-1. The function reads the translated Guide JSON data data from the Core output bucket.
+1. The function reads the translated Guide JSON data from the Core output bucket.
 1. The function looks up configured destinations for the specific Partnership and transaction set ID.
 
    1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destinations) below.
 
 1. The translated Guide JSON is sent to each destination.
-   1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the Guide JSON will apply the mapping transformation before sending to the destination.
+   1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the edi-inbound function will apply the mapping transformation to the Guide JSON before sending to the destination.
 1. Any failures in the process (such as invalid mappings or missing guides) are sent to [Execution Error Destinations](#execution-error-destinations).
 1. Function execution failures are retried 2 more times. This can result in destinations receiving multiple messages and will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication.
 
 ### Outbound EDI workflow
 
 1. A payload and metadata object is sent to the edi-outbound function.
-1. The metadata is used is used to lookup configuration values to construct an EDI envelope.
+   1. The payload must match the shape of the Guide's JSON Schema for writing EDI. Or, if a mappingId is specified, then the payload is the input for a mapping which will output valid Guide JSON data.
+1. The metadata is used is used to lookup configuration values to construct an EDI envelope. `partnershipId` is the only required field.
 1. The payload is optionally transformed by a [Stedi Mapping](https://www.stedi.com/products/mappings) to create a Guide JSON data structure before transforming to EDI.
 1. [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) transforms the Guide JSON payload into an edi file.
 1. The function looks up configured destinations for the specific Partnership and transaction set ID.
 
-   1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destination) below.
+   1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destinations) below.
 
 1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations).
 1. Function execution failures are retried 2 more times. This can result in destinations receiving multiple messages and will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication.
@@ -48,7 +49,7 @@ includes:
 ### Processed functional groups workflow
 
 1. The edi-acknowledgment function listens to Stedi Core `functional_group.processed` inbound events, which contains the found partnership, document direction, and envelope data for a single functional group.
-1. The function looks up 997 acknowledgment configuration for the specific Partnership and transaction set Ids in the functional group. Acknowledgment configuration is configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Acknowledgments](#acknowledgment-destinations) below.
+1. If the direction is `RECEIVED`, The function looks up 997 acknowledgment configuration for the specific Partnership and transaction set Ids in the functional group. Acknowledgment configuration is configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Acknowledgments](#acknowledgment-destinations) below.
 1. If transaction sets are in the functional group with 997 acknowledgments configured, a 997 Guide JSON file is generated and sent to the edi-outbound function.
 
 ### File error workflow
@@ -299,15 +300,15 @@ New files in the SFTP bucket are automatically processed by Core, which invoke t
 
 ### Outbound EDI
 
-You can invoke the `outbound-edi` function through the UI for testing.
+You can invoke the `edi-outbound` function through the UI for testing.
 
-1. Navigate to the `outbound-edi` function in
+1. Navigate to the `edi-outbound` function in
    the (Functions UI)[https://www.stedi.com/app/functions/edi-outbound/edit](https://www.stedi.com/app/functions).
 
 1. Click the `Edit execution payload` link, paste the contents
-   of [src/resources/X12/5010/850/outbound.json)(src/resources/X12/5010/850/outbound.json) into the payload modal, and click save.
+   of [src/resources/X12/5010/850/outbound.json](src/resources/X12/5010/850/outbound.json) into the payload modal, and click save.
 
-1. Hit the `Execute` button, if successful the `Output` should look similar to the following:
+1. Hit the `Execute` button and choose the Synchronous option. If successful the `Output` should look similar to the following:
 
    <details><summary>Example function output (click to expand):</summary>
 
@@ -334,17 +335,14 @@ You can invoke the `outbound-edi` function through the UI for testing.
 
 # Customizing the workflows
 
-The bootstrap workflow uses sample [Partners](https://stedi.com/app/engine/profiles) a [Partnership](https://preview.stedi.com/app/engine/partnerships) associating the two partners, and configuration values for destinations configured in Stash to set up and test the read and write EDI workflows. You can customize the bootstrap workflow by doing one or all of the following:
+The bootstrap workflow uses sample [Partners](https://stedi.com/app/core/profiles), a [Partnership](https://preview.stedi.com/app/core/partnerships) associating the two partners, and configuration values for destinations configured in Stash to set up and test the read and write EDI workflows. You can customize the bootstrap workflow by doing one or all of the following:
 
-- [Edit a partner profile](https://stedi.com/app/engine/profiles)
+- [Edit a partner profile](https://stedi.com/app/core/profiles)
   to replace the test trading partner with your real trading partners' details and requirements.
-- [Create Stedi mappings](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#map-inbound-messages-to-a-custom-json-shape). The base
-  bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. You may need to
-  create a mapping to transform EDI documents into a custom JSON shape for your internal system. You can also create a
-  mapping that transforms JSON data from your system into the JSON schema required for outgoing EDI documents.
-- [Create SFTP users](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#send-and-receive-documents-with-sftp)
+- Create [Stedi mappings](https://stedi.com/app/mappings). Add a `mappingId` property to a Stash destination configuration to transform the inbound payload before sending to a destination. Or, when sending EDI, the mappingId can transform the event payload into the JSON schema required for translating to EDI.
+- [Create SFTP users](https://www.stedi.com/app/sftp)
   for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets.
-- [Customize configuration in Stash](#appendix---stash-configuration). Set one or more destinations for a given event, configure error handling and sending 997 acknowledgments.
+- [Customize configuration in Stash](#appendix---stash-configuration). Add partnership and transaction set configurations for partnerships, set one or more destinations for a given configurations, forward errors to external services or archive in buckets, configure mappings, and send 997 acknowledgments.
 
 You may want to use additional Stedi products to further optimize your EDI workflows. We can help you customize the
 bootstrap workflow and determine which products and approaches are right for your use
@@ -366,7 +364,7 @@ npm run destroy
 
 # Appendix - Stash Configuration
 
-## Destination
+## Destinations
 
 <details><summary>JSON Schema (click to expand):</summary>
 

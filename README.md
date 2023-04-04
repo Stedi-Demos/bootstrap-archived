@@ -1,10 +1,22 @@
 # Stedi EDI Bootstrap
 
+
 This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
 implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution
 may differ depending on your systems and requirements.
 
-## Hands-On Support
+We strongly recommend reviewing the documentation for [Stedi Core](https://www.stedi.com/docs/stedi-core) before deploying the bootstrap implementation.
+
+- [Hands-on support](#hands-on-support)
+- [Bootstrap read and write workflow](#bootstrap-read-and-write-workflow)
+- [Requirements](#requirements)
+- [Deploying bootstrap resources](#deploying-bootstrap-resources)
+- [Testing the workflows](#testing-the-workflows)
+- [Clean up bootstrap resources](#clean-up-bootstrap-resources)
+- [Customizing the workflows](#customizing-the-workflows)
+
+
+## Hands-on support
 
 We'd like to help set up and customize the bootstrap repository with you. Working together helps us understand what Stedi
 customers need and helps get your solution into production as quickly as possible. We offer free hands-on support that
@@ -17,9 +29,10 @@ includes:
 
 [Contact us](https://www.stedi.com/contact) to get started.
 
-## Bootstrap Read and Write Workflow
 
-The [Stedi Core module](https://www.stedi.com/docs/stedi-core) ingests data and emits events with the results of its conversion and validation processing. For example, Stedi emits an event when it receives a new file or successfully processes a transaction set. 
+## Bootstrap read and write workflow
+
+The [Stedi Core module](https://www.stedi.com/docs/stedi-core) ingests data and emits events with the results of its conversion and validation processing. For example, Core emits an event when it receives a new file or successfully processes a transaction set. 
 
 To create a custom end-to-end EDI system on Stedi, you need to automate tasks like adding files from your input buckets and reacting to the emitted events. For example, you may want to automatically forward translated EDI files to an API, FTP server, AS2 server, or a [Stedi function](https://www.stedi.com/docs/functions) to run custom code.
 
@@ -28,38 +41,40 @@ Bootstrap contains opinionated Stedi functions that you can customize through co
 
 ### Inbound EDI workflow
 
-The `edi-inbound` function performs the following steps:
-1. Listen to Stedi Core `transaction.processed` events, which contain the partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
-1. Read the translated EDI-like JSON data from the Core output [Stedi bucket](https://www.stedi.com/products/buckets).
-1. Look up configured destinations for the specific partnership and transaction set ID. 
-   1. You can configure destinations in [Stedi Stash](https://www.stedi.com/products/stash). Refer to [Destinations](#destinations) for details.
+The `edi-inbound` function listens to Stedi Core `transaction.processed` events, which contain the partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set. When it receives an event, it performs the following steps:
 
-1. Sends the EDI-like JSON  to each destination. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the `edi-inbound` function applies the mapping transformation to the Guide JSON before sending to the destination.
-1. Sends failures (such as invalid mappings or missing guides) to [Execution Error Destinations](#execution-error-destinations).
-1. Retry function execution failures 2 more times. These retries can result in destinations receiving multiple messages, so you must handle at-least-once message delivery separately. We recommend using payload control numbers and message timestamps for deduplication.
+1. Read the translated EDI-like JSON data from the [Stedi bucket](https://www.stedi.com/products/buckets) configured to receive Core output.
+1. Look up configured destinations for the specific partnership and transaction set ID. Refer to [Destinations](#destinations) for details.
+1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, apply the mapping transformation the JSON.
+2. Send the JSON  to each destination. 
+3. Send failures (such as invalid mappings or missing guides) to [Execution Error Destinations](#execution-error-destinations).
+4. Retry function execution failures 2 more times. These retries can result in destinations receiving multiple messages, so you must handle at-least-once message delivery separately. We recommend using payload control numbers and message timestamps for deduplication.
 
 ### Outbound EDI workflow
+
 The `edi-outbound` function performs the following steps when it receives a payload and a metadata object. The payload must match the shape of the Guide's JSON Schema for writing EDI. Or, if a mappingId is specified, then the payload is the input for a mapping which will output valid Guide JSON data.
 
 1. Use the metadata to look up the configuration values required to construct an EDI envelope. The `partnershipId` is the only required field.
-1. If a[Stedi Mapping](https://www.stedi.com/products/mappings) is specified, transform the payload to create a data structure that matches an outgoing EDI transaction.
+1. If a [Stedi Mapping](https://www.stedi.com/products/mappings) is specified, apply the mapping transformation to the JSON.
 1. Call [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the JSON payload into an EDI file.
-1. Look up configured destinations for the specific partnership and transaction set ID. 
-   1. You can configure destinations in [Stedi Stash](https://www.stedi.com/products/stash). Refer to [Destinations](#destinations) for details.
-
+1. Look up configured destinations for the specific partnership and transaction set ID. Refer to [Destinations](#destinations) for details.
 1. Send failures to [Execution Error Destinations](#execution-error-destinations).
 1. Retry function execution failures 2 or more times. These retries can result in destinations receiving multiple messages, so you must handle at-least-once message delivery separately. We recommend using payload control numbers and message timestamps for deduplication.
 
 ### Processed functional groups workflow
-TODO Ross - is this on by default? Like should we say "if configured" or something? The `edi-acknowledgement` function listens to Stedi Core `functional_group.processed` inbound events, which contain the partnership, document direction, and envelope data for a single functional group. When it receives an event, the function performs the following steps:
 
-1. If the direction is `RECEIVED`, look up up 997 acknowledgment configuration for the specific partnership and transaction set Ids in the functional group. You can configure acknowledgment configuration in [Stedi Stash](https://www.stedi.com/products/stash). Refer to [Acknowledgments](#acknowledgment-destinations) for details.
+The `edi-acknowledgement` function listens to Stedi Core `functional_group.processed` inbound events, which contain the partnership, document direction, and envelope data for a single functional group. When it receives an event, the function performs the following steps:
+
+1. If the direction is `RECEIVED`, look up up 997 acknowledgment configuration for the specific partnership and transaction set Ids in the functional group. Refer to [Acknowledgments](#acknowledgment-destinations) for details.
 1. If transaction sets are in the functional group with 997 acknowledgments configured, generate a 997 EDI-like JSON file and send it to the `edi-outbound` function for processing.
 
+
 ### File error workflow
+
 The events-file-error function listens to Stedi Core `file.failed` events, which Stedi emits when there is an error processing a file. When it receives an event, the function performs the following steps:
-1. Look up the file error destinations configured in Stash. Refer to [File Error Destinations](#file-error-destinations) for details.
-1. Forward the errors to each configured destination.
+
+1. Look up the configured file error destinations. Refer to [File Error Destinations](#file-error-destinations) for details.
+1. Forward the errors to each destination.
 
 ## Requirements
 
@@ -88,7 +103,7 @@ The events-file-error function listens to Stedi Core `file.failed` events, which
    DESTINATION_WEBHOOK_URL=<YOUR_WEBHOOK_URL>
    ```
 
-## Deploying the bootstrap resources
+## Deploying bootstrap resources
 
 Run the following command in the bootstrap directory:
 
@@ -100,7 +115,7 @@ npm run bootstrap
 
 ### Inbound EDI
 
-New files in the SFTP bucket are automatically processed by Core, which invoke the `edi-inbound` function for each processed transaction set.
+Core automatically processes new files in the designated bucket for incoming data. When Core processes a file, it emits events that automatically invoke the `edi-inbound` function for each processed transaction set.
 
 1. Go to the [Buckets UI](https://www.stedi.com/app/buckets) and navigate to the `inbound` directory for your trading
    partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`
@@ -335,8 +350,8 @@ You can invoke the `edi-outbound` function through the UI for testing.
 
 1. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). The output of the
    function includes the `bucketName` and `key` (path within the bucket) of where the function saved the generated EDI.
-
-# Customizing the workflows
+   
+## Customizing the workflows
 
 The bootstrap workflow uses sample [Partners](https://stedi.com/app/core/profiles), a [Partnership](https://preview.stedi.com/app/core/partnerships) associating the two partners, and configuration values for destinations configured in Stash to set up and test the read and write EDI workflows. You can customize the bootstrap workflow by doing one or all of the following:
 
@@ -351,13 +366,13 @@ You may want to use additional Stedi products to further optimize your EDI workf
 bootstrap workflow and determine which products and approaches are right for your use
 cases. [Contact us](https://www.stedi.com/contact) to set up a meeting with our technical team.
 
-# Poll remote FTP / SFTP servers
+## Poll remote FTP / SFTP servers
 
 You can poll remote FTP and SFTP servers to download files from your
 trading partners. Visit
 the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md) for details.
 
-# Cleanup bootstrap resources
+## Clean up bootstrap resources
 
 To delete all the resources created by the bootstrap, run the following command:
 
@@ -365,9 +380,11 @@ To delete all the resources created by the bootstrap, run the following command:
 npm run destroy
 ```
 
-# Stash configuration
+## Stash configuration
+   
+[Stedi Stash](https://www.stedi.com/products/stash) is a key/value store. You can add and edit Stash key-value pairs to configure destinations for incoming and outgoing documents, destinations for errors, and which transaction sets require functional acknowledgements.
 
-## Destinations
+### Destinations
 
 <details><summary>JSON Schema (click to expand):</summary>
 
@@ -507,7 +524,7 @@ npm run destroy
 </details>
 <br />
 
-### Transaction set destination
+#### Transaction set destination
 
 key: `destinations|${partnershipId}|${transactionSetId}`
 
@@ -555,7 +572,7 @@ value (JSON Schema):
 }
 ```
 
-## File error destinations
+### File error destinations
 
 key: `destinations|errors|execution`
 
@@ -579,7 +596,7 @@ value (JSON Schema):
 }
 ```
 
-## Acknowledgment configuration
+### Acknowledgment configuration
 
 key: `functional_acknowledgments|${partnershipId}`
 

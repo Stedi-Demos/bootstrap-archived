@@ -1,6 +1,6 @@
 # Stedi EDI Bootstrap
 
-This repository contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This
+This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
 implementation demonstrates one way to build an integration for the common read and write EDI use cases. Your solution
 may differ, depending on your systems and requirements.
 
@@ -21,37 +21,39 @@ includes:
 
 ### Inbound EDI workflow
 
-1. The edi-inbound function listens to Stedi Engine `transaction.processed` events, which contains the found partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
-1. The function reads the translated Guide JSON data data from the engine output bucket.
+1. The edi-inbound function listens to Stedi Core `transaction.processed` events, which contains the found partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set.
+1. The function reads the translated Guide JSON data data from the Core output bucket.
 1. The function looks up configured destinations for the specific Partnership and transaction set ID.
 
    1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destinations) below.
 
 1. The translated Guide JSON is sent to each destination.
-   1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the Guide JSON will apply the mapping transformation before sending to the destination
-1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations)
-1. Function execution failures are retried 2 more times. If one out of 3 destinations return an error, the sucessful destination endpoints will receive multiple events and will need to handle at-least-once message delivery.
+   1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, the Guide JSON will apply the mapping transformation before sending to the destination.
+1. Any failures in the process (such as invalid mappings or missing guides) are sent to [Execution Error Destinations](#execution-error-destinations).
+1. Function execution failures are retried 2 more times. This can result in destinations receiving multiple messages and will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication.
 
 ### Outbound EDI workflow
 
 1. A payload and metadata object is sent to the edi-outbound function.
 1. The metadata is used is used to lookup configuration values to construct an EDI envelope.
-1. The payload is optionally transformed by a [Stedi Mapping](https://www.stedi.com/products/mappings) to create a Guide JSON data structure
+1. The payload is optionally transformed by a [Stedi Mapping](https://www.stedi.com/products/mappings) to create a Guide JSON data structure before transforming to EDI.
 1. [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) transforms the Guide JSON payload into an edi file.
 1. The function looks up configured destinations for the specific Partnership and transaction set ID.
+
    1. Destinations are configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Destinations](#destination) below.
+
 1. Any failures in the process are sent to [Execution Error Destinations](#execution-error-destinations).
-1. Function execution failures are retried 2 more times. If one out of 3 destinations return an error, the sucessful destination endpoints will receive multiple events and will need to handle at-least-once message delivery.
+1. Function execution failures are retried 2 more times. This can result in destinations receiving multiple messages and will need to handle at-least-once message delivery. Use payload control numbers and message timestamps for deduplication.
 
 ### Processed functional groups workflow
 
-1. The edi-acknowledgment function listens to Stedi Engine `functional_group.processed` inbound events, which contains the found partnership, document direction, and envelope data for a single functional group.
+1. The edi-acknowledgment function listens to Stedi Core `functional_group.processed` inbound events, which contains the found partnership, document direction, and envelope data for a single functional group.
 1. The function looks up 997 acknowledgment configuration for the specific Partnership and transaction set Ids in the functional group. Acknowledgment configuration is configured in [Stedi Stash](https://www.stedi.com/products/stash). See [Acknowledgments](#acknowledgment-destinations) below.
 1. If transaction sets are in the functional group with 997 acknowledgments configured, a 997 Guide JSON file is generated and sent to the edi-outbound function.
 
 ### File error workflow
 
-1. The events-file-error function listens to Stedi Engine `file.failed` events, which are created when there is an error processing a file.
+1. The events-file-error function listens to Stedi Core `file.failed` events, which are created when there is an error processing a file.
 1. The function looks up file error destinations configured in Stash. See [File Error Destinations](#file-error-destinations) below.
 1. If destinations are configured, the error is forwarded to each destination.
 
@@ -94,7 +96,7 @@ npm run bootstrap
 
 ### Inbound EDI
 
-New files in the SFTP bucket are automatically processed by Engine, which invoke the `inbound-edi` function for each processed transaction set.
+New files in the SFTP bucket are automatically processed by Core, which invoke the `edi-inbound` function for each processed transaction set.
 
 1. Go to the [Buckets UI](https://www.stedi.com/app/buckets) and navigate to the `inbound` directory for your trading
    partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`
@@ -102,262 +104,198 @@ New files in the SFTP bucket are automatically processed by Engine, which invoke
 1. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/inbound.edi) document to this directory.
 
 1. Look for the output of the function wherever you created your test webhook! The function sends the translated JSON payload to the endpoint you have configured.
-   <details><summary>Example webhook output (click to expand):</summary>
+      <details><summary>Example webhook output (click to expand):</summary>
 
    ```json
    {
-     "delimiters": {
-       "composite": ">",
-       "element": "*",
-       "repetition": "U",
-       "segment": "~"
-     },
      "envelope": {
        "interchangeHeader": {
          "authorizationInformationQualifier": "00",
          "authorizationInformation": "          ",
          "securityQualifier": "00",
          "securityInformation": "          ",
-         "senderQualifier": "02",
-         "senderId": "THISISME",
+         "senderQualifier": "14",
+         "senderId": "ANOTHERMERCH   ",
          "receiverQualifier": "ZZ",
-         "receiverId": "ANOTHERMERCH",
-         "date": "2004-08-05",
-         "time": "06:24",
+         "receiverId": "THISISME       ",
+         "date": "2022-09-14",
+         "time": "20:22",
          "repetitionSeparator": "U",
-         "controlVersionNumber": "00400",
-         "controlNumber": "000000001",
+         "controlVersionNumber": "00501",
+         "controlNumber": "000001746",
          "acknowledgementRequestedCode": "0",
-         "usageIndicatorCode": "P",
+         "usageIndicatorCode": "T",
          "componentSeparator": ">"
        },
        "groupHeader": {
-         "functionalIdentifierCode": "IM",
-         "applicationSenderCode": "CNWY",
-         "applicationReceiverCode": "GSRECEIVERID",
-         "date": "2004-08-05",
-         "time": "06:24",
-         "controlNumber": "000000001",
+         "functionalIdentifierCode": "PR",
+         "applicationSenderCode": "ANOTAPPID",
+         "applicationReceiverCode": "MYAPPID",
+         "date": "2022-09-14",
+         "time": "20:22:22",
+         "controlNumber": "000001746",
          "agencyCode": "X",
-         "release": "004010"
+         "release": "005010"
        },
        "groupTrailer": {
          "numberOfTransactions": "1",
-         "controlNumber": "000000001"
+         "controlNumber": "000001746"
        },
        "interchangeTrailer": {
          "numberOfFunctionalGroups": "1",
-         "controlNumber": "000000001"
+         "controlNumber": "000001746"
        }
      },
      "transactionSets": [
        {
          "heading": {
            "transaction_set_header_ST": {
-             "transaction_set_identifier_code_01": "210",
+             "transaction_set_identifier_code_01": "855",
              "transaction_set_control_number_02": 1
            },
-           "beginning_segment_for_carriers_invoice_B3": {
-             "invoice_number_02": "PRONUMBER",
-             "shipment_identification_number_03": "Shipment ID Number",
-             "shipment_method_of_payment_04": "PP",
-             "date_06": "2004-08-05",
-             "net_amount_due_07": 274.09,
-             "delivery_date_09": "2004-08-09",
-             "date_time_qualifier_10": "017",
-             "standard_carrier_alpha_code_11": "CNWY"
+           "beginning_segment_for_purchase_order_acknowledgment_BAK": {
+             "transaction_set_purpose_code_01": "00",
+             "acknowledgment_type_02": "AD",
+             "purchase_order_number_03": "365465413",
+             "date_04": "2022-09-14",
+             "date_09": "2022-09-13"
            },
-           "reference_identification_N9": [
+           "reference_information_REF": [
              {
-               "reference_identification_qualifier_01": "PO",
-               "reference_identification_02": "Reference Identification"
+               "reference_identification_qualifier_01": "CO",
+               "reference_identification_02": "ACME-4567"
              }
            ],
-           "name_N1_loop_Shipper": [
+           "party_identification_N1_loop_ship_to": [
              {
-               "name_N1": {
-                 "entity_identifier_code_01": "SH",
-                 "name_02": "Name"
+               "party_identification_N1": {
+                 "entity_identifier_code_01": "ST",
+                 "name_02": "Wile E Coyote",
+                 "identification_code_qualifier_03": "92",
+                 "identification_code_04": "DROPSHIP CUSTOMER"
                },
-               "additional_name_information_N2": {
-                 "name_01": "Name"
-               },
-               "address_information_N3": [
+               "party_location_N3": [
                  {
-                   "address_information_01": "Address Information"
+                   "address_information_01": "111 Canyon Court"
                  }
                ],
                "geographic_location_N4": {
-                 "city_name_01": "City Name",
-                 "state_or_province_code_02": "St",
-                 "postal_code_03": "Postal Code",
-                 "country_code_04": "USA"
+                 "city_name_01": "Phoenix",
+                 "state_or_province_code_02": "AZ",
+                 "postal_code_03": "85001",
+                 "country_code_04": "US"
                }
              }
            ],
-           "name_N1_loop_consignee": [
+           "party_identification_N1_loop_selling_party": [
              {
-               "name_N1": {
-                 "entity_identifier_code_01": "CN",
-                 "name_02": "Name"
+               "party_identification_N1": {
+                 "entity_identifier_code_01": "SE",
+                 "name_02": "Marvin Acme",
+                 "identification_code_qualifier_03": "92",
+                 "identification_code_04": "DROPSHIP CUSTOMER"
                },
-               "additional_name_information_N2": {
-                 "name_01": "Name"
-               },
-               "address_information_N3": [
+               "party_location_N3": [
                  {
-                   "address_information_01": "Address Information"
+                   "address_information_01": "123 Main Street"
                  }
                ],
                "geographic_location_N4": {
-                 "city_name_01": "City Name",
-                 "state_or_province_code_02": "St",
-                 "postal_code_03": "Postal Code",
-                 "country_code_04": "USA"
-               }
-             }
-           ],
-           "name_N1_loop_bill_to": [
-             {
-               "name_N1": {
-                 "entity_identifier_code_01": "BT",
-                 "name_02": "Name"
-               },
-               "additional_name_information_N2": {
-                 "name_01": "Name"
-               },
-               "address_information_N3": [
-                 {
-                   "address_information_01": "Address Information"
-                 }
-               ],
-               "geographic_location_N4": {
-                 "city_name_01": "City Name",
-                 "state_or_province_code_02": "St",
-                 "postal_code_03": "Postal Code",
-                 "country_code_04": "USA"
+                 "city_name_01": "Fairfield",
+                 "state_or_province_code_02": "NJ",
+                 "postal_code_03": "07004",
+                 "country_code_04": "US"
                }
              }
            ]
          },
          "detail": {
-           "assigned_number_LX_loop": [
+           "baseline_item_data_PO1_loop": [
              {
-               "assigned_number_LX": {
-                 "assigned_number_01": 1
+               "baseline_item_data_PO1": {
+                 "assigned_identification_01": "item-1",
+                 "quantity_02": 8,
+                 "unit_or_basis_for_measurement_code_03": "EA",
+                 "unit_price_04": 400,
+                 "product_service_id_qualifier_06": "VC",
+                 "product_service_id_07": "VND1234567",
+                 "product_service_id_qualifier_08": "SK",
+                 "product_service_id_09": "ACM/8900-400"
                },
-               "description_marks_and_numbers_L5": [
+               "product_item_description_PID_loop": [
                  {
-                   "lading_line_item_number_01": 1,
-                   "lading_description_02": "Lading Description"
-                 },
-                 {
-                   "lading_line_item_number_01": 1,
-                   "lading_description_02": "Lading Description continued"
+                   "product_item_description_PID": {
+                     "item_description_type_01": "F",
+                     "description_05": "400 pound anvil"
+                   }
                  }
                ],
-               "line_item_quantity_and_weight_L0": [
+               "line_item_acknowledgment_ACK_loop": [
                  {
-                   "lading_line_item_number_01": 1,
-                   "weight_04": 2442,
-                   "weight_qualifier_05": "G",
-                   "lading_quantity_08": 509,
-                   "packaging_form_code_09": "BDL",
-                   "weight_unit_code_11": "L"
-                 }
-               ],
-               "rate_and_charges_L1": [
-                 {
-                   "lading_line_item_number_01": 1,
-                   "freight_rate_02": 325.41,
-                   "rate_value_qualifier_03": "FR",
-                   "charge_04": 325.41
-                 }
-               ],
-               "tariff_reference_L7": [
-                 {
-                   "lading_line_item_number_01": 1,
-                   "tariff_agency_code_02": "CNWY",
-                   "tariff_number_03": "5350",
-                   "freight_class_code_07": "55"
+                   "line_item_acknowledgment_ACK": {
+                     "line_item_status_code_01": "IA",
+                     "quantity_02": 8,
+                     "unit_or_basis_for_measurement_code_03": "EA"
+                   }
                  }
                ]
              },
              {
-               "assigned_number_LX": {
-                 "assigned_number_01": 2
+               "baseline_item_data_PO1": {
+                 "assigned_identification_01": "item-2",
+                 "quantity_02": 4,
+                 "unit_or_basis_for_measurement_code_03": "EA",
+                 "unit_price_04": 125,
+                 "product_service_id_qualifier_06": "VC",
+                 "product_service_id_07": "VND000111222",
+                 "product_service_id_qualifier_08": "SK",
+                 "product_service_id_09": "ACM/1100-001"
                },
-               "description_marks_and_numbers_L5": [
+               "product_item_description_PID_loop": [
                  {
-                   "lading_line_item_number_01": 2,
-                   "lading_description_02": "XPO DISCOUNT SAVES YOU"
+                   "product_item_description_PID": {
+                     "item_description_type_01": "F",
+                     "description_05": "Detonator"
+                   }
                  }
                ],
-               "rate_and_charges_L1": [
+               "line_item_acknowledgment_ACK_loop": [
                  {
-                   "lading_line_item_number_01": 2,
-                   "charge_04": -40.23,
-                   "special_charge_or_allowance_code_08": "DSC"
-                 }
-               ],
-               "tariff_reference_L7": [
-                 {
-                   "lading_line_item_number_01": 2,
-                   "tariff_agency_code_02": "CNWY",
-                   "tariff_number_03": "5350"
-                 }
-               ]
-             },
-             {
-               "assigned_number_LX": {
-                 "assigned_number_01": 3
-               },
-               "description_marks_and_numbers_L5": [
-                 {
-                   "lading_line_item_number_01": 3,
-                   "lading_description_02": "FSC FUEL SURCHARGE 8.30% ...."
-                 }
-               ],
-               "rate_and_charges_L1": [
-                 {
-                   "lading_line_item_number_01": 3,
-                   "freight_rate_02": 30.82,
-                   "rate_value_qualifier_03": "FR",
-                   "charge_04": 30.82,
-                   "special_charge_or_allowance_code_08": "FUE"
-                 }
-               ],
-               "tariff_reference_L7": [
-                 {
-                   "lading_line_item_number_01": 3,
-                   "tariff_agency_code_02": "CNWY",
-                   "tariff_number_03": "110"
+                   "line_item_acknowledgment_ACK": {
+                     "line_item_status_code_01": "IA",
+                     "quantity_02": 4,
+                     "unit_or_basis_for_measurement_code_03": "EA"
+                   }
                  }
                ]
              }
            ]
          },
          "summary": {
-           "total_weight_and_charges_L3": {
-             "weight_01": 2442,
-             "weight_qualifier_02": "G",
-             "freight_rate_03": 10484,
-             "rate_value_qualifier_04": "MN",
-             "charge_05": 274.09,
-             "lading_quantity_11": 509,
-             "weight_unit_code_12": "L"
-           },
+           "transaction_totals_CTT_loop": [
+             {
+               "transaction_totals_CTT": {
+                 "number_of_line_items_01": 2
+               }
+             }
+           ],
            "transaction_set_trailer_SE": {
-             "number_of_included_segments_01": 13,
-             "transaction_set_control_number_02": 1
+             "number_of_included_segments_01": 17,
+             "transaction_set_control_number_02": "0001"
            }
          }
        }
-     ]
+     ],
+     "delimiters": {
+       "element": "*",
+       "composite": ">",
+       "repetition": "U",
+       "segment": "~"
+     }
    }
    ```
 
-   </details>
+      </details>
 
 ### Outbound EDI
 
@@ -380,8 +318,8 @@ You can invoke the `outbound-edi` function through the UI for testing.
        {
          "type": "bucket",
          "payload": {
-           "bucketName": "4c22f54a-9ecf-41c8-b404-6a1f20674953-sftp",
-           "key": "trading_partners/ANOTHERMERCH/outbound/000000005-850.edi",
+           "bucketName": "<STEDI_ACCOUNT_ID>-sftp",
+           "key": "trading_partners/ANOTHERMERCH/outbound/1-850.edi",
            "body": "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *230113*2027*U*00501*000000005*0*T*>~GS*PO*MYAPPID*ANOTAPPID*20230113*202727*000000005*X*005010~ST*850*0001~BEG*00*DS*365465413**20220830~REF*CO*ACME-4567~REF*ZZ*Thank you for your business~PER*OC*Marvin Acme*TE*973-555-1212*EM*marvin@acme.com~TD5****ZZ*FHD~N1*ST*Wile E Coyote*92*123~N3*111 Canyon Court~N4*Phoenix*AZ*85001*US~PO1*item-1*0008*EA*400**VC*VND1234567*SK*ACM/8900-400~PID*F****400 pound anvil~PO1*item-2*0004*EA*125**VC*VND000111222*SK*ACM/1100-001~PID*F****Detonator~CTT*2~AMT*TT*3700~SE*16*0001~GE*1*000000005~IEA*1*000000005~"
          }
        }

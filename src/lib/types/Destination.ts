@@ -89,7 +89,7 @@ export type TransactionSetDestinations = z.input<
 >;
 
 export const destinationAckKey = (partnershipId: string) =>
-  `destinations|${partnershipId}|acknowledgments`;
+  `acknowledgments|${partnershipId}`;
 
 export const DestinationAckSchema = z.strictObject({
   generateFor: z.array(z.string().describe("Transaction Set ID")),

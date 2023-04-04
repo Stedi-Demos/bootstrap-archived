@@ -42,7 +42,7 @@ const send997Acknowledgment = async (
   const ackConfigResult = await stash.send(
     new GetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
-      key: `destinations|${partnershipId}|acknowledgments`,
+      key: `functional_acknowledgments|${partnershipId}`,
     })
   );
 

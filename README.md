@@ -528,28 +528,6 @@ value (JSON Schema):
 }
 ```
 
-## Acknowledgment destinations
-
-key: `destinations|${partnershipId}|acknowledgments`
-
-value (JSON Schema):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "generateFor": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "comment": "Transaction Set Id"
-      }
-    }
-  },
-  "required": ["generateFor"]
-}
-```
-
 ## Execution error destinations
 
 key: `destinations|errors|execution`
@@ -595,5 +573,27 @@ value (JSON Schema):
     }
   },
   "required": ["destinations"]
+}
+```
+
+## Acknowledgment configuration
+
+key: `functional_acknowledgments|${partnershipId}`
+
+value (JSON Schema):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "generateFor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "comment": "Transaction Set Id"
+      }
+    }
+  },
+  "required": ["generateFor"]
 }
 ```

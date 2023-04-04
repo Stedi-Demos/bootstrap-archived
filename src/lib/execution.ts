@@ -19,7 +19,6 @@ import {
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
 let _executionsBucketClient: BucketsClient | undefined;
-const _infiniteLoopCheckPassed = false;
 
 export interface FailureRecord {
   bucketName?: string;

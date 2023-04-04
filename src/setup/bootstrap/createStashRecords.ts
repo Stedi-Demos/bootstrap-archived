@@ -70,7 +70,7 @@ export const createSampleStashRecords = async ({
   await stashClient().send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
-      key: `acknowledgments|${partnershipId}`,
+      key: `functional_acknowledgments|${partnershipId}`,
       value: {
         generateFor: ["855"],
       },

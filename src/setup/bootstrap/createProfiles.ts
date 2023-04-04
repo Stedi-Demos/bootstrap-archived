@@ -1,16 +1,18 @@
 import { GetGuideCommandOutput } from "@stedi/sdk-client-guides";
 import {
-  CreateInboundX12TransactionCommand,
-  CreateOutboundX12TransactionCommand,
-  CreateOutboundX12TransactionCommandInput,
+  CreateInboundX12TransactionSettingsCommand,
+  CreateInboundX12TransactionSettingsCommandOutput,
+  CreateOutboundX12TransactionSettingsCommand,
+  CreateOutboundX12TransactionSettingsCommandInput,
+  CreateOutboundX12TransactionSettingsCommandOutput,
   CreateX12PartnershipCommand,
   CreateX12PartnershipCommandOutput,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
   GetX12PartnershipCommand,
   GetX12PartnershipCommandOutput,
-  InboundX12TransactionSummary,
-  OutboundX12TransactionSummary,
+  InboundX12TransactionSettingsSummary,
+  OutboundX12TransactionSettingsSummary,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../../lib/clients/partners.js";
 import { updateResourceMetadata } from "../../support/bootstrapMetadata.js";
@@ -97,11 +99,14 @@ export const createProfiles = async ({
 
   // inbound
 
-  let rule855: InboundX12TransactionSummary | undefined;
+  let rule855:
+    | CreateInboundX12TransactionSettingsCommandOutput
+    | InboundX12TransactionSettingsSummary
+    | undefined;
 
   try {
     rule855 = await partners.send(
-      new CreateInboundX12TransactionCommand({
+      new CreateInboundX12TransactionSettingsCommand({
         partnershipId,
         release: guide855.target!.release,
         transactionSetIdentifier: guide855.target!.transactionSet,
@@ -152,11 +157,14 @@ const ensureOutboundTransaction = async ({
     | CreateX12PartnershipCommandOutput
     | GetX12PartnershipCommandOutput;
 }) => {
-  let rule: OutboundX12TransactionSummary | undefined;
+  let rule:
+    | CreateOutboundX12TransactionSettingsCommandOutput
+    | OutboundX12TransactionSettingsSummary
+    | undefined;
   let transactionSet: string;
 
   try {
-    let params: CreateOutboundX12TransactionCommandInput;
+    let params: CreateOutboundX12TransactionSettingsCommandInput;
 
     if (guide) {
       transactionSet = guide.target!.transactionSet!;
@@ -177,7 +185,9 @@ const ensureOutboundTransaction = async ({
       };
     }
 
-    rule = await partners.send(new CreateOutboundX12TransactionCommand(params));
+    rule = await partners.send(
+      new CreateOutboundX12TransactionSettingsCommand(params)
+    );
   } catch (error) {
     if (
       typeof error === "object" &&

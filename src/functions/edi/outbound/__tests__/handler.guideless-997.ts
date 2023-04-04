@@ -57,6 +57,7 @@ test("translate 997 guide json without a guide and delivers to destination", asy
         interchangeId: "THISISME",
         profileId: "this-is-me",
         profileType: "local",
+        defaultApplicationId: "meId",
       },
       partnerProfileId: "another-merchant",
       partnerProfile: {
@@ -64,11 +65,12 @@ test("translate 997 guide json without a guide and delivers to destination", asy
         interchangeId: "ANOTHERMERCH",
         profileId: "another-merchant",
         profileType: "partner",
+        defaultApplicationId: "merchId",
       },
       outboundTransactions: [
         {
           transactionSetIdentifier: "997",
-          transactionId: "997-transaction-rule-id",
+          outboundX12TransactionSettingsId: "997-transaction-rule-id",
           release: "008010",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -94,31 +96,7 @@ test("translate 997 guide json without a guide and delivers to destination", asy
     .resolvesOnce({
       x12ControlNumber: 1167,
       controlNumberType: "group",
-    } satisfies IncrementX12ControlNumberOutput as any)
-    .on(GetX12ProfileCommand as any, {
-      profileId: "this-is-me",
-    })
-    .resolvesOnce({
-      interchangeQualifier: "ZZ",
-      interchangeId: "THISISME",
-      profileId: "this-is-me",
-      profileType: "local",
-      defaultApplicationId: "meId",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } satisfies GetX12ProfileOutput as any)
-    .on(GetX12ProfileCommand as any, {
-      profileId: "another-merchant",
-    })
-    .resolvesOnce({
-      interchangeQualifier: "14",
-      interchangeId: "ANOTHERMERCH",
-      profileId: "another-merchant",
-      profileType: "partner",
-      defaultApplicationId: "merchId",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } satisfies GetX12ProfileOutput as any);
+    } satisfies IncrementX12ControlNumberOutput as any);
 
   stash
     // loading destinations

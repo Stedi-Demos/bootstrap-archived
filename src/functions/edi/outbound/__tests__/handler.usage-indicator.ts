@@ -72,7 +72,7 @@ test.serial(
         outboundTransactions: [
           {
             transactionSetIdentifier: "850",
-            transactionId: "850-transaction-rule-id",
+            outboundX12TransactionSettingsId: "850-transaction-rule-id",
             guideId,
             release: "008010",
             createdAt: new Date(),

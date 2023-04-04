@@ -22,10 +22,8 @@ import {
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteEnvelope.js";
-import { loadProfile } from "../../../lib/loadProfileById.js";
 import { partnersClient } from "../../../lib/clients/partners.js";
 import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
-import assert from "node:assert";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 
 const partners = partnersClient();
@@ -43,14 +41,6 @@ export const handler = async (
     const partnership = await loadPartnershipById({
       partnershipId: event.metadata.partnershipId,
     });
-
-    // TODO: use the partnership output when it returns the default applicationId
-    const [localProfile, partnerProfile] = await Promise.all([
-      loadProfile(partnership.localProfileId),
-      loadProfile(partnership.partnerProfileId),
-    ]);
-
-    assert(localProfile && partnerProfile);
 
     // get the transaction set from Guide JSON or event metadata
     const transactionSetIdentifier =
@@ -115,10 +105,10 @@ export const handler = async (
       groupHeader: {
         functionalIdentifierCode: functionalIdentifierCode,
         applicationSenderCode:
-          localProfile.defaultApplicationId ??
+          partnership.localProfile.defaultApplicationId ??
           partnership.localProfile.interchangeId,
         applicationReceiverCode:
-          partnerProfile.defaultApplicationId ??
+          partnership.partnerProfile.defaultApplicationId ??
           partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),

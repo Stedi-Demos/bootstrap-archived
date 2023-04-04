@@ -1,7 +1,7 @@
 import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { DocumentType } from "@aws-sdk/types";
-import { ErrorWithContext } from "./errorWithContext";
+import { ErrorWithContext } from "./errorWithContext.js";
 
 let _mappingsClient: MappingsClient | undefined;
 

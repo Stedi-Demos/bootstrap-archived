@@ -9,11 +9,11 @@ import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
 import { stashClient as stashClient } from "../lib/clients/stash.js";
 import { saveTransactionSetDestinations } from "../lib/saveTransactionSetDestinations.js";
 import {
-  CreateInboundX12TransactionCommand,
-  CreateInboundX12TransactionCommandInput,
-  CreateInboundX12TransactionCommandOutput,
-  CreateOutboundX12TransactionCommand,
-  CreateOutboundX12TransactionCommandOutput,
+  CreateInboundX12TransactionSettingsCommand,
+  CreateInboundX12TransactionSettingsCommandInput,
+  CreateInboundX12TransactionSettingsCommandOutput,
+  CreateOutboundX12TransactionSettingsCommand,
+  CreateOutboundX12TransactionSettingsCommandOutput,
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
@@ -221,8 +221,8 @@ export const up = async () => {
         generate997For.push(guideTarget.transactionSet);
 
       let rule:
-        | CreateOutboundX12TransactionCommandOutput
-        | CreateInboundX12TransactionCommandOutput;
+        | CreateOutboundX12TransactionSettingsCommandOutput
+        | CreateInboundX12TransactionSettingsCommandOutput;
 
       if (
         "sendingPartnerId" in transactionSet &&
@@ -230,7 +230,7 @@ export const up = async () => {
       ) {
         // Outbound
         rule = await partners.send(
-          new CreateOutboundX12TransactionCommand({
+          new CreateOutboundX12TransactionSettingsCommand({
             partnershipId: partnership.partnershipId,
             timeZone: "UTC",
             release: guideTarget.release,
@@ -240,7 +240,7 @@ export const up = async () => {
         );
       } else {
         // Inbound
-        const params: CreateInboundX12TransactionCommandInput = {
+        const params: CreateInboundX12TransactionSettingsCommandInput = {
           partnershipId: partnership.partnershipId,
           release: guideTarget.release,
           transactionSetIdentifier: guideTarget.transactionSet,
@@ -248,7 +248,7 @@ export const up = async () => {
         };
 
         rule = await partners.send(
-          new CreateInboundX12TransactionCommand(params)
+          new CreateInboundX12TransactionSettingsCommand(params)
         );
       }
 

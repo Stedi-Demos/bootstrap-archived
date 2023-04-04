@@ -58,7 +58,7 @@ test.serial(
 
     functions
       .on(InvokeFunctionCommand, {
-        functionName: "outbound",
+        functionName: "edi-outbound",
         invocationType: InvocationType.ASYNCHRONOUS,
       })
       .resolvesOnce({});

@@ -12,8 +12,6 @@ import sampleOutboundEvent from "../../../../resources/X12/5010/850/outbound.jso
 import {
   GetX12PartnershipCommand,
   GetX12PartnershipOutput,
-  GetX12ProfileCommand,
-  GetX12ProfileOutput,
   IncrementX12ControlNumberCommand,
   IncrementX12ControlNumberOutput,
 } from "@stedi/sdk-client-partners";
@@ -58,6 +56,7 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
         interchangeId: "THISISME",
         profileId: "this-is-me",
         profileType: "local",
+        defaultApplicationId: "meId",
       },
       partnerProfileId: "another-merchant",
       partnerProfile: {
@@ -65,11 +64,12 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
         interchangeId: "ANOTHERMERCH",
         profileId: "another-merchant",
         profileType: "partner",
+        defaultApplicationId: "merchId",
       },
       outboundTransactions: [
         {
           transactionSetIdentifier: "850",
-          transactionId: "850-transaction-rule-id",
+          outboundX12TransactionSettingsId: "850-transaction-rule-id",
           guideId,
           release: "008010",
           createdAt: new Date(),
@@ -96,31 +96,7 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
     .resolvesOnce({
       x12ControlNumber: 1916,
       controlNumberType: "group",
-    } satisfies IncrementX12ControlNumberOutput as any)
-    .on(GetX12ProfileCommand as any, {
-      profileId: "this-is-me",
-    })
-    .resolvesOnce({
-      interchangeQualifier: "ZZ",
-      interchangeId: "THISISME",
-      profileId: "this-is-me",
-      profileType: "local",
-      defaultApplicationId: "meId",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } satisfies GetX12ProfileOutput as any)
-    .on(GetX12ProfileCommand as any, {
-      profileId: "another-merchant",
-    })
-    .resolvesOnce({
-      interchangeQualifier: "14",
-      interchangeId: "ANOTHERMERCH",
-      profileId: "another-merchant",
-      profileType: "partner",
-      defaultApplicationId: "merchId",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } satisfies GetX12ProfileOutput as any);
+    } satisfies IncrementX12ControlNumberOutput as any);
 
   stash
     // loading destinations
@@ -161,13 +137,15 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
   const translateArgs = translate.commandCalls(TranslateJsonToX12Command)[0]!
     .args[0].input;
   t.is(
-    (translateArgs.envelope as any)!.groupHeader.applicationReceiverCode,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    (translateArgs.envelope as any).groupHeader.applicationReceiverCode,
     "merchId",
     "default applicationId is used for receiver"
   );
 
   t.is(
-    (translateArgs.envelope as any)!.groupHeader.applicationSenderCode,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    (translateArgs.envelope as any).groupHeader.applicationSenderCode,
     "meId",
     "default applicationId is used for sender"
   );

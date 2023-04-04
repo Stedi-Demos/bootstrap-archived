@@ -15,6 +15,7 @@ import { Readable } from "node:stream";
 import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
 import { destinationExecutionErrorKey } from "../../../../lib/types/Destination.js";
 import { sdkStreamMixin } from "@aws-sdk/util-stream-node";
+import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
 
 const buckets = mockBucketClient();
 const partners = mockPartnersClient();
@@ -75,8 +76,10 @@ test("throws runtime error when no configuration is found for transaction set", 
     })
     .reply(200);
 
-  const response = await handler(sampleTransactionProcessedEvent as any);
+  const response = await handler(sampleTransactionProcessedEvent as any).catch(
+    (e) => e
+  );
 
-  t.not(response.statusCode, 200, "not successful");
+  t.assert(response instanceof ErrorWithContext, "not successful");
   t.assert(errorWebhook.isDone(), "error webhook is called");
 });

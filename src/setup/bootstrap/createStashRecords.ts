@@ -1,6 +1,6 @@
 import {
-  InboundX12TransactionSummary,
-  OutboundX12TransactionSummary,
+  InboundX12TransactionSettingsSummary,
+  OutboundX12TransactionSettingsSummary,
 } from "@stedi/sdk-client-partners";
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../../lib/clients/stash.js";
@@ -14,8 +14,8 @@ export const createSampleStashRecords = async ({
   rule855,
 }: {
   partnershipId: string;
-  rule850: OutboundX12TransactionSummary;
-  rule855: InboundX12TransactionSummary;
+  rule850: OutboundX12TransactionSettingsSummary;
+  rule855: InboundX12TransactionSettingsSummary;
 }) => {
   const sftpBucketName = requiredEnvVar("SFTP_BUCKET_NAME");
   const outboundBucketPath = "trading_partners/ANOTHERMERCH/outbound";

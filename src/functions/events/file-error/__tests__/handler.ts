@@ -10,10 +10,7 @@ import {
   mockStashClient,
 } from "../../../../lib/testing/testHelpers.js";
 import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
-import {
-  InvocationType,
-  InvokeFunctionCommand,
-} from "@stedi/sdk-client-functions";
+import { InvokeFunctionCommand } from "@stedi/sdk-client-functions";
 import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
 import {
   destinationFileErrorEventsKey,
@@ -80,7 +77,6 @@ test.serial(
     functions
       .on(InvokeFunctionCommand, {
         functionName: "a-function",
-        invocationType: InvocationType.ASYNCHRONOUS,
       })
       .resolvesOnce({});
 

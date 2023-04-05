@@ -1,6 +1,7 @@
 import { engineClient } from "../lib/clients/engine.js";
 import {
   CreateEngineCommand,
+  DeleteEngineCommand,
   DescribeEngineCommand,
   UpdateEngineCommand,
   waitUntilEngineCreateComplete,
@@ -96,4 +97,8 @@ export const upgradeEngine = async () => {
   );
 
   return upgrade.state === "SUCCESS";
+};
+
+export const deleteEngine = async () => {
+  return engine.send(new DeleteEngineCommand({ engineName }));
 };

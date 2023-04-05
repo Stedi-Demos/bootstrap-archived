@@ -47,13 +47,13 @@ test.serial(
       destinationFilename,
     });
 
-    t.deepEqual(buckets.calls()[0].args[0].input, {
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
       key: `${path}/${destinationFilename}`,
       body: payload,
     });
 
-    t.deepEqual(as2Client.calls()[0].args[0].input, {
+    t.deepEqual(as2Client.calls()[0]!.args[0].input, {
       connectorId,
       sendFilePaths: [`/${bucketName}/${path}/${destinationFilename}`],
     });
@@ -78,7 +78,7 @@ test.serial(
       destinationFilename,
     });
 
-    t.deepEqual(buckets.calls()[0].args[0].input, {
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
       key: `${path}/${destinationFilename}`,
       body: payload,
@@ -105,7 +105,7 @@ test.serial(
     });
 
     const expectedPath = "my-as2-trading-partner/outbound";
-    t.deepEqual(buckets.calls()[0].args[0].input, {
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
       key: `${expectedPath}/${destinationFilename}`,
       body: payload,
@@ -159,13 +159,10 @@ test.serial(
       destinationFilename: "unused",
     });
 
-    t.deepEqual(functions.calls()[0].args[0].input, {
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
       functionName,
-      requestPayload: Buffer.from(
-        JSON.stringify({
-          ...payload,
-        })
-      ),
+      invocationType: "Synchronous",
+      payload,
     });
   }
 );
@@ -189,14 +186,13 @@ test.serial(
       destinationFilename: "unused",
     });
 
-    t.deepEqual(functions.calls()[0].args[0].input, {
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
       functionName,
-      requestPayload: Buffer.from(
-        JSON.stringify({
-          ...payload,
-          ...additionalInput,
-        })
-      ),
+      invocationType: "Synchronous",
+      payload: {
+        ...payload,
+        ...additionalInput,
+      },
     });
   }
 );

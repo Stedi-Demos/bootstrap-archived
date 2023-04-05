@@ -4,9 +4,12 @@ import { StashStorage } from "../lib/migration/stashStorage.js";
 import { migrator } from "../lib/migration/config.js";
 import { createProfiles } from "./bootstrap/createProfiles.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
+import { ensureCoreIsRunning } from "../support/core.js";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
+  await ensureCoreIsRunning();
+
   const guide850 = await ensureGuideExists(
     "src/resources/X12/5010/850/guide.json"
   );
@@ -14,9 +17,14 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
     "src/resources/X12/5010/855/guide.json"
   );
 
-  await updateResourceMetadata({ GUIDE_IDS: [guide850, guide855] });
-  await createProfiles();
-  await createSampleStashRecords({ guide850, guide855 });
+  await updateResourceMetadata({
+    GUIDE_IDS: [guide850.id!, guide855.id!],
+  });
+  const { partnershipId, rule850, rule855 } = await createProfiles({
+    guide850,
+    guide855,
+  });
+  await createSampleStashRecords({ partnershipId, rule850, rule855 });
 
   // record all migrations as run (as this file always creates the latest state)
   const migrationStore = new StashStorage({});

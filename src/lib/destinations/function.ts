@@ -1,10 +1,11 @@
+import { DocumentType } from "@aws-sdk/types";
 import { DeliverToDestinationInput } from "../deliveryManager.js";
 import { invokeFunction } from "../functions.js";
 import { DestinationFunction } from "../types/Destination.js";
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput
-): Promise<string | undefined> => {
+): Promise<DocumentType | undefined> => {
   if (input.destination.type !== "function") {
     throw new Error("invalid destination type (must be function)");
   }

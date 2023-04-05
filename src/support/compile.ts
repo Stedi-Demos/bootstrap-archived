@@ -4,12 +4,13 @@ import * as fs from "fs";
 import JSZip from "jszip";
 import os from "os";
 import path from "path";
+import packageJson from "../../package.json" assert { type: "json" };
 
 export const compile = async (
   buildPath: string,
   debug = false
 ): Promise<string> => {
-  const pathParts = buildPath.replace("/src/", "/dist/").split("/");
+  const pathParts = buildPath.replace("/src/", "/dist/src/").split("/");
   pathParts.pop(); // discard input file name
 
   pathParts.push("index.mjs");
@@ -21,7 +22,7 @@ export const compile = async (
     outfile: outputPath,
     platform: "node",
     format: "esm",
-    target: "node16",
+    target: "node18",
     minify: false,
     sourcemap: true,
     bundle: true,
@@ -46,8 +47,8 @@ const pkg = {
   description:
     "This package contains the dependencies needed at runtime, that cannot be bundled",
   dependencies: {
-    "@stedi/x12-tools": "^1.0.0",
-    "ssh2-sftp-client": "^9.0.4",
+    "@stedi/x12-tools": packageJson.devDependencies["@stedi/x12-tools"],
+    "ssh2-sftp-client": packageJson.devDependencies["ssh2-sftp-client"],
   },
 };
 
@@ -108,6 +109,11 @@ const getZipOfFolder = (dir: string): JSZip => {
   // returns a JSZip instance filled with contents of dir.
 
   const allPaths = getFilePathsRecursively(dir);
+
+  if (!allPaths.some((path) => path.includes("node_modules/")))
+    throw new Error(
+      "There was an issue installing the dependencies using your local npm installation, please check your .npmrc and try again."
+    );
 
   const zip = new JSZip();
   for (const filePath of allPaths) {

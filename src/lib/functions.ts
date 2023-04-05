@@ -1,61 +1,49 @@
+import { DocumentType } from "@aws-sdk/types";
+import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 import {
   CreateFunctionCommand,
   CreateFunctionCommandOutput,
   DeleteFunctionCommand,
   DeleteFunctionCommandOutput,
+  InvocationType,
   InvokeFunctionCommand,
   UpdateFunctionCommand,
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
+import { bucketsClient } from "./clients/buckets.js";
 import { functionsClient } from "./clients/functions.js";
+import { requiredEnvVar } from "./environment.js";
+import {
+  CreateEventToFunctionBindingCommand,
+  UpdateEventToFunctionBindingCommand,
+} from "@stedi/sdk-client-events";
+import { eventsClient } from "./clients/events.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 
 const functions = functionsClient();
-
-type FunctionInvocationId = string;
+const buckets = bucketsClient();
+const events = eventsClient();
 
 export const invokeFunction = async (
   functionName: string,
-  input: unknown
-): Promise<string | undefined> => {
-  const invokeFunctionOutput = await functions.send(
+  input: unknown,
+  invocationType = InvocationType.SYNCHRONOUS
+): Promise<DocumentType | undefined> => {
+  const result = await functions.send(
     new InvokeFunctionCommand({
       functionName,
-      requestPayload: Buffer.from(JSON.stringify(input)),
+      payload: input as DocumentType,
+      invocationType,
     })
   );
 
-  const result = invokeFunctionOutput.responsePayload
-    ? Buffer.from(invokeFunctionOutput.responsePayload).toString()
-    : undefined;
-
-  if (invokeFunctionOutput.invocationError) {
+  if (result.error) {
     throw new ErrorWithContext("function invocation error", {
-      error: invokeFunctionOutput.invocationError,
       result,
     });
   }
 
-  return result;
-};
-
-export const invokeFunctionAsync = async (
-  functionName: string,
-  input?: unknown
-): Promise<FunctionInvocationId> => {
-  const requestPayload = input ? Buffer.from(JSON.stringify(input)) : undefined;
-
-  const { functionInvocationId } = await functions.send(
-    new InvokeFunctionCommand({
-      functionName,
-      invocationType: "Event",
-      requestPayload,
-      contentType: "application/json",
-    })
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return functionInvocationId!;
+  return result.payload;
 };
 
 export const createFunction = async (
@@ -63,11 +51,28 @@ export const createFunction = async (
   functionPackage: Uint8Array,
   environmentVariables?: Record<string, string>
 ): Promise<CreateFunctionCommandOutput> => {
+  const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
+  const key = `functionPackages/${functionName}/${new Date()
+    .getTime()
+    .toString()}-package.zip`;
+
+  await buckets.send(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    new PutObjectCommand({
+      bucketName,
+      key,
+      body: functionPackage,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any //SDK mismatches
+  );
+
   return functions.send(
     new CreateFunctionCommand({
       functionName,
-      package: functionPackage,
+      packageBucket: bucketName,
+      packageKey: key,
       environmentVariables,
+
       timeout: 900,
     })
   );
@@ -78,10 +83,26 @@ export const updateFunction = async (
   functionPackage: Uint8Array,
   environmentVariables?: Record<string, string>
 ): Promise<UpdateFunctionCommandOutput> => {
+  const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
+  const key = `functionPackages/${functionName}/${new Date()
+    .getTime()
+    .toString()}-package.zip`;
+
+  await buckets.send(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    new PutObjectCommand({
+      bucketName,
+      key,
+      body: functionPackage,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any //SDK mismatches
+  );
+
   return functions.send(
     new UpdateFunctionCommand({
       functionName,
-      package: functionPackage,
+      packageBucket: bucketName,
+      packageKey: key,
       environmentVariables,
       timeout: 900,
     })
@@ -94,6 +115,34 @@ export const deleteFunction = async (
   return functions.send(
     new DeleteFunctionCommand({
       functionName,
+    })
+  );
+};
+
+export const createFunctionEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  eventToFunctionBindingName: string
+) => {
+  return events.send(
+    new CreateEventToFunctionBindingCommand({
+      eventPattern,
+      functionName,
+      eventToFunctionBindingName,
+    })
+  );
+};
+
+export const updateFunctionEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  eventToFunctionBindingName: string
+) => {
+  return events.send(
+    new UpdateEventToFunctionBindingCommand({
+      eventPattern,
+      functionName,
+      eventToFunctionBindingName,
     })
   );
 };

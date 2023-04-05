@@ -12,11 +12,11 @@ import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
 
-const buckets = bucketsClient();
-const sftp = sftpClient();
-
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
+  const buckets = bucketsClient();
+  const sftp = sftpClient();
+
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
@@ -47,7 +47,7 @@ const sftp = sftpClient();
   }
 
   // Use a separate bucket for tracking function executions
-  const stediAccountId = user.bucketName.split("-sftp")[0];
+  const stediAccountId = user.bucketName.split("-sftp")[0]!;
   const executionsBucketName = `${stediAccountId}-executions`;
 
   const bucketsList = await buckets.send(new ListBucketsCommand({}));
@@ -84,4 +84,5 @@ const sftp = sftpClient();
       key: user.homeDirectory,
     })
   );
+  console.log("done");
 })();

@@ -4,7 +4,11 @@ export const buildArchivalPath = ({
   currentKey: string;
 }): string => {
   const timestamp = new Date().toISOString();
-  const [year, month, day] = timestamp.split(/[-T]/);
+  const [year, month, day] = timestamp.split(/[-T]/) as [
+    string,
+    string,
+    string
+  ];
 
   const currentKeyParts = currentKey.split("/");
   const currentFilenameParts = currentKeyParts.pop()!.split(".");
@@ -17,7 +21,7 @@ export const buildArchivalPath = ({
       "/"
     )}/${filenameWithoutExtension}_${timestamp}.${extension}`;
   } else {
-    filename = `${currentFilenameParts[0]}_${timestamp}`;
+    filename = `${currentFilenameParts[0]!}_${timestamp}`;
   }
 
   return `archive/${year}/${month}/${day}/${filename}`;

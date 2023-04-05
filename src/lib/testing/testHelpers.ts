@@ -3,11 +3,11 @@ import {
   BucketsClient,
   DeleteObjectCommand,
   PutObjectCommand,
-  ReadBucketCommand,
 } from "@stedi/sdk-client-buckets";
 import { EDITranslateClient } from "@stedi/sdk-client-edi-translate";
 import { FunctionsClient } from "@stedi/sdk-client-functions";
 import { GuidesClient } from "@stedi/sdk-client-guides";
+import { PartnersClient } from "@stedi/sdk-client-partners";
 import { StashClient } from "@stedi/sdk-client-stash";
 import { mockClient } from "aws-sdk-client-mock";
 import { MappingsClient } from "@stedi/sdk-client-mappings";
@@ -41,13 +41,7 @@ export const mockExecutionTracking = (mockedClient = mockBucketClient()) => {
     .on(PutObjectCommand, { bucketName: executionsBucket }) // execution creation
     .resolvesOnce({})
     .on(DeleteObjectCommand, { bucketName: executionsBucket }) // execution cleanup
-    .resolvesOnce({})
-    .on(ReadBucketCommand, { bucketName: executionsBucket }) // infinite loop check
-    .resolvesOnce({
-      notifications: {
-        functions: [],
-      },
-    });
+    .resolvesOnce({});
 };
 
 /**
@@ -84,6 +78,16 @@ export const mockTranslateClient = () => {
  */
 export const mockGuideClient = () => {
   return mockClient(GuidesClient);
+};
+
+/**
+ * Creates a mocked Stedi PartnersClient
+ *
+ * @returns a mocked PartnersClient
+ */
+export const mockPartnersClient = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+  return mockClient(PartnersClient as any);
 };
 
 export const mockMappingsClient = () => {

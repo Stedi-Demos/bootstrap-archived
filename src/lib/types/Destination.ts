@@ -9,7 +9,7 @@ export const SftpConfigSchema = z.strictObject({
   passphrase: z.string().optional(),
 });
 
-const WebhookVerbSchema = z.enum(["PATCH", "POST", "PUT"]);
+const WebhookVerbSchema = z.enum(["PATCH", "POST", "PUT"]).optional();
 
 export type WebhookVerb = z.infer<typeof WebhookVerbSchema>;
 
@@ -53,15 +53,70 @@ const DestinationAs2Schema = DestinationBucketSchema.extend({
   connectorId: z.string(),
 });
 
+const DestinationStashSchema = z.strictObject({
+  type: z.literal("stash"),
+  keyspaceName: z.string(),
+  keyPrefix: z.string().optional(),
+});
+
 export const DestinationSchema = z.strictObject({
   mappingId: z.string().optional(),
+  usageIndicatorCode: z
+    .enum(["P", "T", "I"])
+    .optional()
+    .describe(
+      "configure destination to receive the transaction set only when the envelope usage indicator code matches the supplied value"
+    ),
   destination: z.discriminatedUnion("type", [
     DestinationAs2Schema,
     DestinationBucketSchema,
     DestinationFunctionSchema,
     DestinationSftpSchema,
     DestinationWebhookSchema,
+    DestinationStashSchema,
   ]),
 });
 
-export type Destination = z.infer<typeof DestinationSchema>;
+export type Destination = z.input<typeof DestinationSchema>;
+
+export const TransactionSetDestinationsSchema = z.strictObject({
+  description: z.string().optional(),
+  destinations: z.array(DestinationSchema),
+});
+
+export type TransactionSetDestinations = z.input<
+  typeof TransactionSetDestinationsSchema
+>;
+
+export const destinationAckKey = (partnershipId: string) =>
+  `functional_acknowledgments|${partnershipId}`;
+
+export const DestinationAckSchema = z.strictObject({
+  generateFor: z.array(z.string().describe("Transaction Set ID")),
+});
+
+export type DestinationAck = z.infer<typeof DestinationAckSchema>;
+
+export const destinationExecutionErrorKey = "destinations|errors|execution";
+
+export const destinationFileErrorEventsKey = "destinations|errors|file_error";
+
+const DestinationErrorSchema = z.strictObject({
+  description: z.string().optional(),
+  mappingId: z.string().optional(),
+  destination: z.discriminatedUnion("type", [
+    DestinationFunctionSchema,
+    DestinationWebhookSchema,
+    DestinationStashSchema,
+    DestinationBucketSchema,
+  ]),
+});
+
+export const DestinationErrorEventsSchema = z.strictObject({
+  description: z.string().optional(),
+  destinations: z.array(DestinationErrorSchema),
+});
+
+export type DestinationErrorEvents = z.infer<
+  typeof DestinationErrorEventsSchema
+>;

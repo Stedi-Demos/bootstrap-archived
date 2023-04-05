@@ -16,7 +16,12 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ]
   },
   "overrides": [
     {
@@ -25,8 +30,7 @@
         "**/__fixtures__/*",
         "**/setup/**",
         "**/scripts/**",
-        "**/support/**",
-        "**/migration/**"
+        "**/support/**"
       ],
       "rules": {
         "@typescript-eslint/no-unsafe-argument": "off",

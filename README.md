@@ -1,7 +1,7 @@
 # Stedi EDI Bootstrap
 
 > **Note**
-> This version of bootstrap utilises Stedi Core. The previous version of bootstrap can be found in the [legacy](https://github.com/stedi-demos/bootstrap/tree/legacy) branch.
+> This version of bootstrap utilizes Stedi Core. The previous version of bootstrap can be found in the [legacy](https://github.com/stedi-demos/bootstrap/tree/legacy) branch.
 
 This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
 implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable  */
 import { Umzug } from "umzug";
 import { StashStorage } from "./stashStorage.js";
 

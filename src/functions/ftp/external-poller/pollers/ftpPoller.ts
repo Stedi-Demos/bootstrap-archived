@@ -26,7 +26,7 @@ export class FtpPoller extends RemotePoller {
     await this.client.access(connectionDetails.config);
   }
 
-  disconnect(): Promise<void> {
+  disconnect() {
     return Promise.resolve(this.client.close());
   }
 
@@ -85,10 +85,10 @@ export class FtpPoller extends RemotePoller {
         break;
       }
 
-      listResult[0].isFile
+      listResult[0]!.isFile
         ? filesToProcess.push({
             path: remotePath,
-            ...this.extractFileDetails(listResult[0]),
+            ...this.extractFileDetails(listResult[0]!),
           })
         : // handle non-file as processing error since file was specifically requested
           processingErrors.push({

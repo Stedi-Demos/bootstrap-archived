@@ -1,15 +1,26 @@
 export const lookupFunctionalIdentifierCode = (
-  transactionSet: string
+  transactionSetIdentifier: string
 ): string => {
-  const code = functionalIdentifierCodeLookup[transactionSet];
+  const code = functionalIdentifierCodeLookup[transactionSetIdentifier];
 
   if (code === undefined)
     throw new Error(
-      `No functional identifier code found for '${transactionSet}'`
+      `No functional identifier code found for '${transactionSetIdentifier}'`
     );
 
   return code;
 };
+
+export function lookupTransactionSets(functionalGroup: string): string[] {
+  const txn = Object.entries(functionalIdentifierCodeLookup)
+    .filter(([_txn, fg]) => fg === functionalGroup)
+    .map(([txn]) => txn);
+
+  if (!txn.length)
+    throw new Error(`No transaction set found for '${functionalGroup}'`);
+
+  return txn;
+}
 
 const functionalIdentifierCodeLookup: Record<string, string | undefined> = {
   "100": "PG",

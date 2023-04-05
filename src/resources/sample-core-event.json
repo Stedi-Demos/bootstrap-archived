@@ -1,0 +1,56 @@
+{
+  "version": "0",
+  "id": "15bade2b-5686-3f54-e548-b915c40581f2",
+  "detail-type": "core.inbound:2023-02-13",
+  "source": "stedi.core",
+  "account": "217851219840",
+  "time": "2023-03-03T16:04:17Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "version": "2023-02-13",
+    "metadata": {
+      "interchange": {
+        "controlNumber": "1746",
+        "release": "005010"
+      },
+      "group": {
+        "controlNumber": "1746"
+      },
+      "processedAt": "2023-03-03T16:04:17.635Z"
+    },
+    "transaction": {
+      "controlNumber": "1",
+      "id": "a41c3713-0555-478e-a70a-fd6e0808b6ac",
+      "usageIndicatorCode": "T",
+      "transactionSetIdentifier": "855"
+    },
+    "input": {
+      "type": "EDI/X12",
+      "bucketName": "stedi-core-artifacts-217851219840",
+      "key": "879dbd68-6695-b9b1-7ae4-b81048dc9838/1746-1746-1.edi"
+    },
+    "output": {
+      "type": "STEDI/GUIDE-JSON",
+      "bucketName": "core-inbox-json-bfa02b63-0f40-4ea6-a99d-7edb8ed9e86d",
+      "key": "879dbd68-6695-b9b1-7ae4-b81048dc9838/1746-1746-1.json"
+    },
+    "partnership": {
+      "partnershipId": "this-is-me_another-merchant",
+      "sender": {
+        "isa": {
+          "qualifier": "14",
+          "id": "ANOTHERMERCH"
+        },
+        "profileId": "another-merchant"
+      },
+      "receiver": {
+        "isa": {
+          "qualifier": "ZZ",
+          "id": "THISISME"
+        },
+        "profileId": "this-is-me"
+      }
+    }
+  }
+}

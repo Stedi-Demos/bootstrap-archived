@@ -3,6 +3,8 @@ import { serializeError } from "serialize-error";
 import {
   CreateGuideCommand,
   CreateGuideInput,
+  GetGuideCommand,
+  GetGuideCommandOutput,
   ListGuidesCommand,
   PublishGuideCommand,
   ResourceConflictException,
@@ -14,11 +16,12 @@ import { guidesClient } from "../lib/clients/guides.js";
 
 const guides = guidesClient();
 
-export const parseGuideId = (fullGuideId: string): string => {
-  return fullGuideId.split("_")[1];
-};
+export const parseGuideId = (fullGuideId: string): string =>
+  fullGuideId.includes("_") ? fullGuideId.split("_")[1]! : fullGuideId;
 
-export const ensureGuideExists = async (guidePath: string): Promise<string> => {
+export const ensureGuideExists = async (
+  guidePath: string
+): Promise<GetGuideCommandOutput> => {
   const rawGuide = fs.readFileSync(path.join(process.cwd(), guidePath), "utf8");
   const guide = JSON.parse(rawGuide) as CreateGuideInput;
 
@@ -30,7 +33,7 @@ export const ensureGuideExists = async (guidePath: string): Promise<string> => {
     const guideId = await createGuide(guide);
     const parsedGuideId = parseGuideId(guideId);
     console.log(`Guide created: ${parsedGuideId}`);
-    return parsedGuideId;
+    return loadGuide(guideId);
   } catch (e) {
     if (!(e instanceof ResourceConflictException)) {
       // re-throw all errors except resource conflict
@@ -41,7 +44,7 @@ export const ensureGuideExists = async (guidePath: string): Promise<string> => {
 
     console.log(`Guide creation skipped (guide already exists)`);
     const foundGuideId = await findGuideIdByName(guide.name);
-    return parseGuideId(foundGuideId);
+    return loadGuide(foundGuideId);
   }
 };
 
@@ -56,6 +59,14 @@ const createGuide = async (guide: CreateGuideInput): Promise<string> => {
   }
 
   return createGuideResponse.id;
+};
+
+const loadGuide = async (guideId: string): Promise<GetGuideCommandOutput> => {
+  return await guides.send(
+    new GetGuideCommand({
+      id: guideId,
+    })
+  );
 };
 
 const publishGuide = async (guideId: string): Promise<unknown> => {

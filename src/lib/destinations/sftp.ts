@@ -19,7 +19,9 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be sftp)");
   }
 
-  const remotePath = `${input.destination.remotePath}/${input.destinationFilename}`;
+  const remotePath = `${input.destination.remotePath ?? ""}${
+    input.destination.remotePath?.endsWith("/") ? "" : "/"
+  }${input.destinationFilename}`;
   const { host, username } = input.destination.connectionDetails;
   const fileContents = payloadAsString(input.destinationPayload);
 

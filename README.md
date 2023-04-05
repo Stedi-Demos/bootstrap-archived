@@ -1,40 +1,82 @@
 # Stedi EDI Bootstrap
 
-This repository contains an end-to-end configuration for building a full X12 EDI system using Stedi products. This
-implementation demonstrates one way to build an integration for the common read and write EDI use cases. Your solution
-may differ, depending on your systems and requirements.
+> **Note**
+> This version of bootstrap utilizes Stedi Core. The previous version of bootstrap can be found in the [legacy](https://github.com/stedi-demos/bootstrap/tree/legacy) branch.
 
-## Hands-On Support
+This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
+implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution
+may differ depending on your systems and requirements.
 
-We'd like to set up and customize the bootstrap repository with you. Working together helps us understand what Stedi
+We strongly recommend reviewing the documentation for [Stedi Core](https://www.stedi.com/docs/stedi-core) before deploying the bootstrap implementation.
+
+- [Hands-on support](#hands-on-support)
+- [Bootstrap read and write workflow](#bootstrap-read-and-write-workflow)
+- [Requirements](#requirements)
+- [Deploying bootstrap resources](#deploying-bootstrap-resources)
+- [Testing the workflows](#testing-the-workflows)
+- [Clean up bootstrap resources](#clean-up-bootstrap-resources)
+- [Customizing the workflows](#customizing-the-workflows)
+
+## Hands-on support
+
+We'd like to help set up and customize the bootstrap repository with you. Working together helps us understand what Stedi
 customers need and helps get your solution into production as quickly as possible. We offer free hands-on support that
 includes:
 
 - Help deploying the bootstrap workflows and customizing them for your use cases
-- Best practices for designing a scalable Stedi integration
+- Best practices for designing scalable connections between Stedi and your systems
 - EDI experts to answer your questions
 - Live troubleshooting over Slack or video call
 
 [Contact us](https://www.stedi.com/contact) to get started.
 
-## Bootstrap Read and Write Workflow
+## Bootstrap read and write workflow
 
-The bootstrap workflow uses the following process to handle incoming EDI:
+The [Stedi Core module](https://www.stedi.com/docs/stedi-core) ingests data and emits events with the results of its conversion and validation processing. For example, Core emits an event when it receives a new file or successfully processes a transaction set.
 
-1. You upload EDI documents to a [Stedi bucket](https://www.stedi.com/products/buckets). A trading partner could also do
-   this using [Stedi SFTP](https://www.stedi.com/products/sftp).
-2. New documents automatically invoke a [Stedi Function](https://www.stedi.com/products/functions) that contains custom
-   code for the workflow.
-3. The function calls [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the EDI data into
-   JSON. This process uses a [Stedi Guide](https://www.stedi.com/products/guides) to map EDI fields to JSON fields.
-4. The function sends the JSON document to an internal webhook that you configure.
+To create a custom end-to-end EDI system on Stedi, you need to automate tasks like adding files from your input buckets and reacting to the emitted events. For example, you may want to automatically forward translated EDI files to an API, FTP server, AS2 server, or a [Stedi function](https://www.stedi.com/docs/functions) to run custom code.
 
-The bootstrap uses a similar process in reverse to handle outgoing EDI. It translates JSON documents to EDI and
-publishes them to a Stedi bucket.
+Bootstrap contains opinionated Stedi functions that you can customize through configuration. For example, you can add [Destinations](#destinations) where the bootstrap workflows will send incoming and outgoing data. The following sections describe these built-in functions.
+
+### Inbound EDI workflow
+
+The `edi-inbound` function listens to Stedi Core `transaction.processed` events, which contain the partnership, document direction, location of the translated document, and document transaction set ID for a single EDI transaction set. When it receives an event, it performs the following steps:
+
+1. Read the translated EDI-like JSON data from the [Stedi bucket](https://www.stedi.com/products/buckets) configured to receive Core output.
+1. Look up configured destinations for the specific partnership and transaction set ID. Refer to [Destinations](#destinations) for details.
+1. If a destination has a [Stedi Mapping](https://www.stedi.com/products/mappings) configured, apply the mapping transformation the JSON.
+1. Send the JSON to each destination.
+1. Send failures (such as invalid mappings or missing guides) to [Execution Error Destinations](#execution-error-destinations).
+1. Retry function execution failures 2 more times. These retries can result in destinations receiving multiple messages, so you must handle at-least-once message delivery separately. We recommend using payload control numbers and message timestamps for deduplication.
+
+### Outbound EDI workflow
+
+The `edi-outbound` function performs the following steps when it receives a payload and a metadata object. The payload must match the shape of the Guide's JSON Schema for writing EDI. Or, if a mappingId is specified, then the payload is the input for a mapping which will output valid Guide JSON data.
+
+1. Use the metadata to look up the configuration values required to construct an EDI envelope. The `partnershipId` is the only required field.
+1. If a [Stedi Mapping](https://www.stedi.com/products/mappings) is specified, apply the mapping transformation to the JSON.
+1. Call [Stedi EDI Translate](https://www.stedi.com/products/edi-translate) to transform the JSON payload into an EDI file.
+1. Look up configured destinations for the specific partnership and transaction set ID. Refer to [Destinations](#destinations) for details.
+1. Send failures to [Execution Error Destinations](#execution-error-destinations).
+1. Retry function execution failures 2 or more times. These retries can result in destinations receiving multiple messages, so you must handle at-least-once message delivery separately. We recommend using payload control numbers and message timestamps for deduplication.
+
+### Processed functional groups workflow
+
+The `edi-acknowledgement` function listens to Stedi Core `functional_group.processed` inbound events, which contain the partnership, document direction, and envelope data for a single functional group. When it receives an event, the function performs the following steps:
+
+1. If the direction is `RECEIVED`, look up up 997 acknowledgment configuration for the specific partnership and transaction set Ids in the functional group. Refer to [Acknowledgments](#acknowledgment-destinations) for details.
+1. If transaction sets are in the functional group with 997 acknowledgments configured, generate a 997 EDI-like JSON file and send it to the `edi-outbound` function for processing.
+
+### File error workflow
+
+The events-file-error function listens to Stedi Core `file.failed` events, which Stedi emits when there is an error processing a file. When it receives an event, the function performs the following steps:
+
+1. Look up the configured file error destinations. Refer to [File Error Destinations](#file-error-destinations) for details.
+1. Forward the errors to each destination.
 
 ## Requirements
 
-1. Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 15)_
+1. Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) _(minimum version: 18)_
 
 1. Clone the bootstrap repository and install the necessary dependencies:
 
@@ -44,22 +86,22 @@ publishes them to a Stedi bucket.
    npm ci
    ```
 
-1. Create a [Stedi account](https://www.stedi.com/auth/sign-up).
+1. Create a [Stedi account](https://www.stedi.com/auth/sign-up) and enable Core. Bootstrap does not overwrite existing Core settings or data.
 
 1. Rename the bootstrap's `.env.example` file to `.env` and update the following environment variables:
 
-    - `STEDI_API_KEY`: A Stedi API key is required for authentication. You
-      can [generate an API key](https://www.stedi.com/app/settings/api-keys) in your Stedi account.
-    - `DESTINATION_WEBHOOK_URL`: Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap
-      workflow sends output to this webhook.
+   - `STEDI_API_KEY`: A Stedi API key is required for authentication. You
+     can [generate an API key](https://www.stedi.com/app/settings/api-keys) in your Stedi account.
+   - `DESTINATION_WEBHOOK_URL`: Go to [webhook.site](https://webhook.site/) and copy the unique URL. The bootstrap workflow sends output to this webhook.
 
    Example `.env` file
+
    ```
    STEDI_API_KEY=<YOUR_STEDI_API_KEY>
    DESTINATION_WEBHOOK_URL=<YOUR_WEBHOOK_URL>
    ```
 
-## Deploying the bootstrap resources
+## Deploying bootstrap resources
 
 Run the following command in the bootstrap directory:
 
@@ -71,338 +113,505 @@ npm run bootstrap
 
 ### Inbound EDI
 
-New files in the SFTP bucket automatically invoke the `inbound-edi` function.
+Core automatically processes new files in the designated bucket for incoming data. When Core processes a file, it emits events that automatically invoke the `edi-inbound` function for each processed transaction set.
 
 1. Go to the [Buckets UI](https://www.stedi.com/app/buckets) and navigate to the `inbound` directory for your trading
    partner: `<SFTP_BUCKET_NAME>/trading_partners/ANOTHERMERCH/inbound`
 
-2. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/inbound.edi) document to this directory. (_note_: if
-   you upload the document to any directory not named `inbound`, it will be intentionally ignored by the `inbound-edi`).
+1. Upload the [input X12 5010 855 EDI](src/resources/X12/5010/855/inbound.edi) document to this directory.
 
-3. Look for the output of the function wherever you created your test webhook! The function sends the JSON received from
-   EDI Translate to the endpoint you have configured.
-
-<details><summary>Example webhook output (click to expand):</summary>
+1. Look for the output of the function wherever you created your test webhook. The function sends the translated JSON payload to the endpoint you configured.
+      <details><summary>Example webhook output (click to expand):</summary>
 
    ```json
    {
-  "delimiters": {
-    "composite": ">",
-    "element": "*",
-    "repetition": "U",
-    "segment": "~"
-  },
-  "envelope": {
-    "interchangeHeader": {
-      "authorizationInformationQualifier": "00",
-      "authorizationInformation": "          ",
-      "securityQualifier": "00",
-      "securityInformation": "          ",
-      "senderQualifier": "02",
-      "senderId": "THISISME       ",
-      "receiverQualifier": "ZZ",
-      "receiverId": "ANOTHERMERCH   ",
-      "date": "2004-08-05",
-      "time": "06:24",
-      "repetitionSeparator": "U",
-      "controlVersionNumber": "00400",
-      "controlNumber": "000000001",
-      "acknowledgementRequestedCode": "0",
-      "usageIndicatorCode": "P",
-      "componentSeparator": ">"
-    },
-    "groupHeader": {
-      "functionalIdentifierCode": "IM",
-      "applicationSenderCode": "CNWY",
-      "applicationReceiverCode": "GSRECEIVERID",
-      "date": "2004-08-05",
-      "time": "06:24",
-      "controlNumber": "000000001",
-      "agencyCode": "X",
-      "release": "004010"
-    },
-    "groupTrailer": {
-      "numberOfTransactions": "1",
-      "controlNumber": "000000001"
-    },
-    "interchangeTrailer": {
-      "numberOfFunctionalGroups": "1",
-      "controlNumber": "000000001"
-    }
-  },
-  "transactionSets": [
-    {
-      "heading": {
-        "transaction_set_header_ST": {
-          "transaction_set_identifier_code_01": "210",
-          "transaction_set_control_number_02": 1
-        },
-        "beginning_segment_for_carriers_invoice_B3": {
-          "invoice_number_02": "PRONUMBER",
-          "shipment_identification_number_03": "Shipment ID Number",
-          "shipment_method_of_payment_04": "PP",
-          "date_06": "2004-08-05",
-          "net_amount_due_07": 274.09,
-          "delivery_date_09": "2004-08-09",
-          "date_time_qualifier_10": "017",
-          "standard_carrier_alpha_code_11": "CNWY"
-        },
-        "reference_identification_N9": [
-          {
-            "reference_identification_qualifier_01": "PO",
-            "reference_identification_02": "Reference Identification"
-          }
-        ],
-        "name_N1_loop_Shipper": [
-          {
-            "name_N1": {
-              "entity_identifier_code_01": "SH",
-              "name_02": "Name"
-            },
-            "additional_name_information_N2": {
-              "name_01": "Name"
-            },
-            "address_information_N3": [
-              {
-                "address_information_01": "Address Information"
-              }
-            ],
-            "geographic_location_N4": {
-              "city_name_01": "City Name",
-              "state_or_province_code_02": "St",
-              "postal_code_03": "Postal Code",
-              "country_code_04": "USA"
-            }
-          }
-        ],
-        "name_N1_loop_consignee": [
-          {
-            "name_N1": {
-              "entity_identifier_code_01": "CN",
-              "name_02": "Name"
-            },
-            "additional_name_information_N2": {
-              "name_01": "Name"
-            },
-            "address_information_N3": [
-              {
-                "address_information_01": "Address Information"
-              }
-            ],
-            "geographic_location_N4": {
-              "city_name_01": "City Name",
-              "state_or_province_code_02": "St",
-              "postal_code_03": "Postal Code",
-              "country_code_04": "USA"
-            }
-          }
-        ],
-        "name_N1_loop_bill_to": [
-          {
-            "name_N1": {
-              "entity_identifier_code_01": "BT",
-              "name_02": "Name"
-            },
-            "additional_name_information_N2": {
-              "name_01": "Name"
-            },
-            "address_information_N3": [
-              {
-                "address_information_01": "Address Information"
-              }
-            ],
-            "geographic_location_N4": {
-              "city_name_01": "City Name",
-              "state_or_province_code_02": "St",
-              "postal_code_03": "Postal Code",
-              "country_code_04": "USA"
-            }
-          }
-        ]
-      },
-      "detail": {
-        "assigned_number_LX_loop": [
-          {
-            "assigned_number_LX": {
-              "assigned_number_01": 1
-            },
-            "description_marks_and_numbers_L5": [
-              {
-                "lading_line_item_number_01": 1,
-                "lading_description_02": "Lading Description"
-              },
-              {
-                "lading_line_item_number_01": 1,
-                "lading_description_02": "Lading Description continued"
-              }
-            ],
-            "line_item_quantity_and_weight_L0": [
-              {
-                "lading_line_item_number_01": 1,
-                "weight_04": 2442,
-                "weight_qualifier_05": "G",
-                "lading_quantity_08": 509,
-                "packaging_form_code_09": "BDL",
-                "weight_unit_code_11": "L"
-              }
-            ],
-            "rate_and_charges_L1": [
-              {
-                "lading_line_item_number_01": 1,
-                "freight_rate_02": 325.41,
-                "rate_value_qualifier_03": "FR",
-                "charge_04": 325.41
-              }
-            ],
-            "tariff_reference_L7": [
-              {
-                "lading_line_item_number_01": 1,
-                "tariff_agency_code_02": "CNWY",
-                "tariff_number_03": "5350",
-                "freight_class_code_07": "55"
-              }
-            ]
-          },
-          {
-            "assigned_number_LX": {
-              "assigned_number_01": 2
-            },
-            "description_marks_and_numbers_L5": [
-              {
-                "lading_line_item_number_01": 2,
-                "lading_description_02": "XPO DISCOUNT SAVES YOU"
-              }
-            ],
-            "rate_and_charges_L1": [
-              {
-                "lading_line_item_number_01": 2,
-                "charge_04": -40.23,
-                "special_charge_or_allowance_code_08": "DSC"
-              }
-            ],
-            "tariff_reference_L7": [
-              {
-                "lading_line_item_number_01": 2,
-                "tariff_agency_code_02": "CNWY",
-                "tariff_number_03": "5350"
-              }
-            ]
-          },
-          {
-            "assigned_number_LX": {
-              "assigned_number_01": 3
-            },
-            "description_marks_and_numbers_L5": [
-              {
-                "lading_line_item_number_01": 3,
-                "lading_description_02": "FSC FUEL SURCHARGE 8.30% ...."
-              }
-            ],
-            "rate_and_charges_L1": [
-              {
-                "lading_line_item_number_01": 3,
-                "freight_rate_02": 30.82,
-                "rate_value_qualifier_03": "FR",
-                "charge_04": 30.82,
-                "special_charge_or_allowance_code_08": "FUE"
-              }
-            ],
-            "tariff_reference_L7": [
-              {
-                "lading_line_item_number_01": 3,
-                "tariff_agency_code_02": "CNWY",
-                "tariff_number_03": "110"
-              }
-            ]
-          }
-        ]
-      },
-      "summary": {
-        "total_weight_and_charges_L3": {
-          "weight_01": 2442,
-          "weight_qualifier_02": "G",
-          "freight_rate_03": 10484,
-          "rate_value_qualifier_04": "MN",
-          "charge_05": 274.09,
-          "lading_quantity_11": 509,
-          "weight_unit_code_12": "L"
-        },
-        "transaction_set_trailer_SE": {
-          "number_of_included_segments_01": 13,
-          "transaction_set_control_number_02": 1
-        }
-      }
-    }
-  ]
-}
+     "envelope": {
+       "interchangeHeader": {
+         "authorizationInformationQualifier": "00",
+         "authorizationInformation": "          ",
+         "securityQualifier": "00",
+         "securityInformation": "          ",
+         "senderQualifier": "14",
+         "senderId": "ANOTHERMERCH   ",
+         "receiverQualifier": "ZZ",
+         "receiverId": "THISISME       ",
+         "date": "2022-09-14",
+         "time": "20:22",
+         "repetitionSeparator": "U",
+         "controlVersionNumber": "00501",
+         "controlNumber": "000001746",
+         "acknowledgementRequestedCode": "0",
+         "usageIndicatorCode": "T",
+         "componentSeparator": ">"
+       },
+       "groupHeader": {
+         "functionalIdentifierCode": "PR",
+         "applicationSenderCode": "ANOTAPPID",
+         "applicationReceiverCode": "MYAPPID",
+         "date": "2022-09-14",
+         "time": "20:22:22",
+         "controlNumber": "000001746",
+         "agencyCode": "X",
+         "release": "005010"
+       },
+       "groupTrailer": {
+         "numberOfTransactions": "1",
+         "controlNumber": "000001746"
+       },
+       "interchangeTrailer": {
+         "numberOfFunctionalGroups": "1",
+         "controlNumber": "000001746"
+       }
+     },
+     "transactionSets": [
+       {
+         "heading": {
+           "transaction_set_header_ST": {
+             "transaction_set_identifier_code_01": "855",
+             "transaction_set_control_number_02": 1
+           },
+           "beginning_segment_for_purchase_order_acknowledgment_BAK": {
+             "transaction_set_purpose_code_01": "00",
+             "acknowledgment_type_02": "AD",
+             "purchase_order_number_03": "365465413",
+             "date_04": "2022-09-14",
+             "date_09": "2022-09-13"
+           },
+           "reference_information_REF": [
+             {
+               "reference_identification_qualifier_01": "CO",
+               "reference_identification_02": "ACME-4567"
+             }
+           ],
+           "party_identification_N1_loop_ship_to": [
+             {
+               "party_identification_N1": {
+                 "entity_identifier_code_01": "ST",
+                 "name_02": "Wile E Coyote",
+                 "identification_code_qualifier_03": "92",
+                 "identification_code_04": "DROPSHIP CUSTOMER"
+               },
+               "party_location_N3": [
+                 {
+                   "address_information_01": "111 Canyon Court"
+                 }
+               ],
+               "geographic_location_N4": {
+                 "city_name_01": "Phoenix",
+                 "state_or_province_code_02": "AZ",
+                 "postal_code_03": "85001",
+                 "country_code_04": "US"
+               }
+             }
+           ],
+           "party_identification_N1_loop_selling_party": [
+             {
+               "party_identification_N1": {
+                 "entity_identifier_code_01": "SE",
+                 "name_02": "Marvin Acme",
+                 "identification_code_qualifier_03": "92",
+                 "identification_code_04": "DROPSHIP CUSTOMER"
+               },
+               "party_location_N3": [
+                 {
+                   "address_information_01": "123 Main Street"
+                 }
+               ],
+               "geographic_location_N4": {
+                 "city_name_01": "Fairfield",
+                 "state_or_province_code_02": "NJ",
+                 "postal_code_03": "07004",
+                 "country_code_04": "US"
+               }
+             }
+           ]
+         },
+         "detail": {
+           "baseline_item_data_PO1_loop": [
+             {
+               "baseline_item_data_PO1": {
+                 "assigned_identification_01": "item-1",
+                 "quantity_02": 8,
+                 "unit_or_basis_for_measurement_code_03": "EA",
+                 "unit_price_04": 400,
+                 "product_service_id_qualifier_06": "VC",
+                 "product_service_id_07": "VND1234567",
+                 "product_service_id_qualifier_08": "SK",
+                 "product_service_id_09": "ACM/8900-400"
+               },
+               "product_item_description_PID_loop": [
+                 {
+                   "product_item_description_PID": {
+                     "item_description_type_01": "F",
+                     "description_05": "400 pound anvil"
+                   }
+                 }
+               ],
+               "line_item_acknowledgment_ACK_loop": [
+                 {
+                   "line_item_acknowledgment_ACK": {
+                     "line_item_status_code_01": "IA",
+                     "quantity_02": 8,
+                     "unit_or_basis_for_measurement_code_03": "EA"
+                   }
+                 }
+               ]
+             },
+             {
+               "baseline_item_data_PO1": {
+                 "assigned_identification_01": "item-2",
+                 "quantity_02": 4,
+                 "unit_or_basis_for_measurement_code_03": "EA",
+                 "unit_price_04": 125,
+                 "product_service_id_qualifier_06": "VC",
+                 "product_service_id_07": "VND000111222",
+                 "product_service_id_qualifier_08": "SK",
+                 "product_service_id_09": "ACM/1100-001"
+               },
+               "product_item_description_PID_loop": [
+                 {
+                   "product_item_description_PID": {
+                     "item_description_type_01": "F",
+                     "description_05": "Detonator"
+                   }
+                 }
+               ],
+               "line_item_acknowledgment_ACK_loop": [
+                 {
+                   "line_item_acknowledgment_ACK": {
+                     "line_item_status_code_01": "IA",
+                     "quantity_02": 4,
+                     "unit_or_basis_for_measurement_code_03": "EA"
+                   }
+                 }
+               ]
+             }
+           ]
+         },
+         "summary": {
+           "transaction_totals_CTT_loop": [
+             {
+               "transaction_totals_CTT": {
+                 "number_of_line_items_01": 2
+               }
+             }
+           ],
+           "transaction_set_trailer_SE": {
+             "number_of_included_segments_01": 17,
+             "transaction_set_control_number_02": "0001"
+           }
+         }
+       }
+     ],
+     "delimiters": {
+       "element": "*",
+       "composite": ">",
+       "repetition": "U",
+       "segment": "~"
+     }
+   }
    ```
 
-</details>
+      </details>
 
 ### Outbound EDI
 
-You can invoke the `outbound-edi` function through the UI for testing.
+You can invoke the `edi-outbound` function through the UI for testing.
 
-1. Navigate to the `outbound-edi` function in
-   the [Functions UI][https://www.stedi.com/app/functions/edi-outbound/edit](https://www.stedi.com/app/functions).
+1. Navigate to the `edi-outbound` function in
+   the (Functions UI)[https://www.stedi.com/app/functions/edi-outbound/edit](https://www.stedi.com/app/functions).
 
-2. Click the `Edit execution payload` link, paste the contents
-   of [src/resources/X12/5010/850/outbound.json](src/resources/X12/5010/850/outbound.json) into the payload modal, and
-   click save.
+1. Click the `Edit execution payload` link, and paste the contents
+   of [src/resources/X12/5010/850/outbound.json](src/resources/X12/5010/850/outbound.json) into the payload modal, and click save.
 
-3. Hit the `Execute` button, if successful the `Output` should look similar to the following:
+1. Click **Execute** and choose the **Synchronous** option. If successful the `Output` should look similar to the following:
 
-  <details><summary>Example function output (click to expand):</summary>
+   <details><summary>Example function output (click to expand):</summary>
 
    ```json
    {
-  "statusCode": 200,
-  "deliveryResults": [
-    {
-      "type": "bucket",
-      "payload": {
-        "bucketName": "4c22f54a-9ecf-41c8-b404-6a1f20674953-sftp",
-        "key": "trading_partners/ANOTHERMERCH/outbound/000000005-850.edi",
-        "body": "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *230113*2027*U*00501*000000005*0*T*>~GS*PO*MYAPPID*ANOTAPPID*20230113*202727*000000005*X*005010~ST*850*0001~BEG*00*DS*365465413**20220830~REF*CO*ACME-4567~REF*ZZ*Thank you for your business~PER*OC*Marvin Acme*TE*973-555-1212*EM*marvin@acme.com~TD5****ZZ*FHD~N1*ST*Wile E Coyote*92*123~N3*111 Canyon Court~N4*Phoenix*AZ*85001*US~PO1*item-1*0008*EA*400**VC*VND1234567*SK*ACM/8900-400~PID*F****400 pound anvil~PO1*item-2*0004*EA*125**VC*VND000111222*SK*ACM/1100-001~PID*F****Detonator~CTT*2~AMT*TT*3700~SE*16*0001~GE*1*000000005~IEA*1*000000005~"
-      }
-    }
-  ]
-}
+     "statusCode": 200,
+     "deliveryResults": [
+       {
+         "type": "bucket",
+         "payload": {
+           "bucketName": "<STEDI_ACCOUNT_ID>-sftp",
+           "key": "trading_partners/ANOTHERMERCH/outbound/1-850.edi",
+           "body": "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *230113*2027*U*00501*000000005*0*T*>~GS*PO*MYAPPID*ANOTAPPID*20230113*202727*000000005*X*005010~ST*850*0001~BEG*00*DS*365465413**20220830~REF*CO*ACME-4567~REF*ZZ*Thank you for your business~PER*OC*Marvin Acme*TE*973-555-1212*EM*marvin@acme.com~TD5****ZZ*FHD~N1*ST*Wile E Coyote*92*123~N3*111 Canyon Court~N4*Phoenix*AZ*85001*US~PO1*item-1*0008*EA*400**VC*VND1234567*SK*ACM/8900-400~PID*F****400 pound anvil~PO1*item-2*0004*EA*125**VC*VND000111222*SK*ACM/1100-001~PID*F****Detonator~CTT*2~AMT*TT*3700~SE*16*0001~GE*1*000000005~IEA*1*000000005~"
+         }
+       }
+     ]
+   }
    ```
 
-  </details>
+   </details>
 
-5. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). As shown above, the output of the
-   function includes the `bucketName` and `key` (path within the bucket) of where the generated EDI was saved.
+1. You can view the file using the [Buckets UI](https://www.stedi.com/app/buckets). The output of the
+   function includes the `bucketName` and `key` (path within the bucket) of where the function saved the generated EDI.
 
-# Customizing the workflows
+## Customizing the workflows
 
-The bootstrap workflow uses a sample trading partner to set up and test the read and write EDI workflows. You can
-customize the bootstrap workflow by doing one or all of the following:
+The bootstrap workflow uses sample [Partners](https://stedi.com/app/core/profiles), a [Partnership](https://preview.stedi.com/app/core/partnerships) associating the two partners, and configuration values for destinations configured in Stash to set up and test the read and write EDI workflows. You can customize the bootstrap workflow by doing one or all of the following:
 
-- [Edit the partner profile](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#add-a-partner-profile-for-your-trading-partners)
+- [Edit a partner profile](https://stedi.com/app/core/profiles)
   to replace the test trading partner with your real trading partners' details and requirements.
-- [Create Stedi mappings](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#map-inbound-messages-to-a-custom-json-shape). The base
-  bootstrap repository ingests and generates JSON with a schema that closely matches EDI documents. You may need to
-  create a mapping to transform EDI documents into a custom JSON shape for your internal system. You can also create a
-  mapping that transforms JSON data from your system into the JSON schema required for outgoing EDI documents.
-- [Create SFTP users](https://www.stedi.com/docs/getting-started/deploy-a-simple-edi-flow#send-and-receive-documents-with-sftp)
+- [Customize configuration in Stash](#stash-configuration). Add partnership and transaction set configurations for partnerships, set one or more destinations for a given configurations, forward errors to external services or archive in buckets, configure mappings, and send 997 acknowledgments.
+- Create [Stedi mappings](https://stedi.com/app/mappings). Add a `mappingId` property to a Stash destination configuration to transform the inbound payload before sending to a destination. Or, when sending EDI, the `mappingId` can transform the event payload into the JSON schema required for translating to EDI.
+- [Create SFTP users](https://www.stedi.com/app/sftp)
   for your trading partners, so they can send and retrieve EDI documents from Stedi Buckets.
 
 You may want to use additional Stedi products to further optimize your EDI workflows. We can help you customize the
 bootstrap workflow and determine which products and approaches are right for your use
 cases. [Contact us](https://www.stedi.com/contact) to set up a meeting with our technical team.
 
-# Polling remote FTP / SFTP servers
+## Poll remote FTP / SFTP servers
 
 You can poll remote FTP and SFTP servers to download files from your
 trading partners. Visit
 the [External FTP / SFTP poller README](src/functions/ftp/external-poller/README.md) for details.
 
-# Cleanup
+## Clean up bootstrap resources
 
 To delete all the resources created by the bootstrap, run the following command:
 
 ```bash
 npm run destroy
+```
+
+## Stash configuration
+
+[Stedi Stash](https://www.stedi.com/products/stash) is a key/value store. You can add and edit Stash key-value pairs to configure destinations for incoming and outgoing documents, destinations for errors, and which transaction sets require functional acknowledgements.
+
+### Destinations
+
+<details><summary>JSON Schema (click to expand):</summary>
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "mappingId": {
+      "type": "string"
+    },
+    "usageIndicatorCode": {
+      "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
+      "enum": ["P", "T", "I"]
+    },
+    "destination": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "as2"
+            },
+            "connectorId": {
+              "type": "string"
+            }
+          },
+          "required": ["type", "connectorId"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "bucket"
+            },
+            "bucketName": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": ["type", "bucketName", "path"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "function"
+            },
+            "functionName": {
+              "type": "string"
+            },
+            "additionalInput": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "required": ["type", "functionName"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "sftp"
+            },
+            "connectionDetails": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "number",
+                  "default": 22
+                },
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              },
+              "required": ["host", "username", "password"]
+            },
+            "remotePath": {
+              "type": "string",
+              "defailt": "/"
+            }
+          },
+          "required": ["type", "connectionDetails"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "webhook"
+            },
+            "url": {
+              "type": "string"
+            },
+            "verb": {
+              "type": "string",
+              "enum": ["PATCH", "POST", "PUT"],
+              "default": "POST"
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["type", "url"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "stash"
+            },
+            "keyspaceName": {
+              "type": "string"
+            },
+            "keyPrefix": {
+              "type": "string"
+            }
+          },
+          "required": ["type", "keyspaceName"]
+        }
+      ]
+    }
+  },
+  "required": ["destination"]
+}
+```
+
+</details>
+<br />
+
+#### Transaction set destination
+
+key: `destinations|${partnershipId}|${transactionSetId}`
+
+value (JSON Schema):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "$ref": "see destination type"
+      }
+    }
+  },
+  "required": ["destinations"]
+}
+```
+
+## Execution error destinations
+
+key: `destinations|errors|execution`
+
+value (JSON Schema):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "$ref": "see destination type"
+      }
+    }
+  },
+  "required": ["destinations"]
+}
+```
+
+### File error destinations
+
+key: `destinations|errors|execution`
+
+value (JSON Schema):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "$ref": "see destination type"
+      }
+    }
+  },
+  "required": ["destinations"]
+}
+```
+
+### Acknowledgment configuration
+
+key: `functional_acknowledgments|${partnershipId}`
+
+value (JSON Schema):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "generateFor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "comment": "Transaction Set Id"
+      }
+    }
+  },
+  "required": ["generateFor"]
+}
 ```

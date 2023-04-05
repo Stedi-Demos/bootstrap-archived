@@ -47,13 +47,13 @@ test.serial(
       destinationFilename,
     });
 
-    t.deepEqual(buckets.calls()[0].args[0].input, {
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
       key: `${path}/${destinationFilename}`,
       body: payload,
     });
 
-    t.deepEqual(as2Client.calls()[0].args[0].input, {
+    t.deepEqual(as2Client.calls()[0]!.args[0].input, {
       connectorId,
       sendFilePaths: [`/${bucketName}/${path}/${destinationFilename}`],
     });
@@ -78,9 +78,36 @@ test.serial(
       destinationFilename,
     });
 
-    t.deepEqual(buckets.calls()[0].args[0].input, {
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
       bucketName,
       key: `${path}/${destinationFilename}`,
+      body: payload,
+    });
+  }
+);
+
+test.serial(
+  "delivery via bucket removes preceding slashes from bucket path",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "//my-as2-trading-partner/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+      },
+      payload,
+      destinationFilename,
+    });
+
+    const expectedPath = "my-as2-trading-partner/outbound";
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
+      bucketName,
+      key: `${expectedPath}/${destinationFilename}`,
       body: payload,
     });
   }
@@ -132,13 +159,10 @@ test.serial(
       destinationFilename: "unused",
     });
 
-    t.deepEqual(functions.calls()[0].args[0].input, {
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
       functionName,
-      requestPayload: Buffer.from(
-        JSON.stringify({
-          ...payload,
-        })
-      ),
+      invocationType: "Synchronous",
+      payload,
     });
   }
 );
@@ -162,14 +186,13 @@ test.serial(
       destinationFilename: "unused",
     });
 
-    t.deepEqual(functions.calls()[0].args[0].input, {
+    t.deepEqual(functions.calls()[0]!.args[0].input, {
       functionName,
-      requestPayload: Buffer.from(
-        JSON.stringify({
-          ...payload,
-          ...additionalInput,
-        })
-      ),
+      invocationType: "Synchronous",
+      payload: {
+        ...payload,
+        ...additionalInput,
+      },
     });
   }
 );
@@ -206,6 +229,56 @@ test.serial(
         port,
         username,
         password,
+      })
+    );
+    t.assert(
+      sftpStub.put.calledOnceWith(
+        Buffer.from(payload),
+        `${remotePath}/${destinationFilename}`
+      )
+    );
+    t.assert(sftpStub.end.calledOnceWith());
+  }
+);
+
+test.serial(
+  "delivery via sftp includes privateKey and passphrase when connecting if included in config",
+  async (t) => {
+    const host = "test-host.sftp.com";
+    const port = 22;
+    const username = "test-user";
+    const password = "test-password";
+    const privateKey = "some-private-key-value";
+    const passphrase = "private-key-passphrase";
+    const remotePath = "/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "sftp",
+        connectionDetails: {
+          host,
+          port,
+          username,
+          password,
+          privateKey,
+          passphrase,
+        },
+        remotePath,
+      },
+      destinationFilename,
+      payload,
+    });
+
+    t.assert(
+      sftpStub.connect.calledOnceWith({
+        host,
+        port,
+        username,
+        password,
+        privateKey,
+        passphrase,
       })
     );
     t.assert(

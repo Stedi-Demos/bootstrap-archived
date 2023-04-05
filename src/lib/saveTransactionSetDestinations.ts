@@ -1,19 +1,23 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
-import { Partnership, PartnershipSchema } from "./types/PartnerRouting.js";
 import { DocumentType } from "@aws-sdk/types";
+import {
+  TransactionSetDestinations,
+  TransactionSetDestinationsSchema,
+} from "./types/Destination.js";
 
 const stash = stashClient();
 
-export const savePartnership = async (
+export const saveTransactionSetDestinations = async (
   id: string,
-  partnership: object
-): Promise<Partnership> => {
-  const parseResult = PartnershipSchema.safeParse(partnership);
+  destinations: object
+): Promise<TransactionSetDestinations> => {
+  const parseResult = TransactionSetDestinationsSchema.safeParse(destinations);
 
   if (!parseResult.success) {
-    console.dir(partnership, { depth: null });
+    console.dir(destinations, { depth: null });
+    console.dir(parseResult.error, { depth: null });
     throw Error("Partnership does not match allowed schema");
   }
 

@@ -1,10 +1,12 @@
 import z from "zod";
-
 import { DestinationSchema } from "./Destination.js";
+import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
 
-export const UsageIndicatorCodeSchema = z.enum(["P", "T", "I"]);
-
-export type UsageIndicatorCode = z.infer<typeof UsageIndicatorCodeSchema>;
+/*
+ * WARNING: THE SCHEMAS & TYPES DECLARED BELOW ARE NOW DEPRECATED
+ * They are only present to support type checking when migrating
+ * Stash configuration to Partners & Core.
+ */
 
 const BaseTransactionSetSchema = z.strictObject({
   description: z.string().optional(),
@@ -53,10 +55,6 @@ const TransactionSetWithoutGuideIdSchema = z.union([
   BaseGuideTransactionSetSchema,
 ]);
 
-export type TransactionSetWithoutGuideId = z.infer<
-  typeof TransactionSetWithoutGuideIdSchema
->;
-
 // transaction sets with `guideId`:
 // - no `release` or `transactionSetIdentifier` (inferred from guide)
 const TransactionSetWithGuideIdSchema = NonAckTransactionSetSchema.extend({
@@ -78,8 +76,6 @@ export const PartnershipSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
 });
 
-export type PartnershipInput = z.input<typeof PartnershipSchema>;
-
 export type Partnership = z.infer<typeof PartnershipSchema>;
 
 export const ISAPartnerIdLookupSchema = z.strictObject({
@@ -94,6 +90,7 @@ export const PartnerProfileSchema = z.strictObject({
   partnerInterchangeQualifier: z.string(),
   partnerInterchangeId: z.string(),
   partnerApplicationId: z.string(),
+  coreProfileType: z.literal("local").or(z.literal("partner")).optional(),
 });
 
 export type PartnerProfile = z.infer<typeof PartnerProfileSchema>;

@@ -22,7 +22,7 @@ export const compile = async (
     outfile: outputPath,
     platform: "node",
     format: "esm",
-    target: "node16",
+    target: "node18",
     minify: false,
     sourcemap: true,
     bundle: true,
@@ -109,6 +109,11 @@ const getZipOfFolder = (dir: string): JSZip => {
   // returns a JSZip instance filled with contents of dir.
 
   const allPaths = getFilePathsRecursively(dir);
+
+  if (!allPaths.some((path) => path.includes("node_modules/")))
+    throw new Error(
+      "There was an issue installing the dependencies using your local npm installation, please check your .npmrc and try again."
+    );
 
   const zip = new JSZip();
   for (const filePath of allPaths) {

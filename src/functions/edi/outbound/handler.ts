@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
-
-import { translateJsonToEdi } from "../../../lib/translateV3.js";
+import { translateJsonToEdi } from "../../../lib/translateEDI.js";
 import {
   failedExecution,
+  FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
@@ -17,129 +13,120 @@ import {
   generateDestinationFilename,
   groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
-import { loadPartnership } from "../../../lib/loadPartnership.js";
-import { resolveGuide } from "../../../lib/resolveGuide.js";
-import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.ts.js";
-import { loadPartnerProfile } from "../../../lib/loadPartnerProfile.js";
-import {
-  getTransactionSetConfigsForPartnership,
-  groupTransactionSetConfigsByType,
-  resolveTransactionSetConfig,
-} from "../../../lib/transactionSetConfigs.js";
-import { generateControlNumber } from "../../../lib/generateControlNumber.js";
+import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
   OutboundEvent,
   OutboundEventSchema,
 } from "../../../lib/types/OutboundEvent.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
+import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteEnvelope.js";
+import { partnersClient } from "../../../lib/clients/partners.js";
+import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
+import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 
-export const handler = async (event: any): Promise<Record<string, any>> => {
+const partners = partnersClient();
+
+export const handler = async (
+  event: OutboundEvent
+): Promise<Record<string, unknown> | FailureResponse> => {
   const executionId = generateExecutionId(event);
-  console.log("starting", JSON.stringify({ input: event, executionId }));
 
   try {
     await recordNewExecution(executionId, event);
     const outboundEvent = OutboundEventSchema.parse(event);
 
-    // load "my" Trading Partner profile
-    const { sendingPartnerId } = outboundEvent.metadata;
-    const senderProfile = await loadPartnerProfile(sendingPartnerId);
-
-    // load the receiver's Trading Partner profile
-    const { receivingPartnerId } = outboundEvent.metadata;
-    const receiverProfile = await loadPartnerProfile(receivingPartnerId);
-
     // load the outbound x12 configuration for the sender
-    const partnership = await loadPartnership(
-      sendingPartnerId,
-      receivingPartnerId
-    );
+    const partnership = await loadPartnershipById({
+      partnershipId: event.metadata.partnershipId,
+    });
 
     // get the transaction set from Guide JSON or event metadata
-    const transactionSetType = determineTransactionSetType(outboundEvent);
-    const release = determineRelease(outboundEvent);
+    const transactionSetIdentifier =
+      determineTransactionSetIdentifier(outboundEvent);
 
-    // get transaction set configs for partnership
-    const transactionSetConfigs = getTransactionSetConfigsForPartnership({
-      partnership,
-      sendingPartnerId,
-      receivingPartnerId,
-    });
-
-    const groupedTransactionSetConfigs = groupTransactionSetConfigsByType(
-      transactionSetConfigs
+    const transactionSetConfig = partnership.outboundTransactions?.find(
+      (txn) =>
+        txn.transactionSetIdentifier === transactionSetIdentifier &&
+        (!event.metadata.release || txn.release === event.metadata.release)
     );
 
-    // load the guide for the transaction set
-    const guideSummary = await resolveGuide({
-      guideIdsForPartnership:
-        groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds.map(
-          (config) => config.guideId
-        ),
-      transactionSetType,
-      release,
-    });
-
-    if (release && guideSummary.release !== release) {
+    if (transactionSetConfig === undefined)
       throw new Error(
-        `No guide exists for the specified release: ${release}, found guide with release: ${guideSummary.release}`
+        `Transaction set not found in partnership configuration for '${transactionSetIdentifier}'`
       );
-    }
 
-    // find the transaction set config for partnership that includes guide
-    const transactionSetConfig = resolveTransactionSetConfig(
-      groupedTransactionSetConfigs.transactionSetConfigsWithGuideIds,
-      guideSummary.guideId
-    );
+    const transactionSetDestinations = await loadTransactionDestinations({
+      partnershipId: event.metadata.partnershipId,
+      transactionSetIdentifier,
+    });
 
     // resolve the functional group for the transaction set
-    const functionalIdentifierCode =
-      lookupFunctionalIdentifierCode(transactionSetType);
+    const functionalIdentifierCode = lookupFunctionalIdentifierCode(
+      transactionSetIdentifier
+    );
 
     const documentDate = new Date();
 
     // Generate control number for sender/receiver pair
-    const isaControlNumber = await generateControlNumber({
-      segment: "ISA",
-      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
-      sendingPartnerId,
-      receivingPartnerId,
-    });
-    const gsControlNumber = await generateControlNumber({
-      segment: "GS",
-      usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
-      sendingPartnerId,
-      receivingPartnerId,
-    });
+    const { x12ControlNumber: isaControlNumber } = (await partners.send(
+      new IncrementX12ControlNumberCommand({
+        partnershipId: partnership.partnershipId,
+        controlNumberType: "interchange",
+      })
+    )) as { x12ControlNumber: number };
+
+    const { x12ControlNumber: gsControlNumber } = (await partners.send(
+      new IncrementX12ControlNumberCommand({
+        partnershipId: partnership.partnershipId,
+        controlNumberType: "group",
+      })
+    )) as { x12ControlNumber: number };
 
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
-    const envelope = {
+    const envelope: EdiTranslateWriteEnvelope = {
       interchangeHeader: {
-        senderQualifier: senderProfile.partnerInterchangeQualifier,
-        senderId: senderProfile.partnerInterchangeId,
-        receiverQualifier: receiverProfile.partnerInterchangeQualifier,
-        receiverId: receiverProfile.partnerInterchangeId,
+        senderQualifier: partnership.localProfile
+          .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["senderQualifier"],
+        senderId: partnership.localProfile.interchangeId,
+        receiverQualifier: partnership.partnerProfile
+          .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["receiverQualifier"],
+        receiverId: partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm"),
-        controlNumber: isaControlNumber,
-        usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
+        controlNumber: isaControlNumber.toString(),
+        usageIndicatorCode: event.metadata.usageIndicatorCode,
+        controlVersionNumber: transactionSetConfig.release.slice(
+          0,
+          5
+        ) as EdiTranslateWriteEnvelope["interchangeHeader"]["controlVersionNumber"],
       },
       groupHeader: {
-        functionalIdentifierCode,
-        applicationSenderCode: senderProfile.partnerApplicationId,
-        applicationReceiverCode: receiverProfile.partnerApplicationId,
+        functionalIdentifierCode: functionalIdentifierCode,
+        applicationSenderCode:
+          partnership.localProfile.defaultApplicationId ??
+          partnership.localProfile.interchangeId,
+        applicationReceiverCode:
+          partnership.partnerProfile.defaultApplicationId ??
+          partnership.partnerProfile.interchangeId,
         date: format(documentDate, "yyyy-MM-dd"),
         time: format(documentDate, "HH:mm:ss"),
-        controlNumber: gsControlNumber,
+        controlNumber: gsControlNumber.toString(),
+        release: transactionSetConfig.release,
       },
     };
 
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
-      transactionSetConfig.destinations.map(
-        async ({ destination, mappingId }) => {
+      transactionSetDestinations.destinations
+        .filter(
+          (d) =>
+            !d.usageIndicatorCode ||
+            d.usageIndicatorCode === outboundEvent.metadata.usageIndicatorCode
+        )
+        .map(async ({ destination, mappingId }) => {
           const guideJson =
             mappingId !== undefined
               ? await invokeMapping(mappingId, outboundEvent.payload)
@@ -150,13 +137,14 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
           // Translate the Guide schema-based JSON to X12 EDI
           const translation = await translateJsonToEdi(
             guideJson,
-            guideSummary.guideId,
-            envelope
+            transactionSetConfig.guideId,
+            envelope,
+            event.metadata.useBuiltInGuide
           );
 
           const destinationFilename = generateDestinationFilename(
-            isaControlNumber,
-            transactionSetType,
+            isaControlNumber.toString(),
+            transactionSetIdentifier,
             "edi"
           );
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
@@ -165,11 +153,13 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
             destinationFilename,
           };
           return await processSingleDelivery(deliverToDestinationInput);
-        }
-      )
+        })
     );
 
-    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults);
+    const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
+      payload: outboundEvent,
+      destinations: transactionSetDestinations.destinations,
+    });
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(
@@ -188,35 +178,37 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
       deliveryResults: deliveryResultsByStatus.fulfilled,
     };
   } catch (e) {
+    console.error(e);
     const errorWithContext = ErrorWithContext.fromUnknown(e);
     return failedExecution(executionId, errorWithContext);
   }
 };
 
-const determineTransactionSetType = (event: OutboundEvent): string => {
+const determineTransactionSetIdentifier = (event: OutboundEvent): string => {
   return (
     event.metadata.transactionSet ??
-    extractTransactionSetTypeFromGuideJson(event.payload)
+    extractTransactionSetIdentifierFromGuideJson(event.payload)
   );
 };
 
-const determineRelease = (event: OutboundEvent): string | undefined =>
-  event.metadata.release;
-
-const normalizeGuideJson = (guideJson: any): any[] => {
+const normalizeGuideJson = (guideJson: unknown): unknown[] => {
   // guide JSON can either be a single transaction set object: { heading, detail, summary },
   // or an array of transaction set objects: [{ heading, detail, summary}]
   return Array.isArray(guideJson) ? guideJson : [guideJson];
 };
 
-const extractTransactionSetTypeFromGuideJson = (guideJson: any): string => {
+const extractTransactionSetIdentifierFromGuideJson = (
+  guideJson: unknown
+): string => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   // ensure that there is exactly 1 transaction set type in the input
   const uniqueTransactionSets = normalizedGuideJson.reduce(
     (transactionSetIds: Set<string>, t) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const currentId =
-        t.heading?.transaction_set_header_ST
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (t as any).heading?.transaction_set_header_ST
           ?.transaction_set_identifier_code_01;
       if (currentId !== undefined) {
         transactionSetIds.add(currentId as string);
@@ -231,17 +223,21 @@ const extractTransactionSetTypeFromGuideJson = (guideJson: any): string => {
     throw new Error("unable to determine transaction set type from input");
   }
 
-  return uniqueTransactionSets.values().next().value;
+  const result = uniqueTransactionSets.values().next().value as string;
+
+  return result;
 };
 
-const validateTransactionSetControlNumbers = (guideJson: any) => {
+const validateTransactionSetControlNumbers = (guideJson: unknown) => {
   const normalizedGuideJson = normalizeGuideJson(guideJson);
 
   let expectedControlNumber = 1;
   normalizedGuideJson.forEach((t) => {
     // handle both string and numeric values
     const controlNumberValue = Number(
-      t.heading?.transaction_set_header_ST?.transaction_set_control_number_02
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (t as any).heading?.transaction_set_header_ST
+        ?.transaction_set_control_number_02
     );
     if (controlNumberValue !== expectedControlNumber) {
       const message = `invalid control number for transaction set: [expected: ${expectedControlNumber}, found: ${controlNumberValue}]`;

@@ -4,10 +4,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ListValuesCommand } from "@stedi/sdk-client-stash";
+import { ListValuesCommand, SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../lib/constants.js";
-import { savePartnership } from "../lib/savePartnership.js";
 
 const stash = stashClient();
 
@@ -49,7 +48,13 @@ export const up = async () => {
     const id = partnership.id;
     delete partnership.id;
 
-    await savePartnership(id, partnership);
+    await stash.send(
+      new SetValueCommand({
+        keyspaceName: PARTNERS_KEYSPACE_NAME,
+        key: id,
+        value: partnership,
+      })
+    );
   }
 };
 

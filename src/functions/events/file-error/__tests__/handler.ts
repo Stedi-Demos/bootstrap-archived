@@ -36,7 +36,7 @@ test.afterEach.always(() => {
 });
 
 test.serial(
-  `processes incoming engine file.failed event, sending event to configured destinations`,
+  `processes incoming core file.failed event, sending event to configured destinations`,
   async (t) => {
     stash
       .on(GetValueCommand, {

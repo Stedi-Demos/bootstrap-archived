@@ -84,4 +84,5 @@ import { sftpClient } from "../lib/clients/sftp.js";
       key: user.homeDirectory,
     })
   );
+  console.log("done");
 })();

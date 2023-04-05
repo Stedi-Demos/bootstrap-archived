@@ -2,13 +2,12 @@ import * as z from "zod";
 import { EventFunctionalGroupSchema } from "../../../lib/types/EventFunctionalGroup";
 import { EventInterchangeSchema } from "../../../lib/types/EventInterchange";
 
-export const EngineFunctionalGroupTranslationSucceededEventSchema =
+export const CoreFunctionalGroupTranslationSucceededEventSchema =
   z.strictObject({
     source: z.literal("stedi.core"),
     ["detail-type"]: z.literal("functional_group.processed"),
     detail: z.strictObject({
       version: z.literal("2023-02-13"),
-      // TODO: not yet implemented in Engine 2023/03/20
       direction: z.enum(["SENT", "RECEIVED"]),
       envelopes: z.strictObject({
         interchange: EventInterchangeSchema,
@@ -41,6 +40,6 @@ export const EngineFunctionalGroupTranslationSucceededEventSchema =
     }),
   });
 
-export type EngineFunctionalGroupTranslationSucceededEvent = z.infer<
-  typeof EngineFunctionalGroupTranslationSucceededEventSchema
+export type CoreFunctionalGroupTranslationSucceededEvent = z.infer<
+  typeof CoreFunctionalGroupTranslationSucceededEventSchema
 >;

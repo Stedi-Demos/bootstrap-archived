@@ -1,4 +1,4 @@
-import { EngineFunctionalGroupTranslationSucceededEvent } from "./types.js";
+import { CoreFunctionalGroupTranslationSucceededEvent } from "./types.js";
 import { stashClient } from "../../../lib/clients/stash.js";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
@@ -19,7 +19,7 @@ import {
 const stash = stashClient();
 
 export const handler = async (
-  event: EngineFunctionalGroupTranslationSucceededEvent
+  event: CoreFunctionalGroupTranslationSucceededEvent
 ) => {
   const executionId = generateExecutionId(event);
   try {
@@ -35,7 +35,7 @@ export const handler = async (
 };
 
 const send997Acknowledgment = async (
-  event: EngineFunctionalGroupTranslationSucceededEvent
+  event: CoreFunctionalGroupTranslationSucceededEvent
 ) => {
   const { partnershipId } = event.detail.partnership;
 

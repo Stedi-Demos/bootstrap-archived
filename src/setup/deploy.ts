@@ -146,14 +146,14 @@ const createOrUpdateEventBinding = async (
       source: ["stedi.core"],
       "detail-type": ["file.failed"],
     },
-    "engine-file-errors"
+    "core-file-errors"
   );
-  EVENT_BINDING_NAMES.push("engine-file-errors");
+  EVENT_BINDING_NAMES.push("core-file-errors");
 
   promises.push(
     waitUntilEventToFunctionBindingCreateComplete(
       { client: events, maxWaitTime },
-      { eventToFunctionBindingName: "engine-file-errors" }
+      { eventToFunctionBindingName: "core-file-errors" }
     )
   );
 

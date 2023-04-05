@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { EventInterchangeSchema } from "./EventInterchange.js";
 
-export const EngineFileErrorSchema = z.object({
+export const CoreFileErrorSchema = z.object({
   detail: z.object({
     version: z.literal("2023-02-13"),
     fileId: z.string(),
@@ -22,4 +22,4 @@ export const EngineFileErrorSchema = z.object({
   source: z.literal("stedi.core"),
 });
 
-export type EngineFileError = z.infer<typeof EngineFileErrorSchema>;
+export type CoreFileError = z.infer<typeof CoreFileErrorSchema>;

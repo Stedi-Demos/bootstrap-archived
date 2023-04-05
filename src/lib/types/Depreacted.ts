@@ -5,7 +5,7 @@ import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
 /*
  * WARNING: THE SCHEMAS & TYPES DECLARED BELOW ARE NOW DEPRECATED
  * They are only present to support type checking when migrating
- * Stash configuration to Partners & Engine.
+ * Stash configuration to Partners & Core.
  */
 
 const BaseTransactionSetSchema = z.strictObject({
@@ -90,7 +90,7 @@ export const PartnerProfileSchema = z.strictObject({
   partnerInterchangeQualifier: z.string(),
   partnerInterchangeId: z.string(),
   partnerApplicationId: z.string(),
-  engineProfileType: z.literal("local").or(z.literal("partner")).optional(),
+  coreProfileType: z.literal("local").or(z.literal("partner")).optional(),
 });
 
 export type PartnerProfile = z.infer<typeof PartnerProfileSchema>;

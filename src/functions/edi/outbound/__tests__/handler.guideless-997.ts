@@ -14,6 +14,7 @@ import {
   GetX12PartnershipOutput,
   IncrementX12ControlNumberCommand,
   IncrementX12ControlNumberOutput,
+  Timezone,
 } from "@stedi/sdk-client-partners";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
@@ -72,12 +73,13 @@ test("translate 997 guide json without a guide and delivers to destination", asy
           release: "008010",
           createdAt: new Date(),
           updatedAt: new Date(),
-          timeZone: "Americas/New_York",
         },
       ],
       inboundTransactions: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      timezone: Timezone.AMERICA_NEW_YORK,
+      interchangeUsageIndicator: "T",
     } satisfies GetX12PartnershipOutput as any)
     // increment interchange control number
     .on(IncrementX12ControlNumberCommand as any, {

@@ -5,7 +5,7 @@ import {
   recordNewExecution,
 } from "../../../lib/execution.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
-import { EngineFileError } from "../../../lib/types/FileError.js";
+import { CoreFileError } from "../../../lib/types/FileError.js";
 import { loadFileErrorDestinations } from "../../../lib/loadFileErrorDestinations.js";
 
 import {
@@ -13,7 +13,7 @@ import {
   ProcessDeliveriesInput,
 } from "../../../lib/deliveryManager.js";
 
-export const handler = async (event: EngineFileError) => {
+export const handler = async (event: CoreFileError) => {
   const executionId = generateExecutionId(event);
   try {
     await recordNewExecution(executionId, event);
@@ -27,7 +27,7 @@ export const handler = async (event: EngineFileError) => {
   }
 };
 
-const sendErrorToDestination = async (event: EngineFileError) => {
+const sendErrorToDestination = async (event: CoreFileError) => {
   console.log(event);
   const errorDestinations = await loadFileErrorDestinations();
 

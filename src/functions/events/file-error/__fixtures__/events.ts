@@ -1,6 +1,6 @@
-import { EngineFileError } from "../../../../lib/types/FileError";
+import { CoreFileError } from "../../../../lib/types/FileError";
 
-export const sampleFileErrorEvent: EngineFileError = {
+export const sampleFileErrorEvent: CoreFileError = {
   "detail-type": "file.failed",
   source: "stedi.core",
   detail: {
@@ -23,7 +23,7 @@ export const sampleFileErrorEvent: EngineFileError = {
     },
     input: {
       type: "EDI/X12",
-      bucketName: "stedi-default-engine-artifacts-217851219840",
+      bucketName: "stedi-default-core-artifacts-217851219840",
       key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.edi",
     },
     errors: ["An error occurred"],

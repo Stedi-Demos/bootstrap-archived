@@ -13,6 +13,7 @@ import {
   GetX12PartnershipCommandOutput,
   InboundX12TransactionSettingsSummary,
   OutboundX12TransactionSettingsSummary,
+  Timezone,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../../lib/clients/partners.js";
 import { updateResourceMetadata } from "../../support/bootstrapMetadata.js";
@@ -75,6 +76,8 @@ export const createProfiles = async ({
         partnershipId,
         localProfileId: localProfile.profileId,
         partnerProfileId: remoteProfile.profileId,
+        interchangeUsageIndicator: "T",
+        timezone: Timezone.AMERICA_NEW_YORK,
       })
     );
   } catch (error) {
@@ -170,7 +173,6 @@ const ensureOutboundTransaction = async ({
       transactionSet = guide.target!.transactionSet!;
       params = {
         partnershipId: partnership.partnershipId,
-        timeZone: "UTC",
         release: guide.target!.release,
         transactionSetIdentifier: guide.target!.transactionSet,
         guideId: parseGuideId(guide.id!),
@@ -179,7 +181,6 @@ const ensureOutboundTransaction = async ({
       transactionSet = "997";
       params = {
         partnershipId: partnership.partnershipId,
-        timeZone: "UTC",
         release: "005010",
         transactionSetIdentifier: "997",
       };

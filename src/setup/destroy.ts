@@ -93,11 +93,11 @@ const INBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "inbound-control-numbers";
   // if (resources.EXECUTIONS_BUCKET_NAME !== undefined)
   //   await emptyAndDeleteBucket(resources.EXECUTIONS_BUCKET_NAME);
 
-  // TODO: Cannot destroy engine bucket without destroying engine first,
-  // engine cannot be destroyed without emptying the engine artifacts bucket,
+  // TODO: Cannot destroy core bucket without destroying core first,
+  // core cannot be destroyed without emptying the core artifacts bucket,
   // which has a non-public name
-  // if (resources.ENGINE_INGESTION_BUCKET_NAME !== undefined)
-  //   await emptyAndDeleteBucket(resources.ENGINE_INGESTION_BUCKET_NAME);
+  // if (resources.CORE_INGESTION_BUCKET_NAME !== undefined)
+  //   await emptyAndDeleteBucket(resources.CORE_INGESTION_BUCKET_NAME);
 
   // Delete Guides
   console.log("Deleting Guides");

@@ -1,11 +1,11 @@
-import { engineClient } from "../lib/clients/engine.js";
+import { coreClient } from "../lib/clients/cores.js";
 import {
-  CreateEngineCommand,
-  DescribeEngineCommand,
-  UpdateEngineCommand,
-  waitUntilEngineCreateComplete,
-  waitUntilEngineUpdateComplete,
-} from "@stedi/sdk-client-engines";
+  CreateCoreCommand,
+  DescribeCoreCommand,
+  UpdateCoreCommand,
+  waitUntilCoreCreateComplete,
+  waitUntilCoreUpdateComplete,
+} from "@stedi/sdk-client-cores";
 import { maxWaitTime } from "../setup/contants.js";
 import {
   CreateBucketCommand,
@@ -17,14 +17,14 @@ import { updateResourceMetadata } from "./bootstrapMetadata.js";
 import dotenv from "dotenv";
 import { updateDotEnvFile } from "./utils.js";
 
-const engine = engineClient();
+const core = coreClient();
 const buckets = bucketsClient();
 
-export const engineName = "default";
+export const coreName = "default";
 
-export const ensureEngineIsRunning = async () => {
+export const ensureCoreIsRunning = async () => {
   try {
-    await engine.send(new DescribeEngineCommand({ engineName }));
+    await core.send(new DescribeCoreCommand({ coreName }));
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -32,9 +32,9 @@ export const ensureEngineIsRunning = async () => {
       "name" in error &&
       error.name === "ResourceNotFoundException"
     ) {
-      const bucketName = `${engineName}-engine-ingestion-${randomBytes(
-        6
-      ).toString("hex")}`;
+      const bucketName = `${coreName}-core-ingestion-${randomBytes(6).toString(
+        "hex"
+      )}`;
 
       await buckets.send(
         new CreateBucketCommand({
@@ -51,26 +51,26 @@ export const ensureEngineIsRunning = async () => {
         }
       );
 
-      await engine.send(
-        new CreateEngineCommand({
-          engineName,
+      await core.send(
+        new CreateCoreCommand({
+          coreName,
           inboxEdiBucketName: bucketName,
         })
       );
 
-      await waitUntilEngineCreateComplete(
-        { client: engine, maxWaitTime },
-        { engineName }
+      await waitUntilCoreCreateComplete(
+        { client: core, maxWaitTime },
+        { coreName }
       );
 
       await updateResourceMetadata({
-        ENGINE_INGESTION_BUCKET_NAME: bucketName,
+        CORE_INGESTION_BUCKET_NAME: bucketName,
       });
 
       const existingEnvVars = dotenv.config().parsed ?? {};
       updateDotEnvFile({
         ...existingEnvVars,
-        ...{ ENGINE_INGESTION_BUCKET_NAME: bucketName },
+        ...{ CORE_INGESTION_BUCKET_NAME: bucketName },
       });
     } else {
       console.log(error);
@@ -78,21 +78,21 @@ export const ensureEngineIsRunning = async () => {
   }
 };
 
-export const upgradeEngine = async () => {
-  await engine.send(new UpdateEngineCommand({ engineName }));
+export const upgradeCore = async () => {
+  await core.send(new UpdateCoreCommand({ coreName }));
 
-  const update = await engine.send(new DescribeEngineCommand({ engineName }));
+  const update = await core.send(new DescribeCoreCommand({ coreName }));
 
   if (update.resourceDetail?.status === "UNDER_CHANGE")
-    console.log("Checking for engine updates...");
+    console.log("Checking for core updates...");
   else {
     console.log("Issue starting update");
     return false;
   }
 
-  const upgrade = await waitUntilEngineUpdateComplete(
-    { client: engine, maxWaitTime },
-    { engineName }
+  const upgrade = await waitUntilCoreUpdateComplete(
+    { client: core, maxWaitTime },
+    { coreName }
   );
 
   return upgrade.state === "SUCCESS";

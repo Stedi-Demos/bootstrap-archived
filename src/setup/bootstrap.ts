@@ -4,11 +4,11 @@ import { StashStorage } from "../lib/migration/stashStorage.js";
 import { migrator } from "../lib/migration/config.js";
 import { createProfiles } from "./bootstrap/createProfiles.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
-import { ensureEngineIsRunning } from "../support/engine.js";
+import { ensureCoreIsRunning } from "../support/core.js";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
-  await ensureEngineIsRunning();
+  await ensureCoreIsRunning();
 
   const guide850 = await ensureGuideExists(
     "src/resources/X12/5010/850/guide.json"

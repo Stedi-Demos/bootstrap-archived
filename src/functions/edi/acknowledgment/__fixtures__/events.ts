@@ -1,6 +1,6 @@
-import { EngineFunctionalGroupTranslationSucceededEvent } from "../types.js";
+import { CoreFunctionalGroupTranslationSucceededEvent } from "../types.js";
 
-export const sampleTranslationSucceededEvent: EngineFunctionalGroupTranslationSucceededEvent =
+export const sampleTranslationSucceededEvent: CoreFunctionalGroupTranslationSucceededEvent =
   {
     "detail-type": "functional_group.processed",
     source: "stedi.core",
@@ -33,7 +33,7 @@ export const sampleTranslationSucceededEvent: EngineFunctionalGroupTranslationSu
       },
       input: {
         type: "EDI/X12",
-        bucketName: "stedi-default-engine-artifacts-217851219840",
+        bucketName: "stedi-default-core-artifacts-217851219840",
         key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.edi",
       },
       transactionSetIds: ["850"],

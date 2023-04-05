@@ -43,7 +43,7 @@ export const handler = async (
       })
     );
 
-    // grab the Guide JSON that engine output for this incoming file
+    // grab the Guide JSON that core output for this incoming file
     const fileContents = await consumers.text(
       getObjectResponse.body as Readable
     );
@@ -82,7 +82,7 @@ export const handler = async (
 
     await processDeliveries(processDeliveriesInput);
 
-    // Delete the input file (it is archived by engine)
+    // Delete the input file (it is archived by core)
     await ensureFileIsDeleted(
       transactionEvent.detail.input.bucketName,
       transactionEvent.detail.input.key

@@ -43,13 +43,13 @@ export const sampleTransactionProcessedEvent = {
     },
     input: {
       type: "EDI/X12",
-      bucketName: "stedi-default-engine-artifacts-217851219840",
+      bucketName: "stedi-default-core-artifacts-217851219840",
       key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.edi",
     },
     output: {
       type: "STEDI/GUIDE-JSON",
       bucketName:
-        "default-engine-inbox-json-bfa02b63-0f40-4ea6-a99d-7edb8ed9e86d",
+        "default-core-inbox-json-bfa02b63-0f40-4ea6-a99d-7edb8ed9e86d",
       key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.json",
     },
     partnership: {

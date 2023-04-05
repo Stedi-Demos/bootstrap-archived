@@ -17,6 +17,7 @@ import {
   CreateX12PartnershipCommand,
   CreateX12ProfileCommand,
   CreateX12ProfileCommandInput,
+  Timezone,
 } from "@stedi/sdk-client-partners";
 import { partnersClient } from "../lib/clients/partners.js";
 import { cloneDeep } from "lodash-es";
@@ -67,16 +68,16 @@ export const up = async () => {
     const [localStashProfile, ...unexpectedLocals] = [
       sendingStashProfile,
       receivingStashProfile,
-    ].filter((stashProfile) => stashProfile.engineProfileType === "local");
+    ].filter((stashProfile) => stashProfile.coreProfileType === "local");
 
     if (unexpectedLocals.length > 0)
       throw new Error(
-        `Only one profile within a partnership should be designated as "engineProfileType: local", partnership: '${stashPartnership.id!}'`
+        `Only one profile within a partnership should be designated as "coreProfileType: local", partnership: '${stashPartnership.id!}'`
       );
 
     if (localStashProfile === undefined)
       throw new Error(
-        `One profile within a partnership must be designated as "engineProfileType: local", partnership: '${stashPartnership.id!}'`
+        `One profile within a partnership must be designated as "coreProfileType: local", partnership: '${stashPartnership.id!}'`
       );
 
     const partnerStashProfile = [
@@ -84,14 +85,14 @@ export const up = async () => {
       receivingStashProfile,
     ].find(
       (stashProfile) =>
-        (stashProfile.engineProfileType === "partner" ||
-          stashProfile.engineProfileType === undefined) &&
+        (stashProfile.coreProfileType === "partner" ||
+          stashProfile.coreProfileType === undefined) &&
         stashProfile.id !== localStashProfile.id
     );
 
     if (partnerStashProfile === undefined)
       throw new Error(
-        `One profile within a partnership must be designated as "engineProfileType: partner", partnership: '${stashPartnership.id!}'`
+        `One profile within a partnership must be designated as "coreProfileType: partner", partnership: '${stashPartnership.id!}'`
       );
 
     // prepare "local" profile in Partners API
@@ -161,6 +162,8 @@ export const up = async () => {
         partnershipId,
         localProfileId: localProfile.profileId,
         partnerProfileId: partnerProfile.profileId,
+        timezone: Timezone.AMERICA_NEW_YORK,
+        interchangeUsageIndicator: "T",
       })
     );
 
@@ -232,7 +235,6 @@ export const up = async () => {
         rule = await partners.send(
           new CreateOutboundX12TransactionSettingsCommand({
             partnershipId: partnership.partnershipId,
-            timeZone: "UTC",
             release: guideTarget.release,
             transactionSetIdentifier: guideTarget.transactionSet,
             guideId,

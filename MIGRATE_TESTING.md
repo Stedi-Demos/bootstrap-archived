@@ -18,7 +18,7 @@ npx ts-node-esm ./src/scripts/backup.ts
 npx ts-node-esm ./src/scripts/restore.ts
 ```
 
-5. Update at least one profile from each partnership in the `partners-configuration` Stash keyspace to include `engineProfileType: "local"` so the migration script can correctly identify the local profile.
+5. Update at least one profile from each partnership in the `partners-configuration` Stash keyspace to include `coreProfileType: "local"` so the migration script can correctly identify the local profile.
 
 6. Run the migration script:
 

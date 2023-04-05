@@ -4,7 +4,9 @@ import {
   DescribeEngineCommand,
   UpdateEngineCommand,
   waitUntilEngineCreateComplete,
+  DeleteEngineCommand,
   waitUntilEngineUpdateComplete,
+  waitUntilEngineDeleteComplete,
 } from "@stedi/sdk-client-engines";
 import { maxWaitTime } from "../setup/contants.js";
 import {
@@ -91,6 +93,17 @@ export const upgradeEngine = async () => {
   }
 
   const upgrade = await waitUntilEngineUpdateComplete(
+    { client: engine, maxWaitTime },
+    { engineName }
+  );
+
+  return upgrade.state === "SUCCESS";
+};
+
+export const destroyEngine = async () => {
+  await engine.send(new DeleteEngineCommand({ engineName }));
+
+  const upgrade = await waitUntilEngineDeleteComplete(
     { client: engine, maxWaitTime },
     { engineName }
   );

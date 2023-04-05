@@ -30,6 +30,9 @@ import {
   waitUntilEventToFunctionBindingDeleteComplete,
 } from "@stedi/sdk-client-events";
 import { maxWaitTime } from "./contants.js";
+import { destroyEngine } from "../support/engine.js";
+import { engineClient } from "../lib/clients/engine.js";
+import { DescribeEngineCommand } from "@stedi/sdk-client-engines";
 
 const stash = stashClient();
 const events = eventsClient();
@@ -181,10 +184,19 @@ const INBOUND_CONTROL_NUMBER_KEYSPACE_NAME = "inbound-control-numbers";
 
   await Promise.all(functionPromises);
 
+  // delete engine
+  const engine = await engineClient().send(
+    new DescribeEngineCommand({ engineName: "default" })
+  );
+  if (engine.engineName) {
+    await emptyAndDeleteBucket(engine.inboxEdiBucketName!);
+    await destroyEngine();
+  }
+
   console.log("Done");
 })();
 
-async function _emptyAndDeleteBucket(bucketName: string) {
+async function emptyAndDeleteBucket(bucketName: string) {
   await emptyBucket(bucketName);
   await buckets.send(new DeleteBucketCommand({ bucketName }));
 }

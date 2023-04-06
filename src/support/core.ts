@@ -1,30 +1,31 @@
 import { coreClient } from "../lib/clients/cores.js";
 import {
-  CreateCoreCommand,
   DescribeCoreCommand,
   UpdateCoreCommand,
-  waitUntilCoreCreateComplete,
   waitUntilCoreUpdateComplete,
 } from "@stedi/sdk-client-cores";
 import { maxWaitTime } from "../setup/contants.js";
-import {
-  CreateBucketCommand,
-  waitUntilBucketCreateComplete,
-} from "@stedi/sdk-client-buckets";
-import { bucketsClient } from "../lib/clients/buckets.js";
-import { randomBytes } from "crypto";
+
 import { updateResourceMetadata } from "./bootstrapMetadata.js";
 import dotenv from "dotenv";
 import { updateDotEnvFile } from "./utils.js";
 
 const core = coreClient();
-const buckets = bucketsClient();
 
 export const coreName = "default";
 
 export const ensureCoreIsRunning = async () => {
   try {
-    await core.send(new DescribeCoreCommand({ coreName }));
+    const deployedCore = await core.send(new DescribeCoreCommand({ coreName }));
+    await updateResourceMetadata({
+      CORE_INGESTION_BUCKET_NAME: deployedCore.inboxEdiBucketName!,
+    });
+
+    const existingEnvVars = dotenv.config().parsed ?? {};
+    updateDotEnvFile({
+      ...existingEnvVars,
+      ...{ CORE_INGESTION_BUCKET_NAME: deployedCore.inboxEdiBucketName! },
+    });
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -32,48 +33,12 @@ export const ensureCoreIsRunning = async () => {
       "name" in error &&
       error.name === "ResourceNotFoundException"
     ) {
-      const bucketName = `${coreName}-core-ingestion-${randomBytes(6).toString(
-        "hex"
-      )}`;
-
-      await buckets.send(
-        new CreateBucketCommand({
-          bucketName,
-        })
+      console.warn(
+        "Fatal: Core is not enabled in this account. Visit https://www.stedi.com/app/engine/file-executions to enable Core."
       );
-      await waitUntilBucketCreateComplete(
-        {
-          client: buckets,
-          maxWaitTime: 450,
-        },
-        {
-          bucketName,
-        }
-      );
-
-      await core.send(
-        new CreateCoreCommand({
-          coreName,
-          inboxEdiBucketName: bucketName,
-        })
-      );
-
-      await waitUntilCoreCreateComplete(
-        { client: core, maxWaitTime },
-        { coreName }
-      );
-
-      await updateResourceMetadata({
-        CORE_INGESTION_BUCKET_NAME: bucketName,
-      });
-
-      const existingEnvVars = dotenv.config().parsed ?? {};
-      updateDotEnvFile({
-        ...existingEnvVars,
-        ...{ CORE_INGESTION_BUCKET_NAME: bucketName },
-      });
+      process.exit(1);
     } else {
-      console.log(error);
+      throw error;
     }
   }
 };

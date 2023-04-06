@@ -7,7 +7,7 @@ This repository contains an end-to-end configuration for building an X12 EDI sys
 implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution
 may differ depending on your systems and requirements.
 
-We strongly recommend reviewing the documentation for [Stedi Core](https://www.stedi.com/docs/stedi-core) before deploying the bootstrap implementation.
+We strongly recommend reviewing the documentation for [Stedi Core](https://www.stedi.com/docs/core) before deploying the bootstrap implementation.
 
 - [Hands-on support](#hands-on-support)
 - [Bootstrap read and write workflow](#bootstrap-read-and-write-workflow)
@@ -32,7 +32,7 @@ includes:
 
 ## Bootstrap read and write workflow
 
-The [Stedi Core module](https://www.stedi.com/docs/stedi-core) ingests data and emits events with the results of its conversion and validation processing. For example, Core emits an event when it receives a new file or successfully processes a transaction set.
+The [Stedi Core module](https://www.stedi.com/docs/core) ingests data and emits events with the results of its conversion and validation processing. For example, Core emits an event when it receives a new file or successfully processes a transaction set.
 
 To create a custom end-to-end EDI system on Stedi, you need to automate tasks like adding files from your input buckets and reacting to the emitted events. For example, you may want to automatically forward translated EDI files to an API, FTP server, AS2 server, or a [Stedi function](https://www.stedi.com/docs/functions) to run custom code.
 

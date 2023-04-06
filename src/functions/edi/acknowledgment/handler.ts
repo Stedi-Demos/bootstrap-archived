@@ -77,7 +77,7 @@ const send997Acknowledgment = async (
         transactionSet: "997",
         partnershipId: event.detail.partnership.partnershipId,
         usageIndicatorCode,
-        release: event.detail.envelopes.functionalGroup.release,
+        release: event.detail.envelopes.functionalGroup.release.slice(0, 6),
         useBuiltInGuide: true,
       },
       payload: json997Accepted(

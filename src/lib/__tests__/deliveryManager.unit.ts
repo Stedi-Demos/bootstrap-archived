@@ -114,6 +114,32 @@ test.serial(
 );
 
 test.serial(
+  "delivery via bucket does insert preceding slash when path is empty",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+      },
+      payload,
+      destinationFilename,
+    });
+
+    t.deepEqual(buckets.calls()[0].args[0].input, {
+      bucketName,
+      key: destinationFilename,
+      body: payload,
+    });
+  }
+);
+
+test.serial(
   "delivery via function fails when payload is string but additionalInput object is configured",
   async (t) => {
     const functionName = "test-function";

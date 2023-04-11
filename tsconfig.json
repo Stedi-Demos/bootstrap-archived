@@ -13,11 +13,13 @@
 
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "outDir": "dist",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+ 
   },
 
   "ts-node": {
-    "esm": true
+    "esm": true,
+    "files": true
   },
   "exclude": ["dist", "node_modules"]
 }

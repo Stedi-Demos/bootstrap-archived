@@ -1,0 +1,97 @@
+{
+  "version": "1.0",
+  "timestamp": "2023-04-05T17:20:19.646Z",
+  "requestContext": {
+    "requestId": "30bcfb88-8f0e-48e0-8d69-538498c2e7c5",
+    "functionArn": "arn:aws:lambda:us-east-1:533593023161:function:sleepy15:$LATEST",
+    "condition": "RetriesExhausted",
+    "approximateInvokeCount": 3
+  },
+  "requestPayload": {
+    "version": "0",
+    "id": "6604b211-a692-24ad-8fe4-f2e463948489",
+    "detail-type": "AWS API Call via CloudTrail",
+    "source": "aws.s3",
+    "account": "533593023161",
+    "time": "2023-04-05T17:17:30Z",
+    "region": "us-east-1",
+    "resources": [],
+    "detail": {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROAXYPE7MK4SMGPOKDL5:Vanta-1680715050437",
+        "arn": "arn:aws:sts::533593023161:assumed-role/vanta-auditor/Vanta-1680715050437",
+        "accountId": "533593023161",
+        "accessKeyId": "ASIAXYPE7MK4VMAMYL74",
+        "sessionContext": {
+          "sessionIssuer": {
+            "type": "Role",
+            "principalId": "AROAXYPE7MK4SMGPOKDL5",
+            "arn": "arn:aws:iam::533593023161:role/vanta-auditor",
+            "accountId": "533593023161",
+            "userName": "vanta-auditor"
+          },
+          "webIdFederationData": {},
+          "attributes": {
+            "creationDate": "2023-04-05T17:17:30Z",
+            "mfaAuthenticated": "false"
+          }
+        }
+      },
+      "eventTime": "2023-04-05T17:17:30Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "GetBucketAcl",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "34.227.127.165",
+      "userAgent": "[aws-sdk-js/3.137.0 os/linux/5.10.173-154.642.amzn2.x86_64 lang/js md/nodejs/18.12.0 api/s3/3.137.0 exec-env/AWS_ECS_FARGATE]",
+      "requestParameters": {
+        "bucketName": "bdq-aossbeta-demobdqlargefiles280f9b21-1q6hxayill3ug",
+        "Host": "bdq-aossbeta-demobdqlargefiles280f9b21-1q6hxayill3ug.s3.us-east-1.amazonaws.com",
+        "acl": ""
+      },
+      "responseElements": null,
+      "additionalEventData": {
+        "SignatureVersion": "SigV4",
+        "CipherSuite": "ECDHE-RSA-AES128-GCM-SHA256",
+        "bytesTransferredIn": 0,
+        "AuthenticationMethod": "AuthHeader",
+        "x-amz-id-2": "gDuXQ+Z1SpwhjWv85yXXJ7jZ5ezPdRYK1ZByfBeaEGwJaEvWOHIHA4AMb3SEz4WMiituz+ZsZh4=",
+        "bytesTransferredOut": 560
+      },
+      "requestID": "Z58XJG7VR67T8VZ9",
+      "eventID": "bcf51007-1fcb-448d-b7f5-c97cc7dbf0b3",
+      "readOnly": true,
+      "resources": [
+        {
+          "accountId": "533593023161",
+          "type": "AWS::S3::Bucket",
+          "ARN": "arn:aws:s3:::bdq-aossbeta-demobdqlargefiles280f9b21-1q6hxayill3ug"
+        }
+      ],
+      "eventType": "AwsApiCall",
+      "managementEvent": true,
+      "recipientAccountId": "533593023161",
+      "eventCategory": "Management",
+      "tlsDetails": {
+        "tlsVersion": "TLSv1.2",
+        "cipherSuite": "ECDHE-RSA-AES128-GCM-SHA256",
+        "clientProvidedHostHeader": "bdq-aossbeta-demobdqlargefiles280f9b21-1q6hxayill3ug.s3.us-east-1.amazonaws.com"
+      }
+    }
+  },
+  "responseContext": {
+    "statusCode": 200,
+    "executedVersion": "$LATEST",
+    "functionError": "Unhandled"
+  },
+  "responsePayload": {
+    "errorType": "ErrorWithContext",
+    "errorMessage": "A dog ate my homework",
+    "trace": [
+      "ErrorWithContext: A dog ate my homework",
+      "    at Runtime.handler (file:///var/task/index.mjs:11:7)",
+      "    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1085:29)"
+    ]
+  }
+}

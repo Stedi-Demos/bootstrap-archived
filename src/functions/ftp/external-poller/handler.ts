@@ -1,4 +1,4 @@
-import { GetValueCommand, SetValueCommand } from "@stedi/sdk-client-stash";
+import { SetValueCommand } from "@stedi/sdk-client-stash";
 
 import { PARTNERS_KEYSPACE_NAME } from "../../../lib/constants.js";
 import {
@@ -18,7 +18,8 @@ import { RemotePoller } from "./pollers/remotePoller.js";
 import { FtpPoller } from "./pollers/ftpPoller.js";
 import { SftpPoller } from "./pollers/sftpPoller.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
-import { stashClient } from "../../../lib/clients/stash.js";
+import { getRequiredValue, stashClient } from "../../../lib/clients/stash.js";
+import { ErrorFromStashConfiguration } from "../../../lib/errorFromStashConfiguration.js";
 
 const keyspaceName = PARTNERS_KEYSPACE_NAME;
 const ftpConfigStashKey = "bootstrap|remote-poller-config";
@@ -49,16 +50,21 @@ export const handler = async (
   });
 
   try {
-    const stashResponse = await stash.send(
-      new GetValueCommand({
-        keyspaceName,
-        key: ftpConfigStashKey,
-      })
-    );
+    const stashValue = await getRequiredValue(keyspaceName, ftpConfigStashKey);
+
+    const remotePollerConfigParseResult =
+      RemotePollerConfigMapSchema.safeParse(stashValue);
+
+    if (!remotePollerConfigParseResult.success) {
+      throw new ErrorFromStashConfiguration(
+        ftpConfigStashKey,
+        remotePollerConfigParseResult
+      );
+    }
 
     // `FtpPollerConfigMap.parse` handles failed stash lookup as well (value is undefined)
     const remotePollerConfigMap: RemotePollerConfigMap =
-      RemotePollerConfigMapSchema.parse(stashResponse.value);
+      remotePollerConfigParseResult.data;
     const pollerConfig: RemotePollerConfig | undefined =
       remotePollerConfigMap[configId];
 

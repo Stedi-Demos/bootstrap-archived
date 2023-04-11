@@ -1,13 +1,11 @@
-import { GetValueCommand } from "@stedi/sdk-client-stash";
-import { stashClient } from "./clients/stash.js";
+import { getRequiredValue } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
+import { ErrorFromStashConfiguration } from "./errorFromStashConfiguration.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 import {
   TransactionSetDestinations,
   TransactionSetDestinationsSchema,
 } from "./types/Destination.js";
-
-const stash = stashClient();
 
 export const loadTransactionDestinations = async ({
   partnershipId,
@@ -17,14 +15,15 @@ export const loadTransactionDestinations = async ({
   transactionSetIdentifier: string;
 }): Promise<TransactionSetDestinations> => {
   try {
-    const { value } = await stash.send(
-      new GetValueCommand({
-        keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: `destinations|${partnershipId}|${transactionSetIdentifier}`,
-      })
-    );
+    const key = `destinations|${partnershipId}|${transactionSetIdentifier}`;
+    const stashValue = await getRequiredValue(PARTNERS_KEYSPACE_NAME, key);
 
-    return TransactionSetDestinationsSchema.parse(value);
+    const parsedValue = TransactionSetDestinationsSchema.safeParse(stashValue);
+
+    if (!parsedValue.success) {
+      throw new ErrorFromStashConfiguration(key, parsedValue);
+    }
+    return parsedValue.data;
   } catch (error) {
     if (
       typeof error === "object" &&

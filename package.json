@@ -35,7 +35,7 @@
     "@stedi/sdk-client-queues": "^0.1.49",
     "@stedi/sdk-client-sftp": "^0.1.49",
     "@stedi/sdk-client-stash": "^0.1.49",
-    "@stedi/x12-tools": "^1.10.5",
+    "@stedi/x12-tools": "^1.11.2",
     "@types/lodash-es": "^4.17.7",
     "@types/node": "^18.11.18",
     "@types/node-fetch": "^2.6.3",

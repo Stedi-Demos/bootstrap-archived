@@ -93,7 +93,7 @@ export const handler = async (
         const metadata = x12.metadata(fileContents);
 
         for (const interchange of metadata.interchanges) {
-          const { senderId, receiverId, delimiters, interchangeSegments } =
+          const {senderId, receiverId, delimiters, interchangeSegments} =
             extractInterchangeData(interchange);
 
           // resolve the partnerIds for the sending and receiving partners
@@ -140,7 +140,7 @@ export const handler = async (
             //   - optionally invokes the mapping if one is included in config
             //   - sends the result to the destination
             for (const transactionSet of functionalGroup.transactionSets) {
-              const { id: transactionSetId } =
+              const {id: transactionSetId} =
                 extractTransactionSetData(transactionSet);
 
               // load the guide for the transaction set
@@ -267,6 +267,7 @@ const groupEventKeys = (
     (collectedKeys: KeyToProcess[], record) => {
       const eventKey = record.s3.object.key;
 
+      // ignore events associated with folder creation
       if (eventKey.endsWith("/")) {
         filteredKeys.push({
           key: eventKey,
@@ -274,7 +275,10 @@ const groupEventKeys = (
         });
         return collectedKeys;
       }
+
       const splitKey = eventKey.split("/");
+
+      // ignore events associated with objects that are not in an `inbound` or `processed` directory
       if (
         splitKey.length < 2 ||
         !splitKey[splitKey.length - 2].match(/^(inbound|processed)$/)
@@ -283,6 +287,16 @@ const groupEventKeys = (
           key: eventKey,
           reason:
             "key does not match an item in an `inbound` or `processed` directory",
+        });
+        return collectedKeys;
+      }
+
+      // ignore events associated with objects that are in a `processed` directory (AS2) but have .json or .mdn extension
+      if (splitKey[splitKey.length - 2] === "processed" && splitKey[splitKey.length - 1].match(/^.*\.(json|mdn)$/)) {
+        filteredKeys.push({
+          key: eventKey,
+          reason:
+            "key has `.json` or `.mdn` extension in a `processed` directory",
         });
         return collectedKeys;
       }
@@ -359,5 +373,5 @@ const extractTransactionSetData = (
     throw new Error("invalid transaction set: unable to extract identifier");
   }
 
-  return { id: transactionSet.id };
+  return {id: transactionSet.id};
 };

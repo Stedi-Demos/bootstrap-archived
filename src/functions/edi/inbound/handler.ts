@@ -7,10 +7,7 @@ import {
 } from "../../../lib/execution.js";
 import { bucketsClient } from "../../../lib/clients/buckets.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
-import {
-  TransactionEvent,
-  TransactionEventSchema,
-} from "../../../lib/types/TransactionEvent.js";
+import { TransactionEventSchema } from "../../../lib/types/TransactionEvent.js";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -28,7 +25,7 @@ import {
 const buckets = bucketsClient();
 
 export const handler = async (
-  event: TransactionEvent
+  event: unknown
 ): Promise<Record<string, unknown> | FailureResponse> => {
   console.log(JSON.stringify(event, null, 2));
   const executionId = generateExecutionId(event);

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 import { translateJsonToEdi } from "../../../lib/translateV3.js";
 import {
@@ -120,8 +120,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         senderId: senderProfile.partnerInterchangeId,
         receiverQualifier: receiverProfile.partnerInterchangeQualifier,
         receiverId: receiverProfile.partnerInterchangeId,
-        date: format(documentDate, "yyyy-MM-dd"),
-        time: format(documentDate, "HH:mm"),
+        date: formatInTimeZone(
+          documentDate,
+          partnership.timezone,
+          "yyyy-MM-dd"
+        ),
+        time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm"),
         controlNumber: isaControlNumber,
         usageIndicatorCode: transactionSetConfig.usageIndicatorCode,
       },
@@ -129,8 +133,12 @@ export const handler = async (event: any): Promise<Record<string, any>> => {
         functionalIdentifierCode,
         applicationSenderCode: senderProfile.partnerApplicationId,
         applicationReceiverCode: receiverProfile.partnerApplicationId,
-        date: format(documentDate, "yyyy-MM-dd"),
-        time: format(documentDate, "HH:mm:ss"),
+        date: formatInTimeZone(
+          documentDate,
+          partnership.timezone,
+          "yyyy-MM-dd"
+        ),
+        time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm:ss"),
         controlNumber: gsControlNumber,
       },
     };

@@ -47,3 +47,22 @@ test.serial("load partnership uses set timezone", async (t) => {
     "partnership uses set timezone"
   );
 });
+
+test.serial(
+  "throws on invalid partnership config with helpful message",
+  async (t) => {
+    stash
+      .on(GetValueCommand, { keyspaceName: PARTNERS_KEYSPACE_NAME })
+      .resolvesOnce({
+        key: "partnership|sender|receiver",
+        value: {
+          tim: "America/New_York",
+          transactionSets: [],
+        },
+      });
+
+    const error = await loadPartnership("sender", "receiver").catch((e) => e);
+
+    t.is(error.message, "Invalid Partnership configuration");
+  }
+);

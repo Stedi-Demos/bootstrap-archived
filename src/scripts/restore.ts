@@ -35,7 +35,7 @@ import { parseGuideId } from "../support/guide.js";
     try {
       const guide = await guides.send(new CreateGuideCommand(guideBody));
 
-      stashRaw = stashRaw.replace(oldGuidId, parseGuideId(guide.id!));
+      stashRaw = stashRaw.replaceAll(oldGuidId, parseGuideId(guide.id!));
     } catch (error) {
       if (
         typeof error === "object" &&

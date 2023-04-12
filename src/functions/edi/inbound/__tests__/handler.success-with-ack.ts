@@ -62,6 +62,20 @@ for (const uploadDirectory of ["inbound", "processed"]) {
       });
 
       stash
+        .on(GetValueCommand, { key: "bootstrap|replication-config" }) // mock replication config lookup
+        .resolvesOnce({
+          value: {
+            destinations: [
+              {
+                destination: {
+                  bucketName: "core-ingestion-bucket",
+                  path: "replicated-documents",
+                  type: "bucket",
+                },
+              },
+            ],
+          },
+        })
         .on(GetValueCommand, { key: "lookup|ISA|14/ANOTHERMERCH" }) // mock sending partner lookup
         .resolvesOnce({ value: { partnerId: "another-merchant" } })
         .on(GetValueCommand, { key: "lookup|ISA|ZZ/THISISME" }) // mock receiving partner lookup
@@ -135,6 +149,13 @@ for (const uploadDirectory of ["inbound", "processed"]) {
         webhookRequest.isDone(),
         "delivered guide JSON to destination webhook"
       );
+
+      const replicationPutArgs = buckets.commandCalls(PutObjectCommand, {
+        bucketName: "core-ingestion-bucket",
+      })[0]!.args[0].input;
+
+      t.assert(replicationPutArgs.key === "replicated-documents/inbound.edi");
+      t.assert(replicationPutArgs.body?.toString() === sample855);
 
       const ackPutArgs = buckets.commandCalls(PutObjectCommand, {
         bucketName: "test-ftp-bucket",

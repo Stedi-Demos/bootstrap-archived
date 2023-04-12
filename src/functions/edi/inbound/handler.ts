@@ -44,6 +44,7 @@ import { TransactionSet } from "../../../lib/types/PartnerRouting.js";
 import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { archiveFile } from "../../../lib/archive/archiveFile.js";
 import { FailureResponse } from "../../../lib/execution.js";
+import { processReplication } from "../../../lib/replication.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const buckets = bucketsClient();
@@ -82,10 +83,19 @@ export const handler = async (
         getObjectResponse.body as Readable
       );
 
-      // archive a copy of the input
+      const currentKey = keyToProcess.key;
+      const body = fileContents;
+
+      // if configured, replicate inbound document to replication destinations.
+      // separate from the automatic archival to the executions bucket, inbound
+      // documents can be replicated to other destinations, such as a different
+      // bucket, a remote SFTP, another function for additional processing, etc.
+      await processReplication({ currentKey, body });
+
+      // archive a copy of the input to executions bucket
       const archivalRequest = archiveFile({
-        currentKey: keyToProcess.key,
-        body: fileContents,
+        currentKey,
+        body,
       });
 
       try {

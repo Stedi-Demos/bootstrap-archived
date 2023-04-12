@@ -20,7 +20,11 @@ export const deliverToDestination = async (
   // remove any leading slashes, if present, from bucket key prefix
   const path = input.destination.path.replace(/^\/+/, "");
 
-  const key = `${path}/${input.destinationFilename}`;
+  // prepend path to key if defined, otherwise key points to bucket root
+  const key = path ?
+    `${path}/${input.destinationFilename}`
+    : input.destinationFilename;
+
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

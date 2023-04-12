@@ -57,10 +57,8 @@ export const handler = async (
     });
 
     // prepare delivery payloads
-    const filenamePrefix = transactionEvent.detail.envelopes.interchange
-      .controlNumber
-      ? transactionEvent.detail.envelopes.interchange.controlNumber
-      : Date.now();
+    const { envelopes } = transactionEvent.detail;
+    const filenamePrefix = `${envelopes.interchange.controlNumber}-${envelopes.functionalGroup.controlNumber}-${transactionEvent.detail.transaction.controlNumber}`;
 
     const destinationFilename = generateDestinationFilename(
       filenamePrefix.toString(),

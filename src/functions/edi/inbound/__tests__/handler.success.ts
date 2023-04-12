@@ -10,7 +10,7 @@ import {
   mockStashClient,
   mockTranslateClient,
 } from "../../../../lib/testing/testHelpers.js";
-import { GetObjectCommand } from "@stedi/sdk-client-buckets";
+import { GetObjectCommand, PutObjectCommand } from "@stedi/sdk-client-buckets";
 import { Readable } from "stream";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import guideJSON855 from "../__fixtures__/855-guide.json" assert { type: "json" };
@@ -60,6 +60,13 @@ test.serial(
                 verb: "POST",
               },
             },
+            {
+              destination: {
+                type: "bucket",
+                bucketName: "another-merchant-edi",
+                path: "inbound/855",
+              },
+            },
           ],
         },
       });
@@ -74,6 +81,17 @@ test.serial(
     t.assert(
       webhookRequest.isDone(),
       "delivered guide JSON to destination webhook"
+    );
+
+    const bucketDestinationCall = buckets.commandCalls(PutObjectCommand, {
+      bucketName: "another-merchant-edi",
+    });
+
+    t.is(bucketDestinationCall.length, 1, "delivered guide JSON to bucket");
+    t.is(
+      bucketDestinationCall[0]!.args[0].input.key,
+      "inbound/855/1746-1746-1-855.json",
+      "sets filename prefix to control numbers"
     );
 
     t.deepEqual(result, {});

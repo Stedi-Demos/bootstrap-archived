@@ -1,4 +1,6 @@
-export const sampleTransactionProcessedEvent = {
+import { TransactionEventSchema } from "../../../../lib/types/TransactionEvent.js";
+
+export const sampleTransactionProcessedEvent = TransactionEventSchema.parse({
   version: "0",
   id: "fedbee6f-f48e-df69-f279-3fbc9fad6305",
   "detail-type": "transaction.processed",
@@ -64,4 +66,4 @@ export const sampleTransactionProcessedEvent = {
       },
     },
   },
-};
+});

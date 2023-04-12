@@ -74,13 +74,20 @@ const TransactionSetSchema = z.union([
 
 export type TransactionSet = z.infer<typeof TransactionSetSchema>;
 
+export const DEFAULT_TIMEZONE = "UTC";
 export const PartnershipSchema = z.strictObject({
   transactionSets: z.array(TransactionSetSchema),
+  timezone: z
+    .string()
+    .describe(
+      "Specify a tz database time zone (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) or utc offset"
+    )
+    .default(DEFAULT_TIMEZONE),
 });
 
 export type PartnershipInput = z.input<typeof PartnershipSchema>;
 
-export type Partnership = z.infer<typeof PartnershipSchema>;
+export type Partnership = z.output<typeof PartnershipSchema>;
 
 export const ISAPartnerIdLookupSchema = z.strictObject({
   partnerId: z.string(),

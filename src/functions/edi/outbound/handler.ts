@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { translateJsonToEdi } from "../../../lib/translateEDI.js";
 import {
   failedExecution,
@@ -93,8 +93,12 @@ export const handler = async (
         receiverQualifier: partnership.partnerProfile
           .interchangeQualifier as EdiTranslateWriteEnvelope["interchangeHeader"]["receiverQualifier"],
         receiverId: partnership.partnerProfile.interchangeId,
-        date: format(documentDate, "yyyy-MM-dd"),
-        time: format(documentDate, "HH:mm"),
+        date: formatInTimeZone(
+          documentDate,
+          partnership.timezone,
+          "yyyy-MM-dd"
+        ),
+        time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm"),
         controlNumber: isaControlNumber.toString(),
         usageIndicatorCode: event.metadata.usageIndicatorCode,
         controlVersionNumber: transactionSetConfig.release.slice(
@@ -110,8 +114,12 @@ export const handler = async (
         applicationReceiverCode:
           partnership.partnerProfile.defaultApplicationId ??
           partnership.partnerProfile.interchangeId,
-        date: format(documentDate, "yyyy-MM-dd"),
-        time: format(documentDate, "HH:mm:ss"),
+        date: formatInTimeZone(
+          documentDate,
+          partnership.timezone,
+          "yyyy-MM-dd"
+        ),
+        time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm:ss"),
         controlNumber: gsControlNumber.toString(),
         release: transactionSetConfig.release,
       },

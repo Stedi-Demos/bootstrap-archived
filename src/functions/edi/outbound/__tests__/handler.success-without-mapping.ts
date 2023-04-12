@@ -1,5 +1,6 @@
 import test from "ava";
 import nock from "nock";
+import { reset, set } from "mockdate";
 import {
   mockBucketClient,
   mockExecutionTracking,
@@ -33,6 +34,7 @@ const partnershipId = "this-is-me_another-merchant";
 
 test.beforeEach(() => {
   nock.disableNetConnect();
+  set("2022-05-25T01:02:03.451Z");
   mockExecutionTracking(buckets);
 });
 
@@ -41,6 +43,7 @@ test.afterEach.always(() => {
   partners.reset();
   stash.reset();
   translate.reset();
+  reset();
 });
 
 test("translate guide json to X12 and delivers to destination", async (t) => {
@@ -150,5 +153,29 @@ test("translate guide json to X12 and delivers to destination", async (t) => {
     (translateArgs.envelope as any).groupHeader.applicationSenderCode,
     "meId",
     "default applicationId is used for sender"
+  );
+
+  t.is(
+    (translateArgs.envelope as any).interchangeHeader.date,
+    "2022-05-24",
+    "date is set in partner configured timezone"
+  );
+
+  t.is(
+    (translateArgs.envelope as any).interchangeHeader.time,
+    "21:02",
+    "time is set in partner configured timezone"
+  );
+
+  t.is(
+    (translateArgs.envelope as any).groupHeader.date,
+    "2022-05-24",
+    "date is set in partner configured timezone"
+  );
+
+  t.is(
+    (translateArgs.envelope as any).groupHeader.time,
+    "21:02:03",
+    "time is set in partner configured timezone"
   );
 });

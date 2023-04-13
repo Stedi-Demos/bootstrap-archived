@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   ListBucketsCommand,
   PutObjectCommand,
+  waitUntilBucketCreateComplete,
 } from "@stedi/sdk-client-buckets";
 
 import { updateDotEnvFile } from "../support/utils.js";
@@ -41,7 +42,7 @@ import { sftpClient } from "../lib/clients/sftp.js";
       new PutObjectCommand({
         bucketName: user.bucketName,
         key,
-        body: new Uint8Array(),
+        body: new Uint8Array(0),
       })
     );
   }
@@ -61,9 +62,14 @@ import { sftpClient } from "../lib/clients/sftp.js";
         bucketName: executionsBucketName,
       })
     );
+
+    await waitUntilBucketCreateComplete(
+      { client: buckets, maxWaitTime },
+      { bucketName: executionsBucketName }
+    );
   }
 
-  const bucketEnvVarEntries: dotenv.DotenvParseOutput = {
+  const bucketEnvVarEntries = {
     ["SFTP_BUCKET_NAME"]: user.bucketName,
     ["EXECUTIONS_BUCKET_NAME"]: executionsBucketName,
   };

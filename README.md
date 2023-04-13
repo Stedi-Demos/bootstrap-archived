@@ -395,7 +395,14 @@ npm run destroy
     },
     "usageIndicatorCode": {
       "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
+      "type": "string",
       "enum": ["P", "T", "I"]
+    },
+    "release": {
+      "$comment": "Optional. Only sends transaction sets with the specified release to the destination.",
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 12
     },
     "destination": {
       "oneOf": [

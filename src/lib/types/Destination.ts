@@ -67,6 +67,14 @@ export const DestinationSchema = z.strictObject({
     .describe(
       "configure destination to receive the transaction set only when the envelope usage indicator code matches the supplied value"
     ),
+  release: z
+    .string()
+    .min(6)
+    .max(12)
+    .optional()
+    .describe(
+      "configure destination to receive the transaction set only when the envelope release matches the supplied value"
+    ),
   destination: z.discriminatedUnion("type", [
     DestinationAs2Schema,
     DestinationBucketSchema,

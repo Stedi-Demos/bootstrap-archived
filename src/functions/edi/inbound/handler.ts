@@ -66,17 +66,21 @@ export const handler = async (
       "json"
     );
 
-    const envelopeUsageIndicator =
-      transactionEvent.detail.envelopes.interchange.usageIndicatorCode;
+    const { usageIndicatorCode } =
+      transactionEvent.detail.envelopes.interchange;
+    const { release } = transactionEvent.detail.envelopes.functionalGroup;
+
+    // filter out destinations that target specific releases and usage indicators
+    // which do not match the payload data
+    const filteredDestinations = destinations.filter((d) =>
+      filterDestination(d, { usageIndicatorCode, release })
+    );
 
     const processDeliveriesInput: ProcessDeliveriesInput = {
-      destinations,
+      destinations: filteredDestinations,
       payload: guideJSON,
       destinationFilename,
-      envelopeUsageIndicator,
     };
-
-    // deliver to destination if usage indicator not set or matches the envelope
 
     await processDeliveries(processDeliveriesInput);
 
@@ -109,4 +113,22 @@ export const ensureFileIsDeleted = async (bucketName: string, key: string) => {
       return;
     else throw error;
   }
+};
+
+const filterDestination = (
+  destination: { usageIndicatorCode?: string; release?: string },
+  envelopeData: { usageIndicatorCode: string; release: string }
+) => {
+  if (
+    destination.usageIndicatorCode &&
+    destination.usageIndicatorCode !== envelopeData.usageIndicatorCode
+  ) {
+    return false;
+  }
+
+  if (destination.release && envelopeData.release !== destination.release) {
+    return false;
+  }
+
+  return true;
 };

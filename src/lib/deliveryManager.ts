@@ -26,7 +26,6 @@ export interface ProcessDeliveriesInput {
   destinations: Destination[];
   payload: object | string;
   destinationFilename: string;
-  envelopeUsageIndicator?: "P" | "T" | "I";
 }
 
 export interface DeliverToDestinationInput {
@@ -76,22 +75,16 @@ export const processDeliveries = async (
   input: ProcessDeliveriesInput
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
-    input.destinations
-      .filter(
-        (d) =>
-          !d.usageIndicatorCode ||
-          d.usageIndicatorCode === input.envelopeUsageIndicator
-      )
-      .map(async ({ destination, mappingId }) => {
-        console.log(`delivering to ${destination.type} destination`);
-        const deliverToDestinationInput: ProcessSingleDeliveryInput = {
-          destination,
-          payload: input.payload,
-          mappingId,
-          destinationFilename: input.destinationFilename,
-        };
-        return await processSingleDelivery(deliverToDestinationInput);
-      })
+    input.destinations.map(async ({ destination, mappingId }) => {
+      console.log(`delivering to ${destination.type} destination`);
+      const deliverToDestinationInput: ProcessSingleDeliveryInput = {
+        destination,
+        payload: input.payload,
+        mappingId,
+        destinationFilename: input.destinationFilename,
+      };
+      return await processSingleDelivery(deliverToDestinationInput);
+    })
   );
 
   const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, input);

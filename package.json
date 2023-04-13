@@ -7,7 +7,7 @@
     "bootstrap": "npm run configure-storage && npx ts-node-esm ./src/setup/bootstrap.ts && npm run deploy",
     "destroy": "ts-node-esm ./src/setup/destroy.ts",
     "deploy": "ts-node-esm ./src/setup/deploy.ts",
-    "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
+    "build": "rm -rf ./dist && tsc --build",
     "upgrade-core": "ts-node-esm ./src/setup/upgradeCore.ts",
     "configure-storage": "npm run ensure-keyspaces-exist && npm run configure-buckets",
     "ensure-keyspaces-exist": "ts-node-esm ./src/setup/bootstrap/ensureKeyspacesExist.ts",

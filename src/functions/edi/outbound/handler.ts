@@ -46,6 +46,8 @@ export const handler = async (
     const transactionSetIdentifier =
       determineTransactionSetIdentifier(outboundEvent);
 
+    // select the transaction set configuration that matches the release in the metadata,
+    // allows for multiple transaction set configurations for a transaction, if they have different releases
     const transactionSetConfig = partnership.outboundTransactions?.find(
       (txn) =>
         txn.transactionSetIdentifier === transactionSetIdentifier &&
@@ -129,10 +131,8 @@ export const handler = async (
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
       transactionSetDestinations.destinations
-        .filter(
-          (d) =>
-            !d.usageIndicatorCode ||
-            d.usageIndicatorCode === outboundEvent.metadata.usageIndicatorCode
+        .filter((d) =>
+          filterDestination(d, outboundEvent, transactionSetConfig)
         )
         .map(async ({ destination, mappingId }) => {
           const guideJson =
@@ -255,4 +255,26 @@ const validateTransactionSetControlNumbers = (guideJson: unknown) => {
 
     expectedControlNumber++;
   });
+};
+
+const filterDestination = (
+  destination: { usageIndicatorCode?: string; release?: string },
+  event: { metadata: { usageIndicatorCode: string } },
+  transactionSetConfig: { release: string }
+) => {
+  if (
+    destination.usageIndicatorCode &&
+    destination.usageIndicatorCode !== event.metadata.usageIndicatorCode
+  ) {
+    return false;
+  }
+
+  if (
+    destination.release &&
+    transactionSetConfig.release !== destination.release
+  ) {
+    return false;
+  }
+
+  return true;
 };

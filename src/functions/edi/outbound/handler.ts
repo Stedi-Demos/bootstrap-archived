@@ -25,6 +25,7 @@ import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteE
 import { partnersClient } from "../../../lib/clients/partners.js";
 import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
+import { ErrorFromFunctionEvent } from "../../../lib/errorFromFunctionEvent.js";
 
 const partners = partnersClient();
 
@@ -35,7 +36,17 @@ export const handler = async (
 
   try {
     await recordNewExecution(executionId, event);
-    const outboundEvent = OutboundEventSchema.parse(event);
+
+    const outboundEventParseResult = OutboundEventSchema.safeParse(event);
+
+    if (!outboundEventParseResult.success) {
+      throw new ErrorFromFunctionEvent(
+        `edi-outbound`,
+        outboundEventParseResult
+      );
+    }
+
+    const outboundEvent = outboundEventParseResult.data;
 
     // load the outbound x12 configuration for the sender
     const partnership = await loadPartnershipById({

@@ -15,6 +15,7 @@ import {
   DestinationAck,
   DestinationAckSchema,
 } from "../../../lib/types/Destination.js";
+import { ErrorFromStashConfiguration } from "../../../lib/errorFromStashConfiguration.js";
 
 const stash = stashClient();
 
@@ -51,9 +52,18 @@ const send997Acknowledgment = async (
     return;
   }
 
-  const ackConfig: DestinationAck = DestinationAckSchema.parse(
+  const ackConfigParseResult = DestinationAckSchema.safeParse(
     ackConfigResult.value
   );
+
+  if (!ackConfigParseResult.success) {
+    throw new ErrorFromStashConfiguration(
+      `functional_acknowledgments|${partnershipId}`,
+      ackConfigParseResult
+    );
+  }
+
+  const ackConfig: DestinationAck = ackConfigParseResult.data;
 
   const { functionalIdentifierCode, controlNumber } =
     event.detail.envelopes.functionalGroup;

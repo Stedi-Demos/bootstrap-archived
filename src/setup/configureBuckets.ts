@@ -12,6 +12,7 @@ import { updateDotEnvFile } from "../support/utils.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
+import { maxWaitTime } from "./contants.js";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {

@@ -70,7 +70,7 @@ import { maxWaitTime } from "./contants.js";
     );
   }
 
-  const bucketEnvVarEntries = {
+  const bucketEnvVarEntries: dotenv.DotenvParseOutput = {
     ["SFTP_BUCKET_NAME"]: user.bucketName,
     ["EXECUTIONS_BUCKET_NAME"]: executionsBucketName,
   };

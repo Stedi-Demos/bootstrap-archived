@@ -5,12 +5,14 @@ import {
   DeleteObjectCommand,
   ListBucketsCommand,
   PutObjectCommand,
+  waitUntilBucketCreateComplete,
 } from "@stedi/sdk-client-buckets";
 
 import { updateDotEnvFile } from "../support/utils.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
 import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
+import { maxWaitTime } from "./contants.js";
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -41,7 +43,7 @@ import { sftpClient } from "../lib/clients/sftp.js";
       new PutObjectCommand({
         bucketName: user.bucketName,
         key,
-        body: new Uint8Array(),
+        body: new Uint8Array(0),
       })
     );
   }
@@ -60,6 +62,11 @@ import { sftpClient } from "../lib/clients/sftp.js";
       new CreateBucketCommand({
         bucketName: executionsBucketName,
       })
+    );
+
+    await waitUntilBucketCreateComplete(
+      { client: buckets, maxWaitTime },
+      { bucketName: executionsBucketName }
     );
   }
 

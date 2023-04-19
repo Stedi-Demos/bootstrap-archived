@@ -15,7 +15,8 @@ export const mappingsClient = (): MappingsClient => {
 
 export const invokeMapping = async (
   mappingId: string,
-  payload: unknown
+  payload: unknown,
+  mappingValidation?: "strict"
 ): Promise<object> => {
   // Execute mapping to transform API JSON input to Guide schema-based JSON
   try {
@@ -23,6 +24,7 @@ export const invokeMapping = async (
       new MapDocumentCommand({
         id: mappingId,
         content: payload as DocumentType,
+        validationMode: mappingValidation,
       })
     );
     console.log(`mapping result: ${JSON.stringify(mapResult)}`);

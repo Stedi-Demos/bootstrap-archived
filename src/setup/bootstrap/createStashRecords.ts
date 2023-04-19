@@ -7,6 +7,10 @@ import { stashClient } from "../../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
 import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
+import {
+  DestinationAck,
+  TransactionSetDestinations,
+} from "../../lib/types/Destination.js";
 
 export const createSampleStashRecords = async ({
   partnershipId,
@@ -24,6 +28,8 @@ export const createSampleStashRecords = async ({
   await saveTransactionSetDestinations(
     `destinations|${partnershipId}|${rule850.transactionSetIdentifier!}`,
     {
+      $schema:
+        "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/transaction-destinations.json",
       description: "Purchase Orders sent to ANOTHERMERCH",
       destinations: [
         {
@@ -34,13 +40,15 @@ export const createSampleStashRecords = async ({
           },
         },
       ],
-    }
+    } satisfies TransactionSetDestinations
   );
 
   // inbound 855 from ANOTHERMERCH to THISISME
   await saveTransactionSetDestinations(
     `destinations|${partnershipId}|${rule855.transactionSetIdentifier!}`,
     {
+      $schema:
+        "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/transaction-destinations.json",
       description: "Purchase Order Acknowledgments received from ANOTHERMERCH",
       destinations: [
         {
@@ -50,11 +58,13 @@ export const createSampleStashRecords = async ({
           },
         },
       ],
-    }
+    } satisfies TransactionSetDestinations
   );
 
   // outbound 997s to ANOTHERMERCH
   await saveTransactionSetDestinations(`destinations|${partnershipId}|997`, {
+    $schema:
+      "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/transaction-destinations.json",
     description: "Outbound 997 Acknowledgments",
     destinations: [
       {
@@ -65,15 +75,17 @@ export const createSampleStashRecords = async ({
         },
       },
     ],
-  });
+  } satisfies TransactionSetDestinations);
 
   await stashClient().send(
     new SetValueCommand({
       keyspaceName: PARTNERS_KEYSPACE_NAME,
       key: `functional_acknowledgments|${partnershipId}`,
       value: {
+        $schema:
+          "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/acknowledgment.json",
         generateFor: ["855"],
-      },
+      } satisfies DestinationAck,
     })
   );
 };

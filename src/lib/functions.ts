@@ -7,6 +7,7 @@ import {
   DeleteFunctionCommandOutput,
   InvocationType,
   InvokeFunctionCommand,
+  LogRetention,
   UpdateFunctionCommand,
   UpdateFunctionCommandOutput,
 } from "@stedi/sdk-client-functions";
@@ -72,7 +73,7 @@ export const createFunction = async (
       packageBucket: bucketName,
       packageKey: key,
       environmentVariables,
-
+      logRetention: LogRetention.THREE_MONTHS,
       timeout: 900,
     })
   );

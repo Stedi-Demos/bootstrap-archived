@@ -7,10 +7,10 @@ import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
 import { bucketsClient } from "../../../../lib/clients/buckets.js";
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
-import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
+import { DestinationBucket } from "../../../../lib/types/DestinationBucket.js";
 
 const buckets = bucketsClient();
 

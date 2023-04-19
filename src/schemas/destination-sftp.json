@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-sftp.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "sftp"
+    },
+    "connectionDetails": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "number",
+          "default": 22
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "privateKey": {
+          "type": "string"
+        },
+        "passphrase": {
+          "type": "string"
+        }
+      },
+      "dependentRequired": {
+        "passphrase": [
+          "privateKey"
+        ]
+      },
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "username"
+      ]
+    },
+    "remotePath": {
+      "type": "string",
+      "defailt": "/"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "connectionDetails"
+  ]
+}

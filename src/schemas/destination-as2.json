@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-as2.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "as2"
+    },
+    "connectorId": {
+      "type": "string"
+    },
+    "bucketName": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "connectorId",
+    "bucketName",
+    "path"
+  ]
+}

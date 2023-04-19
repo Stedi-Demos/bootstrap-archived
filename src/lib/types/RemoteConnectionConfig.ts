@@ -1,6 +1,6 @@
 import { z } from "zod";
-
-import { DestinationBucketSchema, SftpConfigSchema } from "./Destination.js";
+import { DestinationSftpSchema } from "./DestinationSftp";
+import { DestinationBucketSchema } from "./DestinationBucket";
 
 const FtpConfigSchema = z.strictObject({
   host: z.string(),
@@ -22,7 +22,7 @@ const ConnectionDetailsSchema = z.discriminatedUnion("protocol", [
   }),
   z.strictObject({
     protocol: z.literal("sftp"),
-    config: SftpConfigSchema,
+    config: DestinationSftpSchema.shape.connectionDetails,
   }),
 ]);
 

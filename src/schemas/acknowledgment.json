@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/acknowledgment.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "generateFor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Transaction Set Id"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "generateFor"
+  ]
+}

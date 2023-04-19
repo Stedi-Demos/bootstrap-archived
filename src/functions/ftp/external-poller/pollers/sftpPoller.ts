@@ -4,11 +4,11 @@ import sftp from "ssh2-sftp-client";
 import { PutObjectCommand } from "@stedi/sdk-client-buckets";
 
 import { FileDetails, ProcessingError, RemoteFileDetails } from "../types.js";
-import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
 import { RemotePoller } from "./remotePoller.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
 import { bucketsClient } from "../../../../lib/clients/buckets.js";
+import { DestinationBucket } from "../../../../lib/types/DestinationBucket.js";
 
 const buckets = bucketsClient();
 export class SftpPoller extends RemotePoller {

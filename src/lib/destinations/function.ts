@@ -1,7 +1,7 @@
 import { DocumentType } from "@aws-sdk/types";
 import { DeliverToDestinationInput } from "../deliveryManager.js";
 import { invokeFunction } from "../functions.js";
-import { DestinationFunction } from "../types/Destination.js";
+import { DestinationFunction } from "../types/DestinationFunction.js";
 
 export const deliverToDestination = async (
   input: DeliverToDestinationInput

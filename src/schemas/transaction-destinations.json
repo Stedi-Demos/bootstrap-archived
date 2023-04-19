@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/transaction-destinations.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "mappingId": {
+            "type": "string"
+          },
+          "mappingValidation": {
+            "type": "string",
+            "enum": [
+              "strict"
+            ]
+          },
+          "usageIndicatorCode": {
+            "description": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
+            "type": "string",
+            "enum": [
+              "P",
+              "T",
+              "I"
+            ]
+          },
+          "release": {
+            "description": "Optional. Only sends transaction sets with the specified release to the destination.",
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 12
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "destination-as2.json"
+              },
+              {
+                "$ref": "destination-bucket.json"
+              },
+              {
+                "$ref": "destination-function.json"
+              },
+              {
+                "$ref": "destination-sftp.json"
+              },
+              {
+                "$ref": "destination-stash.json"
+              },
+              {
+                "$ref": "destination-webhook.json"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "destinations"
+  ]
+}

@@ -33,7 +33,9 @@ void (async () => {
     ? InvocationType.ASYNCHRONOUS
     : InvocationType.SYNCHRONOUS;
 
-  console.log(`Invoking function '${functionName}' with invocation type: ${invocationType}.`);
+  console.log(
+    `Invoking function '${functionName}' with invocation type: ${invocationType}.`
+  );
   const response = await invokeFunction(functionName, input);
 
   const resultsOutput = response

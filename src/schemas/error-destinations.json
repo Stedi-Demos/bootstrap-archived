@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/error-destination.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "mappingId": {
+            "type": "string"
+          },
+          "mappingValidation": {
+            "type": "string",
+            "enum": [
+              "strict"
+            ]
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "./destination-bucket.json"
+              },
+              {
+                "$ref": "./destination-function.json"
+              },
+              {
+                "$ref": "./destination-stash.json"
+              },
+              {
+                "$ref": "./destination-webhook.json"
+              }
+            ]
+          }
+        },
+        "required": [
+          "destination"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "destinations"
+  ]
+}

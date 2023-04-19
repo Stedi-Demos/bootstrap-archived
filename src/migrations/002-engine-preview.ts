@@ -346,7 +346,7 @@ const findStashProfile = (id?: string): PartnerProfile => {
   if (id === undefined) throw new Error("Profile ID is undefined");
 
   const profile = allConfigValues.find(
-    (item) => item.key?.toLowerCase() === `profile|${id}`
+    (item) => item.key?.toLowerCase() === `profile|${id}`.toLowerCase()
   );
 
   if (

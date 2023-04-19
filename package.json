@@ -9,6 +9,7 @@
     "deploy": "ts-node-esm ./src/setup/deploy.ts",
     "build": "rm -rf ./dist && tsc --build",
     "upgrade-core": "ts-node-esm ./src/setup/upgradeCore.ts",
+    "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
     "configure-storage": "npm run ensure-keyspaces-exist && npm run configure-buckets",
     "ensure-keyspaces-exist": "ts-node-esm ./src/setup/bootstrap/ensureKeyspacesExist.ts",
     "execute": "ts-node-esm ./src/scripts/execute.ts",

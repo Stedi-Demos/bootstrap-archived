@@ -24,6 +24,7 @@ export interface FailureRecord {
   bucketName?: string;
   key: string;
 }
+
 export interface FailureResponse {
   statusCode: number;
   message: string;
@@ -151,7 +152,10 @@ export const sendFailureToDestinations = async (
   const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: errorDestinations.destinations,
     payload: failure,
-    destinationFilename: `${executionId}-${new Date().toUTCString()}`,
+    payloadMetadata: {
+      payloadId: `${executionId}-${new Date().toUTCString()}`,
+      format: "json",
+    },
   };
 
   await processDeliveries(processDeliveriesInput);

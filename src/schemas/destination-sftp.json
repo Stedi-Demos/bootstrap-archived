@@ -151,6 +151,9 @@
     "remotePath": {
       "type": "string",
       "defailt": "/"
+    },
+    "baseFilename": {
+      "type": "string"
     }
   },
   "additionalProperties": false,

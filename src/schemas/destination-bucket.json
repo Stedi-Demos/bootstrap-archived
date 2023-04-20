@@ -11,6 +11,9 @@
     },
     "path": {
       "type": "string"
+    },
+    "baseFilename": {
+      "type": "string"
     }
   },
   "additionalProperties": false,

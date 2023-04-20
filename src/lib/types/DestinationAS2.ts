@@ -7,6 +7,7 @@ export const DestinationAS2Schema = z
     connectorId: z.string(),
     bucketName: z.string(),
     path: z.string(),
+    baseFilename: z.string().optional(),
   })
   .strict();
 

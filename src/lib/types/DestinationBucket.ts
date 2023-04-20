@@ -6,6 +6,7 @@ export const DestinationBucketSchema = z
     type: z.literal("bucket"),
     bucketName: z.string(),
     path: z.string(),
+    baseFilename: z.string().optional(),
   })
   .strict();
 

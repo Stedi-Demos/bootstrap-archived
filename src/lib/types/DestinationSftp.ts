@@ -100,6 +100,7 @@ export const DestinationSftpSchema = z
       })
       .strict(),
     remotePath: z.string().optional(),
+    baseFilename: z.string().optional(),
   })
   .strict();
 

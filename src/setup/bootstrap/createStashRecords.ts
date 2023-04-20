@@ -6,6 +6,7 @@ import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../../lib/clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
+import { saveErrorDestinations } from "../../lib/saveErrorDestinations.js";
 import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
 import {
   DestinationAck,
@@ -76,6 +77,34 @@ export const createSampleStashRecords = async ({
       },
     ],
   } satisfies TransactionSetDestinations);
+
+  await saveErrorDestinations("destinations|errors|file_error", {
+    $schema:
+      "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/error-destinations.json",
+    description: "Send file errors to webhook",
+    destinations: [
+      {
+        destination: {
+          type: "webhook",
+          url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
+        },
+      },
+    ],
+  });
+
+  await saveErrorDestinations("destinations|errors|execution", {
+    $schema:
+      "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/error-destinations.json",
+    description: "Send function execution errors to webhook",
+    destinations: [
+      {
+        destination: {
+          type: "webhook",
+          url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
+        },
+      },
+    ],
+  });
 
   await stashClient().send(
     new SetValueCommand({

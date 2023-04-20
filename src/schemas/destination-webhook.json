@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-webhook.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "webhook"
+    },
+    "url": {
+      "type": "string"
+    },
+    "verb": {
+      "type": "string",
+      "enum": [
+        "PATCH",
+        "POST",
+        "PUT"
+      ],
+      "default": "POST"
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "patternProperties": {
+        "^[cC]ontent-[tT]ype$": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "url"
+  ]
+}

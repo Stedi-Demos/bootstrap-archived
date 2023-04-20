@@ -1,6 +1,6 @@
 import { FileDetails, RemoteFileDetails } from "../types.js";
-import { DestinationBucket } from "../../../../lib/types/Destination.js";
 import { ConnectionDetails } from "../../../../lib/types/RemoteConnectionConfig.js";
+import { DestinationBucket } from "../../../../lib/types/DestinationBucket.js";
 
 export abstract class RemotePoller {
   abstract getRemoteFileDetails(

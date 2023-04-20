@@ -1,7 +1,7 @@
 import { ErrorObject, serializeError } from "serialize-error";
 
 import { invokeMapping } from "./mappings.js";
-import { Destination } from "./types/Destination.js";
+import { TransactionSetDestinations } from "./types/Destination.js";
 import { ErrorWithContext } from "./errorWithContext.js";
 import * as as2 from "./destinations/as2.js";
 import * as bucket from "./destinations/bucket.js";
@@ -10,32 +10,35 @@ import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
 import * as stash from "./destinations/stash.js";
 
+type Destination = TransactionSetDestinations["destinations"][0]["destination"];
+
 export interface DeliveryResult {
-  type: Destination["destination"]["type"];
+  type: Destination["type"];
   payload: unknown;
 }
 
 export interface ProcessSingleDeliveryInput {
-  destination: Destination["destination"];
+  destination: Destination;
   payload: object | string;
   mappingId?: string;
+  mappingValidation?: "strict";
   destinationFilename: string;
 }
 
 export interface ProcessDeliveriesInput {
-  destinations: Destination[];
+  destinations: TransactionSetDestinations["destinations"];
   payload: object | string;
   destinationFilename: string;
 }
 
 export interface DeliverToDestinationInput {
-  destination: Destination["destination"];
+  destination: Destination;
   destinationPayload: string | object;
   destinationFilename: string;
 }
 
 const deliveryFnForDestinationType: {
-  [type in Destination["destination"]["type"]]: (
+  [type in Destination["type"]]: (
     input: DeliverToDestinationInput
   ) => Promise<unknown>;
 } = {
@@ -52,7 +55,11 @@ export const processSingleDelivery = async (
 ): Promise<DeliveryResult> => {
   const destinationPayload: string | object =
     input.mappingId !== undefined
-      ? await invokeMapping(input.mappingId, input.payload)
+      ? await invokeMapping(
+          input.mappingId,
+          input.payload,
+          input.mappingValidation
+        )
       : input.payload;
 
   const deliverToDestinationInput: DeliverToDestinationInput = {
@@ -122,7 +129,7 @@ export const groupDeliveryResults = (
         groupedResults.rejected.push({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           error: serializeError(group.reason),
-          destination,
+          destination: destination.destination,
           payload: input.payload,
         });
       } else {

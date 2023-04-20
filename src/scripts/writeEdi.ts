@@ -25,7 +25,7 @@ const PO_NUMBER_KEY = "purchase-order-number";
 
   const iterations = Array.from(Array(loopCount).keys());
   const promises = iterations.map(async (iteration) => {
-    const date = new Date().toISOString().split("T")[0] || "2023-04-14";
+    const date = new Date().toISOString().split("T")[0] ?? "2023-04-14";
     const poNumberResponse = await stashClient().send(
       new IncrementValueCommand({
         keyspaceName: BUSINESS_IDS_KEYSPACE_NAME,
@@ -33,7 +33,7 @@ const PO_NUMBER_KEY = "purchase-order-number";
         amount: 1,
       })
     );
-    const poNumber = poNumberResponse.value ?? "1";
+    const poNumber = (poNumberResponse.value as number | undefined) ?? "1";
 
     const outboundPayload = Outbound850Schema.parse(DEFAULT_850_PAYLOAD);
     outboundPayload.payload.heading.beginning_segment_for_purchase_order_BEG.purchase_order_number_03 = `PO-${poNumber

@@ -7,7 +7,7 @@
     "bootstrap": "npm run configure-storage && npx ts-node-esm ./src/setup/bootstrap.ts && npm run deploy",
     "destroy": "ts-node-esm ./src/setup/destroy.ts",
     "deploy": "ts-node-esm ./src/setup/deploy.ts",
-    "build": "rm -rf ./dist && tsc --build",
+    "build": "rm -rf ./dist && npm run generate-schema-types && tsc --build",
     "upgrade-core": "ts-node-esm ./src/setup/upgradeCore.ts",
     "configure-buckets": "ts-node-esm ./src/setup/configureBuckets.ts",
     "configure-storage": "npm run ensure-keyspaces-exist && npm run configure-buckets",
@@ -17,7 +17,8 @@
     "migrate": "ts-node-esm ./src/setup/migrate.ts",
     "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",
     "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava",
-    "lint": "npx eslint --fix \"src/**/*.ts\""
+    "lint": "npx eslint --fix \"src/**/*.ts\"",
+    "generate-schema-types": "ts-node-esm ./src/scripts/schema-zod-types.ts"
   },
   "author": "",
   "license": "ISC",
@@ -55,6 +56,7 @@
     "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "json-schema-to-zod": "^0.6.3",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "mockdate": "^3.0.5",

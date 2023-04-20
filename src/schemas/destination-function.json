@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-function.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "function"
+    },
+    "functionName": {
+      "type": "string"
+    },
+    "additionalInput": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "functionName"
+  ]
+}

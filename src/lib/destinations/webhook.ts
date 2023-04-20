@@ -38,7 +38,7 @@ export const deliverToDestination = async (
   }
 
   return {
-    method,
+    method: method ?? "POST",
     url: input.destination.url,
     status: response.status,
   };

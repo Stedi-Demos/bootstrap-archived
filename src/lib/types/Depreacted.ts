@@ -1,6 +1,7 @@
 import z from "zod";
-import { DestinationSchema } from "./Destination.js";
+
 import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
+import { TransactionSetDestinationsSchema } from "./Destination.js";
 
 /*
  * WARNING: THE SCHEMAS & TYPES DECLARED BELOW ARE NOW DEPRECATED
@@ -11,7 +12,7 @@ import { UsageIndicatorCodeSchema } from "./TransactionEvent.js";
 const BaseTransactionSetSchema = z.strictObject({
   description: z.string().optional(),
   usageIndicatorCode: UsageIndicatorCodeSchema,
-  destinations: z.array(DestinationSchema),
+  destinations: z.array(TransactionSetDestinationsSchema),
 });
 
 // dedicated schema for "997" ack transaction set:

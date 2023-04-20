@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-stash.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "stash"
+    },
+    "keyspaceName": {
+      "type": "string"
+    },
+    "keyPrefix": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "keyspaceName"
+  ]
+}

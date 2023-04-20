@@ -90,7 +90,7 @@ test("sends execution errors to error destination when runtime error occurs", as
   const errorWebhook = nock("https://example.com")
     .post("/error-webhook", (body: any) => {
       return (
-        body.error.context.rejected[0].destination.destination.url ===
+        body.error.context.rejected[0].destination.url ===
           "https://webhook.site/TESTING" &&
         body.error.context.rejected[0].payload &&
         body.error.context.rejected[0].error

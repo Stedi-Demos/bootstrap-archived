@@ -384,241 +384,33 @@ npm run destroy
 
 ### Destinations
 
-<details><summary>JSON Schema (click to expand):</summary>
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "mappingId": {
-      "type": "string"
-    },
-    "usageIndicatorCode": {
-      "$comment": "Optional. Only sends transaction sets with the specified usage indicator to the destination.",
-      "type": "string",
-      "enum": ["P", "T", "I"]
-    },
-    "release": {
-      "$comment": "Optional. Only sends transaction sets with the specified release to the destination.",
-      "type": "string",
-      "minLength": 6,
-      "maxLength": 12
-    },
-    "destination": {
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "as2"
-            },
-            "connectorId": {
-              "type": "string"
-            }
-          },
-          "required": ["type", "connectorId"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "bucket"
-            },
-            "bucketName": {
-              "type": "string"
-            },
-            "path": {
-              "type": "string"
-            }
-          },
-          "required": ["type", "bucketName", "path"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "function"
-            },
-            "functionName": {
-              "type": "string"
-            },
-            "additionalInput": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          },
-          "required": ["type", "functionName"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "sftp"
-            },
-            "connectionDetails": {
-              "type": "object",
-              "properties": {
-                "host": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "number",
-                  "default": 22
-                },
-                "username": {
-                  "type": "string"
-                },
-                "password": {
-                  "type": "string"
-                }
-              },
-              "required": ["host", "username", "password"]
-            },
-            "remotePath": {
-              "type": "string",
-              "defailt": "/"
-            }
-          },
-          "required": ["type", "connectionDetails"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "webhook"
-            },
-            "url": {
-              "type": "string"
-            },
-            "verb": {
-              "type": "string",
-              "enum": ["PATCH", "POST", "PUT"],
-              "default": "POST"
-            },
-            "headers": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
-          "required": ["type", "url"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "stash"
-            },
-            "keyspaceName": {
-              "type": "string"
-            },
-            "keyPrefix": {
-              "type": "string"
-            }
-          },
-          "required": ["type", "keyspaceName"]
-        }
-      ]
-    }
-  },
-  "required": ["destination"]
-}
-```
-
-</details>
-<br />
+- [AS2](./src/schemas/destination-as2.json)
+- [Bucket](./src/schemas/destination-bucket.json)
+- [Function](./src/schemas/destination-function.json)
+- [SFTP](./src/schemas/destination-sftp.json)
+- [Stash](./src/schemas/destination-stash.json)
+- [Webhook](./src/schemas/destination-webhook.json)
 
 #### Transaction set destination
 
 key: `destinations|${partnershipId}|${transactionSetId}`
 
-value (JSON Schema):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "description": {
-      "type": "string"
-    },
-    "destinations": {
-      "type": "array",
-      "items": {
-        "$ref": "see destination type"
-      }
-    }
-  },
-  "required": ["destinations"]
-}
-```
+value: [JSON Schema](./src/schemas/transaction-destinations.json)
 
 ## Execution error destinations
 
 key: `destinations|errors|execution`
 
-value (JSON Schema):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "description": {
-      "type": "string"
-    },
-    "destinations": {
-      "type": "array",
-      "items": {
-        "$ref": "see destination type"
-      }
-    }
-  },
-  "required": ["destinations"]
-}
-```
+value: [JSON Schema](./src/schemas/error-destinations.json)
 
 ### File error destinations
 
 key: `destinations|errors|execution`
 
-value (JSON Schema):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "description": {
-      "type": "string"
-    },
-    "destinations": {
-      "type": "array",
-      "items": {
-        "$ref": "see destination type"
-      }
-    }
-  },
-  "required": ["destinations"]
-}
-```
+value: [JSON Schema](./src/schemas/error-destinations.json)
 
 ### Acknowledgment configuration
 
 key: `functional_acknowledgments|${partnershipId}`
 
-value (JSON Schema):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "generateFor": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "comment": "Transaction Set Id"
-      }
-    }
-  },
-  "required": ["generateFor"]
-}
-```
+value: [JSON Schema](./src/schemas/acknowledgment.json)

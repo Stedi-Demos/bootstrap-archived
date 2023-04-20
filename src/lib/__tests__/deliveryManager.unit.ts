@@ -10,6 +10,7 @@ import {
 import { processSingleDelivery } from "../deliveryManager.js";
 import nock from "nock";
 import { InvokeFunctionCommand } from "@stedi/sdk-client-functions";
+import { DestinationSftp } from "../types/DestinationSftp.js";
 
 const as2Client = mockAs2Client();
 const buckets = mockBucketClient();
@@ -279,6 +280,68 @@ test.serial(
         password,
         privateKey,
         passphrase,
+      })
+    );
+    t.assert(
+      sftpStub.put.calledOnceWith(
+        Buffer.from(payload),
+        `${remotePath}/${destinationFilename}`
+      )
+    );
+    t.assert(sftpStub.end.calledOnceWith());
+  }
+);
+
+test.serial(
+  "delivery via sftp includes retries, timeouts, and algorithms when connecting if included in config",
+  async (t) => {
+    const host = "test-host.sftp.com";
+    const port = 22;
+    const username = "test-user";
+    const password = "test-password";
+    const remotePath = "/outbound";
+    const destinationFilename = "850-0001.edi";
+    const payload = "file-contents";
+    const retries = 2;
+    const readyTimeout = 1_000;
+    const timeout = 2_000;
+    const algorithms: DestinationSftp["connectionDetails"]["algorithms"] = {
+      kex: ["diffie-hellman-group18-sha512"],
+      serverHostKey: ["rsa-sha2-512"],
+      cipher: ["aes256-gcm"],
+      hmac: ["hmac-sha2-512"],
+      compress: ["zlib"],
+    };
+
+    await processSingleDelivery({
+      destination: {
+        type: "sftp",
+        connectionDetails: {
+          host,
+          port,
+          username,
+          password,
+          retries,
+          readyTimeout,
+          timeout,
+          algorithms,
+        },
+        remotePath,
+      },
+      destinationFilename,
+      payload,
+    });
+
+    t.assert(
+      sftpStub.connect.calledOnceWith({
+        host,
+        port,
+        username,
+        password,
+        retries,
+        readyTimeout,
+        timeout,
+        algorithms,
       })
     );
     t.assert(

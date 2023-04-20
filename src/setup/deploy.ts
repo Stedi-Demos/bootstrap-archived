@@ -25,8 +25,15 @@ const createOrUpdateFunction = async (
 ) => {
   try {
     await updateFunction(functionName, functionPackage, environmentVariables);
-  } catch (e) {
-    await createFunction(functionName, functionPackage, environmentVariables);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceNotFoundException"
+    )
+      await createFunction(functionName, functionPackage, environmentVariables);
+    else throw error;
   }
 };
 
@@ -37,8 +44,15 @@ const createOrUpdateEventBinding = async (
 ) => {
   try {
     await updateFunctionEventBinding(functionName, eventPattern, bindingName);
-  } catch (e) {
-    await createFunctionEventBinding(functionName, eventPattern, bindingName);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceNotFoundException"
+    )
+      await createFunctionEventBinding(functionName, eventPattern, bindingName);
+    else throw error;
   }
 };
 

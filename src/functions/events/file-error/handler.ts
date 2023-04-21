@@ -34,7 +34,10 @@ const sendErrorToDestination = async (event: CoreFileError) => {
   const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: errorDestinations.destinations,
     payload: event,
-    destinationFilename: `${event.detail.fileId}-${new Date().toUTCString()}`,
+    payloadMetadata: {
+      payloadId: `${event.detail.fileId}-${new Date().toISOString()}`,
+      format: "json",
+    },
   };
 
   await processDeliveries(processDeliveriesInput);

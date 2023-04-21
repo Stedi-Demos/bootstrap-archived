@@ -7,6 +7,10 @@ export const DestinationAS2Schema = z
     connectorId: z.string(),
     bucketName: z.string(),
     path: z.string(),
+    baseFilename: z
+      .string()
+      .describe("Optional prefix added to output file")
+      .optional(),
   })
   .strict();
 

@@ -11,6 +11,7 @@ import { bucketsClient } from "../clients/buckets.js";
 
 import {
   DeliverToDestinationInput,
+  generateDestinationFilename,
   payloadAsString,
 } from "../deliveryManager.js";
 
@@ -24,7 +25,11 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be as2)");
   }
 
-  const key = `${input.destination.path}/${input.destinationFilename}`;
+  const destinationFilename = generateDestinationFilename(
+    input.payloadMetadata,
+    input.destination.baseFilename
+  );
+  const key = `${input.destination.path}/${destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

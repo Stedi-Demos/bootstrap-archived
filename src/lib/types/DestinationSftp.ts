@@ -100,6 +100,10 @@ export const DestinationSftpSchema = z
       })
       .strict(),
     remotePath: z.string().optional(),
+    baseFilename: z
+      .string()
+      .describe("Optional prefix added to output file")
+      .optional(),
   })
   .strict();
 

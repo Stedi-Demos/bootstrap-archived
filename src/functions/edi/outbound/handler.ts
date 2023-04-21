@@ -10,7 +10,6 @@ import {
 import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
-  generateDestinationFilename,
   groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
@@ -161,15 +160,15 @@ export const handler = async (
             event.metadata.useBuiltInGuide
           );
 
-          const destinationFilename = generateDestinationFilename(
-            isaControlNumber.toString(),
-            transactionSetIdentifier,
-            "edi"
-          );
+          const payloadId = `${isaControlNumber}-${gsControlNumber}-${transactionSetIdentifier}`;
+
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
-            destinationFilename,
+            payloadMetadata: {
+              payloadId,
+              format: "edi",
+            },
           };
           return await processSingleDelivery(deliverToDestinationInput);
         })

@@ -131,9 +131,9 @@ test("translate 997 guide json without a guide and delivers to destination", asy
         body.includes(
           "ISA*00*          *00*          *ZZ*THISISME       *14*ANOTHERMERCH   *"
         ) &&
-          body.includes("*^*00801*1167*0*I*>~GS*FA*meId*merchId*") &&
+          body.includes("*^*00801*000001167*0*I*>~GS*FA*meId*merchId*") &&
           body.includes(
-            "*1167*X*008010~ST*997*0001~AK1*PO*1921~AK9*A*1*1*1~SE*4*0001~GE*1*1167~IEA*1*1167~"
+            "*1167*X*008010~ST*997*0001~AK1*PO*1921~AK9*A*1*1*1~SE*4*0001~GE*1*1167~IEA*1*000001167~"
           ),
         "EDI message is valid"
       );

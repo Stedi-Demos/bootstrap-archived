@@ -16,6 +16,7 @@
       "type": "string"
     },
     "baseFilename": {
+      "description": "Optional prefix added to output file",
       "type": "string"
     }
   },

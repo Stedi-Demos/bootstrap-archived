@@ -35,7 +35,7 @@ const sendErrorToDestination = async (event: CoreFileError) => {
     destinations: errorDestinations.destinations,
     payload: event,
     payloadMetadata: {
-      payloadId: `${event.detail.fileId}-${new Date().toUTCString()}`,
+      payloadId: `${event.detail.fileId}-${new Date().toISOString()}`,
       format: "json",
     },
   };

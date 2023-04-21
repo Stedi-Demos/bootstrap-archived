@@ -153,7 +153,7 @@ export const sendFailureToDestinations = async (
     destinations: errorDestinations.destinations,
     payload: failure,
     payloadMetadata: {
-      payloadId: `${executionId}-${new Date().toUTCString()}`,
+      payloadId: `${executionId}-${new Date().toISOString()}`,
       format: "json",
     },
   };

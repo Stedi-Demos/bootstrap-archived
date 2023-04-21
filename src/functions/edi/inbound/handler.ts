@@ -20,6 +20,7 @@ import {
   processDeliveries,
   ProcessDeliveriesInput,
 } from "../../../lib/deliveryManager.js";
+import { DocumentObject } from "../../../lib/types/JsonObject.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const buckets = bucketsClient();
@@ -47,7 +48,7 @@ export const handler = async (
     const fileContents = await consumers.text(
       getObjectResponse.body as Readable
     );
-    const guideJSON = JSON.parse(fileContents) as object;
+    const guideJSON = JSON.parse(fileContents) as DocumentObject;
 
     // get the destinations for this transaction set
     const { destinations } = await loadTransactionDestinations({

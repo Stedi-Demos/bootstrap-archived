@@ -2,6 +2,7 @@ import { MapDocumentCommand, MappingsClient } from "@stedi/sdk-client-mappings";
 import { DEFAULT_SDK_CLIENT_PROPS } from "./constants.js";
 import { DocumentType } from "@aws-sdk/types";
 import { ErrorWithContext } from "./errorWithContext.js";
+import { DocumentObject } from "./types/JsonObject.js";
 
 let _mappingsClient: MappingsClient | undefined;
 
@@ -15,15 +16,15 @@ export const mappingsClient = (): MappingsClient => {
 
 export const invokeMapping = async (
   mappingId: string,
-  payload: unknown,
+  payload: DocumentType,
   mappingValidation?: "strict"
-): Promise<object> => {
+): Promise<DocumentObject> => {
   // Execute mapping to transform API JSON input to Guide schema-based JSON
   try {
     const mapResult = await mappingsClient().send(
       new MapDocumentCommand({
         id: mappingId,
-        content: payload as DocumentType,
+        content: payload,
         validationMode: mappingValidation,
       })
     );
@@ -36,7 +37,7 @@ export const invokeMapping = async (
     }
 
     // temporarily remove empty objects from mapping result until $omitField is updated to work on objects
-    return removeEmptyObjects(mapResult.content) as object;
+    return removeEmptyObjects(mapResult.content) as DocumentObject;
   } catch (e: unknown) {
     if (
       e &&

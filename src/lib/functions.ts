@@ -27,13 +27,13 @@ const events = eventsClient();
 
 export const invokeFunction = async (
   functionName: string,
-  input: unknown,
+  input: DocumentType | undefined,
   invocationType = InvocationType.SYNCHRONOUS
 ): Promise<DocumentType | undefined> => {
   const result = await functions.send(
     new InvokeFunctionCommand({
       functionName,
-      payload: input as DocumentType,
+      payload: input,
       invocationType,
     })
   );

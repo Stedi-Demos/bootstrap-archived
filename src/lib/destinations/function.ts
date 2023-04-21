@@ -20,14 +20,16 @@ export const deliverToDestination = async (
 const buildFunctionInput = (
   destinationPayload: DeliverToDestinationInput["destinationPayload"],
   additionalInput?: DestinationFunction["additionalInput"]
-): string | unknown => {
+): DocumentType => {
   if (additionalInput && typeof destinationPayload === "string") {
     throw new Error(
       "additionalInput for function destination not supported with string payload"
     );
   }
 
-  return typeof destinationPayload === "object"
-    ? { ...destinationPayload, ...additionalInput }
-    : destinationPayload;
+  return (
+    typeof destinationPayload === "object"
+      ? { ...destinationPayload, ...additionalInput }
+      : destinationPayload
+  ) as DocumentType;
 };

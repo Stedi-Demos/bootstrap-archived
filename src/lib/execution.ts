@@ -15,6 +15,7 @@ import {
   processDeliveries,
   ProcessDeliveriesInput,
 } from "./deliveryManager.js";
+import { DocumentObject } from "./types/JsonObject.js";
 
 const bucketName = requiredEnvVar("EXECUTIONS_BUCKET_NAME");
 
@@ -150,7 +151,7 @@ export const sendFailureToDestinations = async (
 
   const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: errorDestinations.destinations,
-    payload: failure,
+    payload: failure as unknown as DocumentObject,
     destinationFilename: `${executionId}-${new Date().toUTCString()}`,
   };
 

@@ -1,5 +1,6 @@
 import { InvocationType } from "@stedi/sdk-client-functions";
 import { invokeFunction } from "../lib/functions.js";
+import { DocumentObject } from "../lib/types/JsonObject.js";
 
 // if input was provided, parse as object or string, otherwise return undefined
 const processFunctionInput = (input?: string) => {
@@ -8,9 +9,9 @@ const processFunctionInput = (input?: string) => {
 
 // parse input as object if possible, otherwise leave as string
 const parsedObjectOrString = (input: string) => {
-  let result: string | object = input;
+  let result: string | DocumentObject = input;
   try {
-    result = JSON.parse(input) as string | object;
+    result = JSON.parse(input) as string | DocumentObject;
   } catch (e) {
     // no-op
   }

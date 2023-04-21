@@ -112,7 +112,7 @@ export const handler = async (
           "yyyy-MM-dd"
         ),
         time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm"),
-        controlNumber: isaControlNumber.toString(),
+        controlNumber: isaControlNumber.toString().padStart(9, "0"),
         usageIndicatorCode: event.metadata.usageIndicatorCode,
         controlVersionNumber: transactionSetConfig.release.slice(
           0,

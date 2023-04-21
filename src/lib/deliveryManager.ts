@@ -9,6 +9,7 @@ import * as fn from "./destinations/function.js";
 import * as sftp from "./destinations/sftp.js";
 import * as webhook from "./destinations/webhook.js";
 import * as stash from "./destinations/stash.js";
+import { DocumentObject } from "./types/JsonObject.js";
 
 type Destination = TransactionSetDestinations["destinations"][0]["destination"];
 
@@ -19,7 +20,7 @@ export interface DeliveryResult {
 
 export interface ProcessSingleDeliveryInput {
   destination: Destination;
-  payload: object | string;
+  payload: string | DocumentObject;
   mappingId?: string;
   mappingValidation?: "strict";
   destinationFilename: string;
@@ -27,13 +28,13 @@ export interface ProcessSingleDeliveryInput {
 
 export interface ProcessDeliveriesInput {
   destinations: TransactionSetDestinations["destinations"];
-  payload: object | string;
+  payload: string | DocumentObject;
   destinationFilename: string;
 }
 
 export interface DeliverToDestinationInput {
   destination: Destination;
-  destinationPayload: string | object;
+  destinationPayload: string | DocumentObject;
   destinationFilename: string;
 }
 
@@ -53,7 +54,7 @@ const deliveryFnForDestinationType: {
 export const processSingleDelivery = async (
   input: ProcessSingleDeliveryInput
 ): Promise<DeliveryResult> => {
-  const destinationPayload: string | object =
+  const destinationPayload: string | DocumentObject =
     input.mappingId !== undefined
       ? await invokeMapping(
           input.mappingId,
@@ -111,7 +112,7 @@ interface GroupedDeliveryResultSettledResult {
   rejected: {
     error: ErrorObject;
     destination: Destination;
-    payload: string | object;
+    payload: string | DocumentObject;
   }[];
 }
 

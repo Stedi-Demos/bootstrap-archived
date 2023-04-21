@@ -12,6 +12,7 @@ import {
   processDeliveries,
   ProcessDeliveriesInput,
 } from "../../../lib/deliveryManager.js";
+import { DocumentObject } from "../../../lib/types/JsonObject.js";
 
 export const handler = async (event: CoreFileError) => {
   const executionId = generateExecutionId(event);
@@ -33,7 +34,7 @@ const sendErrorToDestination = async (event: CoreFileError) => {
 
   const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: errorDestinations.destinations,
-    payload: event,
+    payload: event as DocumentObject,
     destinationFilename: `${event.detail.fileId}-${new Date().toUTCString()}`,
   };
 

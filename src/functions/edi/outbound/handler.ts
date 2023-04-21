@@ -5,13 +5,13 @@ import {
   FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
-  recordNewExecution,
+  recordNewExecution
 } from "../../../lib/execution.js";
 import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
   generateDestinationFilename,
-  groupDeliveryResults,
+  groupDeliveryResults
 } from "../../../lib/deliveryManager.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
 import { invokeMapping } from "../../../lib/mappings.js";
@@ -26,6 +26,7 @@ import { partnersClient } from "../../../lib/clients/partners.js";
 import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 import { ErrorFromFunctionEvent } from "../../../lib/errorFromFunctionEvent.js";
+import { DocumentObject } from "../../../lib/types/JsonObject.js";
 
 const partners = partnersClient();
 
@@ -148,7 +149,10 @@ export const handler = async (
         .map(async ({ destination, mappingId }) => {
           const guideJson =
             mappingId !== undefined
-              ? await invokeMapping(mappingId, outboundEvent.payload)
+              ? await invokeMapping(
+                  mappingId,
+                  outboundEvent.payload as DocumentObject
+                )
               : outboundEvent.payload;
 
           validateTransactionSetControlNumbers(guideJson);
@@ -176,7 +180,7 @@ export const handler = async (
     );
 
     const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
-      payload: outboundEvent,
+      payload: outboundEvent as DocumentObject,
       destinations: transactionSetDestinations.destinations,
     });
     const rejectedCount = deliveryResultsByStatus.rejected.length;

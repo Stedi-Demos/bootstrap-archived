@@ -171,6 +171,28 @@ const createOrUpdateEventBinding = async (
     )
   );
 
+  await createOrUpdateEventBinding(
+    "csv-from-json",
+    {
+      source: ["stedi.core"],
+      "detail-type": ["file.processed"],
+      detail: {
+        source: {
+          type: ["JSON"],
+        },
+      },
+    },
+    "all-processed-json-files"
+  );
+  EVENT_BINDING_NAMES.push("all-processed-json-files");
+
+  promises.push(
+    waitUntilEventToFunctionBindingCreateComplete(
+      { client: events, maxWaitTime },
+      { eventToFunctionBindingName: "all-processed-json-files" }
+    )
+  );
+
   console.log("Waiting for event binding deploys to complete");
   await Promise.all(promises);
 

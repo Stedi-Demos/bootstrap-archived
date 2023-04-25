@@ -111,6 +111,8 @@ const DestinationCsvFromJsonSchema = z.strictObject({
   ]),
 });
 
+type DestinationCsvFromJson = z.output<typeof DestinationCsvFromJsonSchema>;
+
 const DestinationCsvFromJsonEventsSchema = z.strictObject({
   $schema: z.string().optional(),
   description: z.string().optional(),
@@ -130,6 +132,7 @@ export {
   TransactionSetDestinations,
   DestinationAckSchema,
   DestinationAck,
+  DestinationCsvFromJson,
   DestinationErrorEventsSchema,
   DestinationErrorEvents,
   DestinationCsvFromJsonEventsSchema,

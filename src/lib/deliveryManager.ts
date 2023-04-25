@@ -14,7 +14,7 @@ type Destination = TransactionSetDestinations["destinations"][0]["destination"];
 
 export interface PayloadMetadata {
   payloadId: string;
-  format: "edi" | "json";
+  format: "edi" | "json" | "csv";
 }
 
 export interface DeliveryResult {

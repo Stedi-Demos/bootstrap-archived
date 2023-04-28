@@ -15,6 +15,7 @@ import {
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
+  LegacyOutboundEvent,
   LegacyOutboundEventSchema,
   OutboundEvent,
   OutboundEventSchema,
@@ -34,7 +35,7 @@ import { NoUndefined } from "../../../lib/types/NoUndefined.js";
 const partners = partnersClient();
 
 export const handler = async (
-  event: unknown
+  event: OutboundEvent | LegacyOutboundEvent
 ): Promise<Record<string, unknown> | FailureResponse> => {
   const executionId = generateExecutionId(event);
 

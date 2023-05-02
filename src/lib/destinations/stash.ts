@@ -1,6 +1,9 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../clients/stash.js";
-import { DeliverToDestinationInput, generateDestinationFilename } from "../deliveryManager.js";
+import {
+  DeliverToDestinationInput,
+  generateDestinationFilename,
+} from "../deliveryManager.js";
 import { DocumentType } from "@aws-sdk/types";
 import { ErrorWithContext } from "../errorWithContext.js";
 
@@ -28,7 +31,7 @@ export const deliverToDestination = async (
   }
 
   const destinationFilename = generateDestinationFilename(
-    input.payloadMetadata,
+    input.payloadMetadata
   );
 
   return await stash.send(

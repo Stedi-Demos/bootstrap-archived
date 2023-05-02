@@ -125,7 +125,7 @@ export const createProfiles = async ({
         (error.name === "BadRequestException" &&
           "message" in error &&
           typeof error.message === "string" &&
-          error.message.includes("conflicts with transaction")))
+          error.message.includes("already exists for this partnership")))
     ) {
       if ("inboundTransactions" in partnership) {
         rule855 = partnership.inboundTransactions?.find(
@@ -198,7 +198,7 @@ const ensureOutboundTransaction = async ({
         (error.name === "BadRequestException" &&
           "message" in error &&
           typeof error.message === "string" &&
-          error.message.includes("conflicts with transaction")))
+          error.message.includes("already exists for this partnership")))
     ) {
       if ("outboundTransactions" in partnership) {
         rule = partnership.outboundTransactions?.find(

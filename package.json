@@ -18,7 +18,8 @@
     "test": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/.bin/ava",
     "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava",
     "lint": "npx eslint --fix \"src/**/*.ts\"",
-    "generate-schema-types": "ts-node-esm ./src/scripts/schema-zod-types.ts"
+    "generate-schema-types": "ts-node-esm ./src/scripts/schema-zod-types.ts",
+    "deploy-transform-split-loop": "ts-node-esm ./src/optional-functions/transform/split-loop/deploy.ts"
   },
   "author": "",
   "license": "ISC",
@@ -38,6 +39,7 @@
     "@stedi/sdk-client-sftp": "^0.1.51",
     "@stedi/sdk-client-stash": "^0.1.51",
     "@stedi/x12-tools": "^1.11.2",
+    "@supercharge/promise-pool": "^2.4.0",
     "@types/lodash-es": "^4.17.7",
     "@types/node": "^18.11.18",
     "@types/node-fetch": "^2.6.3",
@@ -79,7 +81,8 @@
   },
   "ava": {
     "environmentVariables": {
-      "STEDI_FUNCTION_NAME": "function-under-test"
+      "STEDI_FUNCTION_NAME": "function-under-test",
+      "EXECUTIONS_BUCKET_NAME": "executions-bucket-test"
     },
     "typescript": {
       "rewritePaths": {

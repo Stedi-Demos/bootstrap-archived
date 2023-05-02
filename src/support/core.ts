@@ -4,7 +4,7 @@ import {
   UpdateCoreCommand,
   waitUntilCoreUpdateComplete,
 } from "@stedi/sdk-client-cores";
-import { maxWaitTime } from "../setup/contants.js";
+import { maxWaitTime } from "./contants.js";
 
 import { updateResourceMetadata } from "./bootstrapMetadata.js";
 import dotenv from "dotenv";

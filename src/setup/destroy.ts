@@ -29,7 +29,7 @@ import {
   DeleteEventToFunctionBindingCommand,
   waitUntilEventToFunctionBindingDeleteComplete,
 } from "@stedi/sdk-client-events";
-import { maxWaitTime } from "./contants.js";
+import { maxWaitTime } from "../support/contants.js";
 
 const stash = stashClient();
 const events = eventsClient();

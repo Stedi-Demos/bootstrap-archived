@@ -92,7 +92,7 @@ test.serial(
     const { payload: exceptionPayload } = exceptionFunctionCall.args[0].input;
     t.is((exceptionPayload as any).error.name, "StashConfigurationError");
     t.is((exceptionPayload as any).error.context.details.length, 2);
-    t.is(error.context.rawError.name, "StashConfigurationError");
-    t.is(error.context.rawError.context.details.length, 2);
+    t.is(error.name, "StashConfigurationError");
+    t.is(error.context.details.length, 2);
   }
 );

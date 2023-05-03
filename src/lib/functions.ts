@@ -10,6 +10,7 @@ import {
   LogRetention,
   UpdateFunctionCommand,
   UpdateFunctionCommandOutput,
+  waitUntilFunctionCreateComplete,
 } from "@stedi/sdk-client-functions";
 import { bucketsClient } from "./clients/buckets.js";
 import { functionsClient } from "./clients/functions.js";
@@ -17,9 +18,13 @@ import { requiredEnvVar } from "./environment.js";
 import {
   CreateEventToFunctionBindingCommand,
   UpdateEventToFunctionBindingCommand,
+  waitUntilEventToFunctionBindingCreateComplete,
 } from "@stedi/sdk-client-events";
 import { eventsClient } from "./clients/events.js";
 import { ErrorWithContext } from "./errorWithContext.js";
+import { compile, packForDeployment } from "../support/compile.js";
+import dotenv from "dotenv";
+import { maxWaitTime } from "../support/contants.js";
 
 const functions = functionsClient();
 const buckets = bucketsClient();
@@ -146,4 +151,94 @@ export const updateFunctionEventBinding = async (
       eventToFunctionBindingName,
     })
   );
+};
+
+export const deployFunctionAtPath = async (
+  path: `./src/${string}/handler.ts`,
+  name?: string
+) => {
+  const functionName = name ?? path.split("/").slice(-3, -1).join("-");
+  const jsPath = await compile(path);
+  const code = await packForDeployment(jsPath);
+
+  try {
+    const functionPackage = new Uint8Array(code);
+    const environmentVariables = dotenv.config().parsed ?? {};
+    environmentVariables.NODE_OPTIONS = "--enable-source-maps";
+    environmentVariables.STEDI_FUNCTION_NAME = functionName;
+
+    await createOrUpdateFunction(
+      functionName,
+      functionPackage,
+      environmentVariables
+    );
+
+    await waitUntilFunctionCreateComplete(
+      { client: functions, maxWaitTime },
+      { functionName }
+    );
+    console.log(`Finished deploying function: ${functionName}`);
+  } catch (e) {
+    console.error(
+      `Could not update deploy ${functionName}. Error: ${JSON.stringify(
+        e,
+        null,
+        2
+      )}`
+    );
+  }
+
+  return functionName;
+};
+
+export const createOrUpdateFunction = async (
+  functionName: string,
+  functionPackage: Uint8Array,
+  environmentVariables?: Record<string, string>
+) => {
+  try {
+    await updateFunction(functionName, functionPackage, environmentVariables);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceNotFoundException"
+    )
+      await createFunction(functionName, functionPackage, environmentVariables);
+    else throw error;
+  }
+};
+
+export const createOrUpdateEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  bindingName: string
+) => {
+  try {
+    await updateFunctionEventBinding(functionName, eventPattern, bindingName);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "ResourceNotFoundException"
+    )
+      await createFunctionEventBinding(functionName, eventPattern, bindingName);
+    else throw error;
+  }
+};
+
+export const deployEventBinding = async (
+  functionName: string,
+  eventPattern: DocumentType,
+  bindingName: string
+) => {
+  await createOrUpdateEventBinding(functionName, eventPattern, bindingName);
+
+  await waitUntilEventToFunctionBindingCreateComplete(
+    { client: eventsClient(), maxWaitTime },
+    { eventToFunctionBindingName: bindingName }
+  );
+  console.log(`Finished deploying event binding: ${bindingName}`);
 };

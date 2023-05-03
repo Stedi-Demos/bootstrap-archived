@@ -92,10 +92,9 @@ export const failedExecution = async (
   const statusCode: number =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     ((errorWithContext as any)?.$metadata?.httpStatusCode as number) || 500;
-  const message = "execution failed";
   const failureResponse = {
     statusCode,
-    message,
+    message: errorWithContext.message,
     failureRecord,
     error: rawError,
   };
@@ -108,7 +107,7 @@ export const failedExecution = async (
       `failure-error-destination.json`
     );
   }
-  throw new ErrorWithContext(message, { rawError });
+  throw errorWithContext;
 };
 
 const markExecutionAsFailed = async (

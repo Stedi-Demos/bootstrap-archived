@@ -148,11 +148,14 @@ export const groupDeliveryResults = (
 
 export const generateDestinationFilename = (
   metadata: PayloadMetadata,
-  baseFilename?: string
+  baseFilename?: string,
+  fileExtension?: string
 ): string => {
   const baseFilenameSegment = baseFilename ? `-${baseFilename}` : "";
 
-  return `${metadata.payloadId}${baseFilenameSegment}.${metadata.format}`;
+  return `${metadata.payloadId}${baseFilenameSegment}.${
+    fileExtension ?? metadata.format
+  }`;
 };
 
 export const payloadAsString = (

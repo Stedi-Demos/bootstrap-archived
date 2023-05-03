@@ -208,13 +208,10 @@ test.serial(
       ),
     });
 
-    const errorResponse = await t.throwsAsync(
-      handler(sampleFileProcessedEvent),
-      {
-        instanceOf: ErrorWithContext,
-        message: "execution failed",
-      }
-    );
+    await t.throwsAsync(handler(sampleFileProcessedEvent), {
+      instanceOf: ErrorWithContext,
+      message: "unable to parse input as JSON",
+    });
 
     const bucketGetInputCalls = buckets.commandCalls(GetObjectCommand, {
       bucketName: inputBucketName,
@@ -226,10 +223,6 @@ test.serial(
 
     t.is(bucketGetInputCalls.length, 1);
     t.is(bucketDestinationCalls.length, 0);
-    t.is(
-      (errorResponse as any).context.rawError.message,
-      "unable to parse input as JSON"
-    );
   }
 );
 
@@ -271,7 +264,7 @@ test.serial(
       handler(sampleFileProcessedEvent),
       {
         instanceOf: ErrorWithContext,
-        message: "execution failed",
+        message: "some deliveries were not successful: 1 failed, 0 succeeded",
       }
     );
 
@@ -286,7 +279,7 @@ test.serial(
     t.is(bucketGetInputCalls.length, 1);
     t.is(bucketDestinationCalls.length, 0);
     t.is(
-      (errorResponse as any).context.rawError.context.rejected[0].error.message,
+      (errorResponse as any).context.rejected[0].error.message,
       "input must be a JSON array"
     );
   }

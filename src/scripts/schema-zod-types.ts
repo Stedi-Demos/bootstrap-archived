@@ -6,7 +6,6 @@ import destinationFunction from "../schemas/destination-function.json" assert { 
 import destinationSftp from "../schemas/destination-sftp.json" assert { type: "json" };
 import destinationStash from "../schemas/destination-stash.json" assert { type: "json" };
 import destinationWebhook from "../schemas/destination-webhook.json" assert { type: "json" };
-import errorDestinations from "../schemas/error-destinations.json" assert { type: "json" };
 import fs from "node:fs";
 import { jsonSchemaToZodDereffed } from "json-schema-to-zod";
 
@@ -19,7 +18,6 @@ await generateZod(destinationFunction, "DestinationFunction");
 await generateZod(destinationSftp, "DestinationSftp");
 await generateZod(destinationStash, "DestinationStash");
 await generateZod(destinationWebhook, "DestinationWebhook");
-await generateZod(errorDestinations, "ErrorDestinations");
 
 async function generateZod(
   json: unknown,

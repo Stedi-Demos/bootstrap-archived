@@ -1,60 +1,14 @@
-import dotenv from "dotenv";
-import { compile, packForDeployment } from "../support/compile.js";
-import {
-  createFunction,
-  createFunctionEventBinding,
-  updateFunction,
-  updateFunctionEventBinding,
-} from "../lib/functions.js";
-import { functionNameFromPath, getFunctionPaths } from "../support/utils.js";
-import { waitUntilFunctionCreateComplete } from "@stedi/sdk-client-functions";
-import { functionsClient } from "../lib/clients/functions.js";
+import { getFunctionPaths } from "../support/utils.js";
 import { waitUntilEventToFunctionBindingCreateComplete } from "@stedi/sdk-client-events";
-import { DocumentType } from "@aws-sdk/types";
 import { eventsClient } from "../lib/clients/events.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
-import { maxWaitTime } from "./contants.js";
+import { maxWaitTime } from "../support/contants.js";
+import {
+  createOrUpdateEventBinding,
+  deployFunctionAtPath,
+} from "../lib/functions.js";
 
-const functions = functionsClient();
 const events = eventsClient();
-
-const createOrUpdateFunction = async (
-  functionName: string,
-  functionPackage: Uint8Array,
-  environmentVariables?: Record<string, string>
-) => {
-  try {
-    await updateFunction(functionName, functionPackage, environmentVariables);
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      error.name === "ResourceNotFoundException"
-    )
-      await createFunction(functionName, functionPackage, environmentVariables);
-    else throw error;
-  }
-};
-
-const createOrUpdateEventBinding = async (
-  functionName: string,
-  eventPattern: DocumentType,
-  bindingName: string
-) => {
-  try {
-    await updateFunctionEventBinding(functionName, eventPattern, bindingName);
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      error.name === "ResourceNotFoundException"
-    )
-      await createFunctionEventBinding(functionName, eventPattern, bindingName);
-    else throw error;
-  }
-};
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -64,43 +18,10 @@ const createOrUpdateEventBinding = async (
 
   const FUNCTION_NAMES: string[] = [];
   let promises: Promise<unknown>[] = functionPaths.map(async (fnPath) => {
-    const functionName = functionNameFromPath(fnPath);
-
-    console.log(`Deploying ${functionName}`);
-
-    // compiling function code
-    const jsPath = await compile(fnPath);
-    const code = await packForDeployment(jsPath);
-
-    // deploying functions
-    try {
-      const functionPackage = new Uint8Array(code);
-      const environmentVariables = dotenv.config().parsed ?? {};
-      environmentVariables.NODE_OPTIONS = "--enable-source-maps";
-      environmentVariables.STEDI_FUNCTION_NAME = functionName;
-
-      await createOrUpdateFunction(
-        functionName,
-        functionPackage,
-        environmentVariables
-      );
-
-      await waitUntilFunctionCreateComplete(
-        { client: functions, maxWaitTime },
-        { functionName }
-      );
-      FUNCTION_NAMES.push(functionName);
-
-      console.log(`Done ${functionName}`);
-    } catch (e: unknown) {
-      console.error(
-        `Could not update deploy ${functionName}. Error: ${JSON.stringify(
-          e,
-          null,
-          2
-        )}`
-      );
-    }
+    const functionName = await deployFunctionAtPath(
+      fnPath as `./src/${string}/handler.ts`
+    );
+    FUNCTION_NAMES.push(functionName);
   });
 
   console.log("Waiting for function deploys to complete");

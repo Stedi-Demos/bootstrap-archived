@@ -23,6 +23,7 @@ export const loadCsvFromJsonDestinations = async (
     );
 
     if (!value) {
+      console.log(`no ${destinationCsvFromJsonEventsKey} configuration found`);
       return [];
     }
 

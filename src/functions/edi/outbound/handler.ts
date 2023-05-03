@@ -196,7 +196,11 @@ export const handler = async (
   } catch (e) {
     console.error(e);
     const errorWithContext = ErrorWithContext.fromUnknown(e);
-    return failedExecution(executionId, errorWithContext);
+    const failureResponse = await failedExecution(
+      executionId,
+      errorWithContext
+    );
+    return failureResponse;
   }
 };
 

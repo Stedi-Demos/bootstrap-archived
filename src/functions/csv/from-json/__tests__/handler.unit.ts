@@ -23,7 +23,6 @@ import { Readable } from "node:stream";
 import { defaultInputAsString } from "../__fixtures__/inputs.js";
 import { defaultOutput } from "../__fixtures__/outputs.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
-import { serializeError } from "serialize-error";
 
 const buckets = mockBucketClient();
 const stash = mockStashClient();
@@ -151,13 +150,10 @@ test.serial(
       ),
     });
 
-    const errorResponse = await t.throwsAsync(
-      handler(sampleFileProcessedEvent),
-      {
-        instanceOf: ErrorWithContext,
-        message: "unable to parse input as JSON",
-      }
-    );
+    await t.throwsAsync(handler(sampleFileProcessedEvent), {
+      instanceOf: ErrorWithContext,
+      message: "unable to parse input as JSON",
+    });
 
     const bucketGetInputCalls = buckets.commandCalls(GetObjectCommand, {
       bucketName: inputBucketName,

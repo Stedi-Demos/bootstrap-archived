@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "optional-functions/billing/usage-poller/configuration.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "threshold": {
+            "description": "the",
+            "type": "number",
+            "minimum": 1
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "../../../schemas/destination-webhook.json"
+              },
+              {
+                "$ref": "../../../schemas/destination-function.json"
+              }
+            ]
+          }
+        },
+        "required": [
+          "destination",
+          "threshold"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "destinations"
+  ]
+}

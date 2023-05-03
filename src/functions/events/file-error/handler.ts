@@ -23,7 +23,8 @@ export const handler = async (event: CoreFileError) => {
     return {};
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    return failedExecution(executionId, error);
+    const failureResponse = await failedExecution(executionId, error);
+    return failureResponse;
   }
 };
 

@@ -2,11 +2,11 @@ import { getFunctionPaths } from "../support/utils.js";
 import { waitUntilEventToFunctionBindingCreateComplete } from "@stedi/sdk-client-events";
 import { eventsClient } from "../lib/clients/events.js";
 import { updateResourceMetadata } from "../support/bootstrapMetadata.js";
-import { maxWaitTime } from "../support/contants.js";
 import {
   createOrUpdateEventBinding,
   deployFunctionAtPath,
 } from "../lib/functions.js";
+import { maxWaitTime } from "../support/contants.js";
 
 const events = eventsClient();
 

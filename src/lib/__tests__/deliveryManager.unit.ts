@@ -7,7 +7,7 @@ import {
   mockBucketClient,
   mockFunctionsClient,
 } from "../testing/testHelpers.js";
-import { processSingleDelivery } from "../deliveryManager.js";
+import { PayloadMetadata, processSingleDelivery } from "../deliveryManager.js";
 import nock from "nock";
 import { InvokeFunctionCommand } from "@stedi/sdk-client-functions";
 import { DestinationSftp } from "../types/DestinationSftp.js";
@@ -33,7 +33,11 @@ test.serial(
   async (t) => {
     const bucketName = "test-as2-bucket";
     const path = "my-as2-trading-partner/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const connectorId = "my-as2-connector-id";
     const payload = "file-contents";
 
@@ -45,7 +49,7 @@ test.serial(
         connectorId,
       },
       payload: "file-contents",
-      destinationFilename,
+      payloadMetadata,
     });
 
     t.deepEqual(buckets.calls()[0]!.args[0].input, {
@@ -66,7 +70,11 @@ test.serial(
   async (t) => {
     const bucketName = "test-as2-bucket";
     const path = "my-as2-trading-partner/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const payload = "file-contents";
 
     await processSingleDelivery({
@@ -76,7 +84,39 @@ test.serial(
         path,
       },
       payload,
-      destinationFilename,
+      payloadMetadata,
+    });
+
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
+      bucketName,
+      key: `${path}/${destinationFilename}`,
+      body: payload,
+    });
+  }
+);
+
+test.serial(
+  "delivery via bucket includes baseFilename when specified",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "my-as2-trading-partner/outbound";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const baseFilename = "my-base-filename";
+    const destinationFilename = `${payloadMetadata.payloadId}-${baseFilename}.${payloadMetadata.format}`;
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+        baseFilename,
+      },
+      payload,
+      payloadMetadata,
     });
 
     t.deepEqual(buckets.calls()[0]!.args[0].input, {
@@ -92,7 +132,11 @@ test.serial(
   async (t) => {
     const bucketName = "test-as2-bucket";
     const path = "//my-as2-trading-partner/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const payload = "file-contents";
 
     await processSingleDelivery({
@@ -102,7 +146,39 @@ test.serial(
         path,
       },
       payload,
-      destinationFilename,
+      payloadMetadata,
+    });
+
+    const expectedPath = "my-as2-trading-partner/outbound";
+    t.deepEqual(buckets.calls()[0]!.args[0].input, {
+      bucketName,
+      key: `${expectedPath}/${destinationFilename}`,
+      body: payload,
+    });
+  }
+);
+
+test.serial(
+  "delivery via bucket uses file extension if specified",
+  async (t) => {
+    const bucketName = "test-as2-bucket";
+    const path = "my-as2-trading-partner/outbound";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.DAT`;
+    const payload = "file-contents";
+
+    await processSingleDelivery({
+      destination: {
+        type: "bucket",
+        bucketName,
+        path,
+        fileExtention: "DAT",
+      },
+      payload,
+      payloadMetadata,
     });
 
     const expectedPath = "my-as2-trading-partner/outbound";
@@ -132,7 +208,10 @@ test.serial(
             additionalInput,
           },
           payload,
-          destinationFilename: "unused",
+          payloadMetadata: {
+            payloadId: "some-id",
+            format: "json",
+          },
         }),
       {
         instanceOf: Error,
@@ -157,7 +236,10 @@ test.serial(
         functionName,
       },
       payload,
-      destinationFilename: "unused",
+      payloadMetadata: {
+        payloadId: "some-id",
+        format: "json",
+      },
     });
 
     t.deepEqual(functions.calls()[0]!.args[0].input, {
@@ -184,7 +266,10 @@ test.serial(
         additionalInput,
       },
       payload,
-      destinationFilename: "unused",
+      payloadMetadata: {
+        payloadId: "some-id",
+        format: "json",
+      },
     });
 
     t.deepEqual(functions.calls()[0]!.args[0].input, {
@@ -206,7 +291,11 @@ test.serial(
     const username = "test-user";
     const password = "test-password";
     const remotePath = "/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const payload = "file-contents";
 
     await processSingleDelivery({
@@ -220,7 +309,7 @@ test.serial(
         },
         remotePath,
       },
-      destinationFilename,
+      payloadMetadata,
       payload,
     });
 
@@ -252,7 +341,11 @@ test.serial(
     const privateKey = "some-private-key-value";
     const passphrase = "private-key-passphrase";
     const remotePath = "/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const payload = "file-contents";
 
     await processSingleDelivery({
@@ -268,7 +361,7 @@ test.serial(
         },
         remotePath,
       },
-      destinationFilename,
+      payloadMetadata,
       payload,
     });
 
@@ -300,7 +393,11 @@ test.serial(
     const username = "test-user";
     const password = "test-password";
     const remotePath = "/outbound";
-    const destinationFilename = "850-0001.edi";
+    const payloadMetadata: PayloadMetadata = {
+      payloadId: "850-0001",
+      format: "edi",
+    };
+    const destinationFilename = `${payloadMetadata.payloadId}.${payloadMetadata.format}`;
     const payload = "file-contents";
     const retries = 2;
     const readyTimeout = 1_000;
@@ -328,7 +425,7 @@ test.serial(
         },
         remotePath,
       },
-      destinationFilename,
+      payloadMetadata,
       payload,
     });
 
@@ -371,7 +468,10 @@ test.serial("delivery via webhook sends payload to expected url", async (t) => {
       url,
     },
     payload,
-    destinationFilename: "unused",
+    payloadMetadata: {
+      payloadId: "some-id",
+      format: "json",
+    },
   });
 
   t.assert(webhookRequest.isDone(), "delivered payload to destination webhook");

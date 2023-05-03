@@ -10,12 +10,13 @@ import {
 import {
   processSingleDelivery,
   ProcessSingleDeliveryInput,
-  generateDestinationFilename,
   groupDeliveryResults,
 } from "../../../lib/deliveryManager.js";
 import { lookupFunctionalIdentifierCode } from "../../../lib/lookupFunctionalIdentifierCode.js";
 import { invokeMapping } from "../../../lib/mappings.js";
 import {
+  LegacyOutboundEvent,
+  LegacyOutboundEventSchema,
   OutboundEvent,
   OutboundEventSchema,
 } from "../../../lib/types/OutboundEvent.js";
@@ -23,34 +24,29 @@ import { ErrorWithContext } from "../../../lib/errorWithContext.js";
 import { loadPartnershipById } from "../../../lib/loadPartnershipById.js";
 import { EdiTranslateWriteEnvelope } from "../../../lib/types/EdiTranslateWriteEnvelope.js";
 import { partnersClient } from "../../../lib/clients/partners.js";
-import { IncrementX12ControlNumberCommand } from "@stedi/sdk-client-partners";
+import {
+  GetX12PartnershipCommandOutput,
+  IncrementX12ControlNumberCommand,
+} from "@stedi/sdk-client-partners";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 import { ErrorFromFunctionEvent } from "../../../lib/errorFromFunctionEvent.js";
+import { NoUndefined } from "../../../lib/types/NoUndefined.js";
 
 const partners = partnersClient();
 
 export const handler = async (
-  event: OutboundEvent
+  event: OutboundEvent | LegacyOutboundEvent
 ): Promise<Record<string, unknown> | FailureResponse> => {
   const executionId = generateExecutionId(event);
 
   try {
     await recordNewExecution(executionId, event);
 
-    const outboundEventParseResult = OutboundEventSchema.safeParse(event);
-
-    if (!outboundEventParseResult.success) {
-      throw new ErrorFromFunctionEvent(
-        `edi-outbound`,
-        outboundEventParseResult
-      );
-    }
-
-    const outboundEvent = outboundEventParseResult.data;
+    const outboundEvent = await prepapreEvent(event);
 
     // load the outbound x12 configuration for the sender
     const partnership = await loadPartnershipById({
-      partnershipId: event.metadata.partnershipId,
+      partnershipId: outboundEvent.metadata.partnershipId,
     });
 
     // get the transaction set from Guide JSON or event metadata
@@ -62,7 +58,8 @@ export const handler = async (
     const transactionSetConfig = partnership.outboundTransactions?.find(
       (txn) =>
         txn.transactionSetIdentifier === transactionSetIdentifier &&
-        (!event.metadata.release || txn.release === event.metadata.release)
+        (!outboundEvent.metadata.release ||
+          txn.release === outboundEvent.metadata.release)
     );
 
     if (transactionSetConfig === undefined)
@@ -71,7 +68,7 @@ export const handler = async (
       );
 
     const transactionSetDestinations = await loadTransactionDestinations({
-      partnershipId: event.metadata.partnershipId,
+      partnershipId: outboundEvent.metadata.partnershipId,
       transactionSetIdentifier,
     });
 
@@ -112,8 +109,8 @@ export const handler = async (
           "yyyy-MM-dd"
         ),
         time: formatInTimeZone(documentDate, partnership.timezone, "HH:mm"),
-        controlNumber: isaControlNumber.toString(),
-        usageIndicatorCode: event.metadata.usageIndicatorCode,
+        controlNumber: isaControlNumber.toString().padStart(9, "0"),
+        usageIndicatorCode: outboundEvent.metadata.usageIndicatorCode,
         controlVersionNumber: transactionSetConfig.release.slice(
           0,
           5
@@ -158,18 +155,18 @@ export const handler = async (
             guideJson,
             transactionSetConfig.guideId,
             envelope,
-            event.metadata.useBuiltInGuide
+            outboundEvent.metadata.useBuiltInGuide
           );
 
-          const destinationFilename = generateDestinationFilename(
-            isaControlNumber.toString(),
-            transactionSetIdentifier,
-            "edi"
-          );
+          const payloadId = `${isaControlNumber}-${gsControlNumber}-${transactionSetIdentifier}`;
+
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
             destination,
             payload: translation,
-            destinationFilename,
+            payloadMetadata: {
+              payloadId,
+              format: "edi",
+            },
           };
           return await processSingleDelivery(deliverToDestinationInput);
         })
@@ -199,7 +196,11 @@ export const handler = async (
   } catch (e) {
     console.error(e);
     const errorWithContext = ErrorWithContext.fromUnknown(e);
-    return failedExecution(executionId, errorWithContext);
+    const failureResponse = await failedExecution(
+      executionId,
+      errorWithContext
+    );
+    return failureResponse;
   }
 };
 
@@ -288,4 +289,54 @@ const filterDestination = (
   }
 
   return true;
+};
+
+const prepapreEvent = async (event: unknown): Promise<OutboundEvent> => {
+  // check if we have a legacy event input
+  const legacyEventParse = LegacyOutboundEventSchema.safeParse(event);
+  if (legacyEventParse.success) {
+    // check if we can resolve the partnership using the legacy event
+    let partnership: NoUndefined<GetX12PartnershipCommandOutput> | undefined;
+    try {
+      partnership = await loadPartnershipById({
+        partnershipId: `${legacyEventParse.data.metadata.sendingPartnerId}_${legacyEventParse.data.metadata.receivingPartnerId}`,
+      });
+    } catch (error) {
+      // swallow error
+    }
+
+    if (partnership === undefined) {
+      try {
+        partnership = await loadPartnershipById({
+          partnershipId: `${legacyEventParse.data.metadata.receivingPartnerId}_${legacyEventParse.data.metadata.sendingPartnerId}`,
+        });
+      } catch (error) {
+        // swallow error
+      }
+    }
+
+    if (partnership === undefined)
+      throw new ErrorWithContext(
+        "Legacy input used for edi-outbound, but no partnership found",
+        legacyEventParse.data
+      );
+
+    // reshape legacy event to new event format
+    event = {
+      metadata: {
+        partnershipId: partnership.partnershipId,
+        usageIndicatorCode: "P", // Do we default to P?
+        release: legacyEventParse.data.metadata.release,
+        transactionSet: legacyEventParse.data.metadata.transactionSet,
+      },
+      payload: legacyEventParse.data.payload,
+    };
+  }
+
+  const outboundEventParseResult = OutboundEventSchema.safeParse(event);
+
+  if (!outboundEventParseResult.success)
+    throw new ErrorFromFunctionEvent(`edi-outbound`, outboundEventParseResult);
+
+  return outboundEventParseResult.data;
 };

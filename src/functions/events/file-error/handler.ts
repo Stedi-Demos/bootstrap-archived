@@ -23,7 +23,8 @@ export const handler = async (event: CoreFileError) => {
     return {};
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    return failedExecution(executionId, error);
+    const failureResponse = await failedExecution(executionId, error);
+    return failureResponse;
   }
 };
 
@@ -34,7 +35,10 @@ const sendErrorToDestination = async (event: CoreFileError) => {
   const processDeliveriesInput: ProcessDeliveriesInput = {
     destinations: errorDestinations.destinations,
     payload: event,
-    destinationFilename: `${event.detail.fileId}-${new Date().toUTCString()}`,
+    payloadMetadata: {
+      payloadId: `${event.detail.fileId}-${new Date().toISOString()}`,
+      format: "json",
+    },
   };
 
   await processDeliveries(processDeliveriesInput);

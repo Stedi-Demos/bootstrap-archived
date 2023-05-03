@@ -12,6 +12,11 @@ import * as stash from "./destinations/stash.js";
 
 type Destination = TransactionSetDestinations["destinations"][0]["destination"];
 
+export interface PayloadMetadata {
+  payloadId: string;
+  format: "edi" | "json" | "csv";
+}
+
 export interface DeliveryResult {
   type: Destination["type"];
   payload: unknown;
@@ -22,19 +27,19 @@ export interface ProcessSingleDeliveryInput {
   payload: object | string;
   mappingId?: string;
   mappingValidation?: "strict";
-  destinationFilename: string;
+  payloadMetadata: PayloadMetadata;
 }
 
 export interface ProcessDeliveriesInput {
   destinations: TransactionSetDestinations["destinations"];
   payload: object | string;
-  destinationFilename: string;
+  payloadMetadata: PayloadMetadata;
 }
 
 export interface DeliverToDestinationInput {
   destination: Destination;
   destinationPayload: string | object;
-  destinationFilename: string;
+  payloadMetadata: PayloadMetadata;
 }
 
 const deliveryFnForDestinationType: {
@@ -53,6 +58,7 @@ const deliveryFnForDestinationType: {
 export const processSingleDelivery = async (
   input: ProcessSingleDeliveryInput
 ): Promise<DeliveryResult> => {
+  console.log(`delivering to ${input.destination.type} destination`);
   const destinationPayload: string | object =
     input.mappingId !== undefined
       ? await invokeMapping(
@@ -65,7 +71,7 @@ export const processSingleDelivery = async (
   const deliverToDestinationInput: DeliverToDestinationInput = {
     destination: input.destination,
     destinationPayload,
-    destinationFilename: input.destinationFilename,
+    payloadMetadata: input.payloadMetadata,
   };
 
   const payload = await deliveryFnForDestinationType[input.destination.type](
@@ -83,12 +89,11 @@ export const processDeliveries = async (
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
     input.destinations.map(async ({ destination, mappingId }) => {
-      console.log(`delivering to ${destination.type} destination`);
       const deliverToDestinationInput: ProcessSingleDeliveryInput = {
         destination,
         payload: input.payload,
         mappingId,
-        destinationFilename: input.destinationFilename,
+        payloadMetadata: input.payloadMetadata,
       };
       return await processSingleDelivery(deliverToDestinationInput);
     })
@@ -117,7 +122,7 @@ interface GroupedDeliveryResultSettledResult {
 
 export const groupDeliveryResults = (
   deliveryResults: PromiseSettledResult<DeliveryResult>[],
-  input: Omit<ProcessDeliveriesInput, "destinationFilename">
+  input: Omit<ProcessDeliveriesInput, "payloadMetadata">
 ): GroupedDeliveryResultSettledResult => {
   return deliveryResults.reduce(
     (groupedResults: GroupedDeliveryResultSettledResult, group, index) => {
@@ -142,12 +147,15 @@ export const groupDeliveryResults = (
 };
 
 export const generateDestinationFilename = (
-  prefix: string,
-  transactionSetType: string,
-  extension?: string
+  metadata: PayloadMetadata,
+  baseFilename?: string,
+  fileExtension?: string
 ): string => {
-  const baseFilename = `${prefix}-${transactionSetType}`;
-  return extension ? `${baseFilename}.${extension}` : baseFilename;
+  const baseFilenameSegment = baseFilename ? `-${baseFilename}` : "";
+
+  return `${metadata.payloadId}${baseFilenameSegment}.${
+    fileExtension ?? metadata.format
+  }`;
 };
 
 export const payloadAsString = (

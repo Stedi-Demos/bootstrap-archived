@@ -63,6 +63,7 @@ const destinationFileErrorEventsKey = "destinations|errors|file_error";
 const DestinationErrorSchema = z.strictObject({
   description: z.string().optional(),
   mappingId: z.string().optional(),
+  mappingValidation: z.enum(["strict"]).optional(),
   destination: z.discriminatedUnion("type", [
     DestinationFunctionSchema,
     DestinationWebhookSchema,
@@ -79,15 +80,113 @@ const DestinationErrorEventsSchema = z.strictObject({
 
 type DestinationErrorEvents = z.infer<typeof DestinationErrorEventsSchema>;
 
+const destinationCsvFromJsonEventsKey = "destinations|csv|from-json";
+
+// custom definition in order to use discriminated union with good types, not
+// possible using json-schema-to-zod
+const DestinationCsvFromJsonSchema = z.strictObject({
+  description: z.string().optional(),
+  mappingId: z.string().optional(),
+  mappingValidation: z.enum(["strict"]).optional(),
+  filter: z
+    .strictObject({
+      bucketName: z.string().optional(),
+      pathPrefix: z.string().optional(),
+    })
+    .optional(),
+  parserConfig: z
+    .strictObject({
+      header: z.boolean().default(true),
+      delimiter: z.string().default(","),
+      newline: z.string().default("\r\n"),
+    })
+    .optional(),
+  destination: z.discriminatedUnion("type", [
+    DestinationAS2Schema,
+    DestinationBucketSchema,
+    DestinationFunctionSchema,
+    DestinationSftpSchema,
+    DestinationWebhookSchema,
+    DestinationStashSchema,
+  ]),
+});
+
+type DestinationCsvFromJson = z.output<typeof DestinationCsvFromJsonSchema>;
+
+const DestinationCsvFromJsonEventsSchema = z.strictObject({
+  $schema: z.string().optional(),
+  description: z.string().optional(),
+  destinations: z.array(DestinationCsvFromJsonSchema),
+});
+
+type DestinationCsvFromJsonEvents = z.infer<
+  typeof DestinationCsvFromJsonEventsSchema
+>;
+
+const destinationCsvToJsonEventsKey = "destinations|csv|to-json";
+
+// custom definition in order to use discriminated union with good types, not
+// possible using json-schema-to-zod
+const DestinationCsvToJsonSchema = z.strictObject({
+  description: z.string().optional(),
+  mappingId: z.string().optional(),
+  mappingValidation: z.enum(["strict"]).optional(),
+  filter: z
+    .strictObject({
+      bucketName: z.string().optional(),
+      pathPrefix: z.string().optional(),
+    })
+    .optional(),
+  parserConfig: z
+    .strictObject({
+      delimiter: z.string().optional(),
+      header: z.boolean().default(true),
+      newline: z.enum(["\r", "\n", "\r\n"]).optional(),
+      quoteChar: z.string().default('"'),
+      skipEmptyLines: z.boolean().default(true),
+      trim: z.boolean().default(false),
+    })
+    .optional(),
+
+  destination: z.discriminatedUnion("type", [
+    DestinationAS2Schema,
+    DestinationBucketSchema,
+    DestinationFunctionSchema,
+    DestinationSftpSchema,
+    DestinationWebhookSchema,
+    DestinationStashSchema,
+  ]),
+});
+
+type DestinationCsvToJson = z.output<typeof DestinationCsvToJsonSchema>;
+
+const DestinationCsvToJsonEventsSchema = z.strictObject({
+  $schema: z.string().optional(),
+  description: z.string().optional(),
+  destinations: z.array(DestinationCsvToJsonSchema),
+});
+
+type DestinationCsvToJsonEvents = z.infer<
+  typeof DestinationCsvToJsonEventsSchema
+>;
+
 export {
   destinationAckKey,
+  destinationCsvFromJsonEventsKey,
+  destinationCsvToJsonEventsKey,
   destinationExecutionErrorKey,
   destinationFileErrorEventsKey,
   TransactionSetDestinationsSchema,
   TransactionSetDestinations,
   DestinationAckSchema,
   DestinationAck,
+  DestinationCsvFromJson,
+  DestinationCsvToJson,
   DestinationErrorEventsSchema,
   DestinationErrorEvents,
+  DestinationCsvFromJsonEventsSchema,
+  DestinationCsvToJsonEventsSchema,
+  DestinationCsvFromJsonEvents,
+  DestinationCsvToJsonEvents,
   WebhookVerb,
 };

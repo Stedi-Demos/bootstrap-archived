@@ -10,7 +10,11 @@ export const compile = async (
   buildPath: string,
   debug = false
 ): Promise<string> => {
-  const pathParts = buildPath.replace("/src/", "/dist/src/").split("/");
+  const buildPathFromRoot = new URL(
+    "../.." + buildPath.replace("./", "/"),
+    import.meta.url
+  ).pathname;
+  const pathParts = buildPathFromRoot.replace("/src/", "/dist/src/").split("/");
   pathParts.pop(); // discard input file name
 
   pathParts.push("index.mjs");
@@ -18,7 +22,7 @@ export const compile = async (
 
   const result = await build({
     metafile: true,
-    entryPoints: [buildPath],
+    entryPoints: [buildPathFromRoot],
     outfile: outputPath,
     platform: "node",
     format: "esm",

@@ -5,6 +5,7 @@ import {
 import { bucketsClient } from "../clients/buckets.js";
 import {
   DeliverToDestinationInput,
+  generateDestinationFilename,
   payloadAsString,
 } from "../deliveryManager.js";
 
@@ -20,7 +21,12 @@ export const deliverToDestination = async (
   // remove any leading slashes, if present, from bucket key prefix
   const path = input.destination.path.replace(/^\/+/, "");
 
-  const key = `${path}/${input.destinationFilename}`;
+  const destinationFilename = generateDestinationFilename(
+    input.payloadMetadata,
+    input.destination.baseFilename,
+    input.destination.fileExtention
+  );
+  const key = `${path}/${destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {
     bucketName: input.destination.bucketName,
     key,

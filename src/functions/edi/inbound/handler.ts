@@ -16,7 +16,6 @@ import consumers from "stream/consumers";
 import { Readable } from "node:stream";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
 import {
-  generateDestinationFilename,
   processDeliveries,
   ProcessDeliveriesInput,
 } from "../../../lib/deliveryManager.js";
@@ -58,13 +57,9 @@ export const handler = async (
 
     // prepare delivery payloads
     const { envelopes } = transactionEvent.detail;
-    const filenamePrefix = `${envelopes.interchange.controlNumber}-${envelopes.functionalGroup.controlNumber}-${transactionEvent.detail.transaction.controlNumber}`;
-
-    const destinationFilename = generateDestinationFilename(
-      filenamePrefix.toString(),
-      transactionEvent.detail.transaction.transactionSetIdentifier,
-      "json"
-    );
+    const payloadIdEnvelopeSegment = `${envelopes.interchange.controlNumber}-${envelopes.functionalGroup.controlNumber}`;
+    const payloadIdTransactionSegment = `${transactionEvent.detail.transaction.controlNumber}-${transactionEvent.detail.transaction.transactionSetIdentifier}`;
+    const payloadId = `${payloadIdEnvelopeSegment}-${payloadIdTransactionSegment}`;
 
     const { usageIndicatorCode } =
       transactionEvent.detail.envelopes.interchange;
@@ -79,7 +74,10 @@ export const handler = async (
     const processDeliveriesInput: ProcessDeliveriesInput = {
       destinations: filteredDestinations,
       payload: guideJSON,
-      destinationFilename,
+      payloadMetadata: {
+        payloadId,
+        format: "json",
+      },
     };
 
     await processDeliveries(processDeliveriesInput);
@@ -96,7 +94,8 @@ export const handler = async (
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
 
-    return failedExecution(executionId, error);
+    const failureResponse = await failedExecution(executionId, error);
+    return failureResponse;
   }
 };
 

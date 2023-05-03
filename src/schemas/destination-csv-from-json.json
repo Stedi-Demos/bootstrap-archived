@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/destination-csv-from-json.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "object",
+            "description": "Optional filter criteria to specify which files to process",
+            "properties": {
+              "bucketName": {
+                "description": "Optional. If specified, only process files in the corresponding bucket",
+                "type": "string"
+              },
+              "pathPrefix": {
+                "description": "Optional. If specified, only process files with matching prefix",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "mappingId": {
+            "type": "string"
+          },
+          "mappingValidation": {
+            "type": "string",
+            "enum": [
+              "strict"
+            ]
+          },
+          "parserConfig": {
+            "type": "object",
+            "description": "Optional parser configuration options. See https://www.papaparse.com/docs#config",
+            "properties": {
+              "delimiter": {
+                "type": "string",
+                "default": ","
+              },
+              "header": {
+                "type": "boolean",
+                "default": true
+              },
+              "newline": {
+                "type": "string",
+                "default": "\r\n"
+              }
+            },
+            "additionalProperties": false
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "./destination-as2.json"
+              },
+              {
+                "$ref": "./destination-bucket.json"
+              },
+              {
+                "$ref": "./destination-function.json"
+              },
+              {
+                "$ref": "./destination-sftp.json"
+              },
+              {
+                "$ref": "./destination-stash.json"
+              },
+              {
+                "$ref": "./destination-webhook.json"
+              }
+            ]
+          }
+        },
+        "required": [
+          "destination"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "destinations"
+  ]
+}

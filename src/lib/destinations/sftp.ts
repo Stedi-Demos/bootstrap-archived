@@ -2,6 +2,7 @@ import sftp from "ssh2-sftp-client";
 
 import {
   DeliverToDestinationInput,
+  generateDestinationFilename,
   payloadAsString,
 } from "../deliveryManager.js";
 
@@ -19,9 +20,14 @@ export const deliverToDestination = async (
     throw new Error("invalid destination type (must be sftp)");
   }
 
+  const destinationFilename = generateDestinationFilename(
+    input.payloadMetadata,
+    input.destination.baseFilename,
+    input.destination.fileExtention
+  );
   const remotePath = `${input.destination.remotePath ?? ""}${
     input.destination.remotePath?.endsWith("/") ? "" : "/"
-  }${input.destinationFilename}`;
+  }${destinationFilename}`;
   const { host, username } = input.destination.connectionDetails;
   const fileContents = payloadAsString(input.destinationPayload);
 

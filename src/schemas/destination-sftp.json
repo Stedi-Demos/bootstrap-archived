@@ -151,6 +151,15 @@
     "remotePath": {
       "type": "string",
       "defailt": "/"
+    },
+    "baseFilename": {
+      "description": "Optional prefix added to output file",
+      "type": "string"
+    },
+    "fileExtention": {
+      "type": "string",
+      "description": "defaults to 'edi', 'json', or 'csv', depending on output file type. Do not include a leading dot",
+      "pattern": "^(?!\\.).+"
     }
   },
   "additionalProperties": false,

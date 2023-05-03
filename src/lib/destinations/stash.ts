@@ -1,6 +1,9 @@
 import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../clients/stash.js";
-import { DeliverToDestinationInput } from "../deliveryManager.js";
+import {
+  DeliverToDestinationInput,
+  generateDestinationFilename,
+} from "../deliveryManager.js";
 import { DocumentType } from "@aws-sdk/types";
 import { ErrorWithContext } from "../errorWithContext.js";
 
@@ -27,12 +30,16 @@ export const deliverToDestination = async (
     );
   }
 
+  const destinationFilename = generateDestinationFilename(
+    input.payloadMetadata
+  );
+
   return await stash.send(
     new SetValueCommand({
       keyspaceName: input.destination.keyspaceName,
       key: `${input.destination.keyPrefix ?? ""}${
         input.destination.keyPrefix ? "/" : ""
-      }${input.destinationFilename}`,
+      }${destinationFilename}`,
       value: input.destinationPayload as DocumentType,
     })
   );

@@ -104,6 +104,13 @@ export const DestinationSftpSchema = z
       .string()
       .describe("Optional prefix added to output file")
       .optional(),
+    fileExtention: z
+      .string()
+      .regex(new RegExp("^(?!\\.).+"))
+      .describe(
+        "defaults to 'edi', 'json', or 'csv', depending on output file type. Do not include a leading dot"
+      )
+      .optional(),
   })
   .strict();
 

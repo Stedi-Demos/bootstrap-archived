@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "schemas/destination-csv-from-json.json",
+  "$id": "schemas/destination-csv-to-json.json",
   "type": "object",
   "properties": {
     "$schema": {
@@ -43,19 +43,29 @@
           },
           "parserConfig": {
             "type": "object",
-            "description": "Optional parser configurations. See https://www.papaparse.com/docs#config",
+            "description": "Optional parser configuration options. See https://www.papaparse.com/docs#config",
             "properties": {
+              "delimiter": {
+                "type": "string"
+              },
               "header": {
                 "type": "boolean",
                 "default": true
               },
-              "delimiter": {
-                "type": "string",
-                "default": ","
-              },
               "newline": {
+                "type": "string"
+              },
+              "quoteChar": {
                 "type": "string",
-                "default": "\r\n"
+                "default": "\""
+              },
+              "skipEmptyLines": {
+                "type": "boolean",
+                "default": true
+              },
+              "trim": {
+                "type": "boolean",
+                "default": false
               }
             },
             "additionalProperties": false

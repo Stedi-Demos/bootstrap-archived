@@ -4,9 +4,9 @@ import { handler } from "../handler.js";
 import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { PARTNERS_KEYSPACE_NAME } from "../../../../lib/constants.js";
 import {
-  DestinationCsvFromJsonEvents,
-  destinationCsvFromJsonEventsKey,
-  DestinationCsvFromJsonEventsSchema,
+  DestinationCsvToJsonEvents,
+  destinationCsvToJsonEventsKey,
+  DestinationCsvToJsonEventsSchema,
 } from "../../../../lib/types/Destination.js";
 import {
   mockBucketClient,
@@ -22,10 +22,10 @@ import {
 import { GetObjectCommand, PutObjectCommand } from "@stedi/sdk-client-buckets";
 import { sdkStreamMixin } from "@aws-sdk/util-stream-node";
 import { Readable } from "node:stream";
-import { defaultInputAsString } from "../__fixtures__/inputs.js";
+import { customCsvInput, defaultInput } from "../__fixtures__/inputs.js";
 import {
-  customParserConfigOutput,
-  defaultOutput,
+  customParserConfigOutputAsString,
+  defaultOutputAsString,
 } from "../__fixtures__/outputs.js";
 import { ErrorWithContext } from "../../../../lib/errorWithContext.js";
 
@@ -43,12 +43,12 @@ test.afterEach.always(() => {
 });
 
 test.serial(
-  "processes incoming core file.processed event, converts json to csv, and sends to configured destination",
+  "processes incoming core file.processed event, converts csv to json, and sends to configured destination",
   async (t) => {
     const bucketName = "testBucket";
     const path = "test-path";
-    const configValue: DestinationCsvFromJsonEvents = {
-      description: "destinations to handle file.processed json events",
+    const configValue: DestinationCsvToJsonEvents = {
+      description: "destinations to handle file.processed csv events",
       destinations: [
         {
           destination: {
@@ -63,16 +63,16 @@ test.serial(
     stash
       .on(GetValueCommand, {
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
         value: configValue,
       });
 
     buckets.on(GetObjectCommand, {}).resolvesOnce({
       body: sdkStreamMixin(
-        Readable.from([new TextEncoder().encode(defaultInputAsString)])
+        Readable.from([new TextEncoder().encode(defaultInput)])
       ),
     });
 
@@ -84,19 +84,20 @@ test.serial(
 
     t.deepEqual(bucketDestinationCalls[0]!.args[0].input, {
       bucketName,
-      key: `${path}/${inputBaseFilename}.csv`,
-      body: defaultOutput,
+      key: `${path}/${inputBaseFilename}.json`,
+      body: defaultOutputAsString,
     });
   }
 );
 
 test.serial(
-  "processes incoming core file.processed event and converts json to csv using custom parser config if specified",
+  "processes incoming core file.processed event and converts csv to json using custom parser config if specified",
   async (t) => {
     const bucketName = "testBucket";
     const path = "test-path";
-    const configValue: z.input<typeof DestinationCsvFromJsonEventsSchema> = {
-      description: "destinations to handle file.processed json events",
+
+    const configValue: z.input<typeof DestinationCsvToJsonEventsSchema> = {
+      description: "destinations to handle file.processed csv events",
       destinations: [
         {
           destination: {
@@ -105,9 +106,9 @@ test.serial(
             path,
           },
           parserConfig: {
-            header: false,
             delimiter: "--",
-            newline: "~",
+            header: false,
+            newline: "\r",
           },
         },
       ],
@@ -116,16 +117,16 @@ test.serial(
     stash
       .on(GetValueCommand, {
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
         value: configValue,
       });
 
     buckets.on(GetObjectCommand, {}).resolvesOnce({
       body: sdkStreamMixin(
-        Readable.from([new TextEncoder().encode(defaultInputAsString)])
+        Readable.from([new TextEncoder().encode(customCsvInput)])
       ),
     });
 
@@ -137,8 +138,8 @@ test.serial(
 
     t.deepEqual(bucketDestinationCalls[0]!.args[0].input, {
       bucketName,
-      key: `${path}/${inputBaseFilename}.csv`,
-      body: customParserConfigOutput,
+      key: `${path}/${inputBaseFilename}.json`,
+      body: customParserConfigOutputAsString,
     });
   }
 );
@@ -152,10 +153,10 @@ test.serial(
     stash
       .on(GetValueCommand, {
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
         value: configValue,
       });
 
@@ -175,12 +176,12 @@ test.serial(
 );
 
 test.serial(
-  "throws error when processing file.processed event for non-json input",
+  "throws error when processing file.processed event for non-csv input",
   async (t) => {
     const bucketName = "testBucket";
     const path = "test-path";
-    const configValue: DestinationCsvFromJsonEvents = {
-      description: "destinations to handle file.processed json events",
+    const configValue: DestinationCsvToJsonEvents = {
+      description: "destinations to handle file.processed csv events",
       destinations: [
         {
           destination: {
@@ -195,68 +196,16 @@ test.serial(
     stash
       .on(GetValueCommand, {
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
       }) // mock destinations lookup
       .resolvesOnce({
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
         value: configValue,
       });
 
     buckets.on(GetObjectCommand, {}).resolvesOnce({
       body: sdkStreamMixin(
-        Readable.from([new TextEncoder().encode("not-json")])
-      ),
-    });
-
-    await t.throwsAsync(handler(sampleFileProcessedEvent), {
-      instanceOf: ErrorWithContext,
-      message: "unable to parse input as JSON",
-    });
-
-    const bucketGetInputCalls = buckets.commandCalls(GetObjectCommand, {
-      bucketName: inputBucketName,
-    });
-
-    const bucketDestinationCalls = buckets.commandCalls(PutObjectCommand, {
-      bucketName,
-    });
-
-    t.is(bucketGetInputCalls.length, 1);
-    t.is(bucketDestinationCalls.length, 0);
-  }
-);
-
-test.serial(
-  "throws error when processing file.processed event for non-array json input",
-  async (t) => {
-    const bucketName = "testBucket";
-    const path = "test-path";
-    const configValue: DestinationCsvFromJsonEvents = {
-      description: "destinations to handle file.processed json events",
-      destinations: [
-        {
-          destination: {
-            type: "bucket",
-            bucketName,
-            path,
-          },
-        },
-      ],
-    };
-
-    stash
-      .on(GetValueCommand, {
-        keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
-      }) // mock destinations lookup
-      .resolvesOnce({
-        key: destinationCsvFromJsonEventsKey,
-        value: configValue,
-      });
-
-    buckets.on(GetObjectCommand, {}).resolvesOnce({
-      body: sdkStreamMixin(
-        Readable.from([new TextEncoder().encode('{ "notAn": "array" }')])
+        Readable.from([new TextEncoder().encode('{ "not": "a csv" }')])
       ),
     });
 
@@ -280,7 +229,7 @@ test.serial(
     t.is(bucketDestinationCalls.length, 0);
     t.is(
       (errorResponse as any).context.rejected[0].error.message,
-      "input must be a JSON array"
+      "error encountered converting CSV to JSON"
     );
   }
 );

@@ -58,6 +58,7 @@ const deliveryFnForDestinationType: {
 export const processSingleDelivery = async (
   input: ProcessSingleDeliveryInput
 ): Promise<DeliveryResult> => {
+  console.log(`delivering to ${input.destination.type} destination`);
   const destinationPayload: string | object =
     input.mappingId !== undefined
       ? await invokeMapping(
@@ -88,7 +89,6 @@ export const processDeliveries = async (
 ): Promise<DeliveryResult[]> => {
   const deliveryResults = await Promise.allSettled(
     input.destinations.map(async ({ destination, mappingId }) => {
-      console.log(`delivering to ${destination.type} destination`);
       const deliverToDestinationInput: ProcessSingleDeliveryInput = {
         destination,
         payload: input.payload,

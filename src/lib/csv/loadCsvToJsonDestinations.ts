@@ -2,43 +2,43 @@ import { GetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "../clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "../constants.js";
 import {
-  DestinationCsvFromJson,
-  destinationCsvFromJsonEventsKey,
-  DestinationCsvFromJsonEventsSchema,
+  DestinationCsvToJson,
+  destinationCsvToJsonEventsKey,
+  DestinationCsvToJsonEventsSchema,
 } from "../types/Destination.js";
 import { ErrorFromStashConfiguration } from "../errorFromStashConfiguration.js";
 
 const stash = stashClient();
 
-export const loadCsvFromJsonDestinations = async (
+export const loadCsvToJsonDestinations = async (
   bucketName: string,
   key: string
-): Promise<DestinationCsvFromJson[]> => {
+): Promise<DestinationCsvToJson[]> => {
   try {
     const { value } = await stash.send(
       new GetValueCommand({
         keyspaceName: PARTNERS_KEYSPACE_NAME,
-        key: destinationCsvFromJsonEventsKey,
+        key: destinationCsvToJsonEventsKey,
       })
     );
 
     if (!value) {
-      console.log(`no ${destinationCsvFromJsonEventsKey} configuration found`);
+      console.log(`no ${destinationCsvToJsonEventsKey} configuration found`);
       return [];
     }
 
-    const csvFromJsonDestinationParseResult =
-      DestinationCsvFromJsonEventsSchema.safeParse(value);
+    const csvToJsonDestinationParseResult =
+      DestinationCsvToJsonEventsSchema.safeParse(value);
 
-    if (!csvFromJsonDestinationParseResult.success) {
+    if (!csvToJsonDestinationParseResult.success) {
       throw new ErrorFromStashConfiguration(
-        destinationCsvFromJsonEventsKey,
-        csvFromJsonDestinationParseResult
+        destinationCsvToJsonEventsKey,
+        csvToJsonDestinationParseResult
       );
     }
 
-    const destinationCsvFromJsonEvents = csvFromJsonDestinationParseResult.data;
-    return destinationCsvFromJsonEvents.destinations.filter((destination) =>
+    const destinationCsvToJsonEvents = csvToJsonDestinationParseResult.data;
+    return destinationCsvToJsonEvents.destinations.filter((destination) =>
       filterDestination(destination, bucketName, key)
     );
   } catch (error) {
@@ -55,7 +55,7 @@ export const loadCsvFromJsonDestinations = async (
 };
 
 const filterDestination = (
-  destination: DestinationCsvFromJson,
+  destination: DestinationCsvToJson,
   bucketName: string,
   key: string
 ): boolean => {

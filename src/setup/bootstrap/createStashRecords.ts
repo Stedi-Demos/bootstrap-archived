@@ -8,10 +8,7 @@ import { PARTNERS_KEYSPACE_NAME } from "../../lib/constants.js";
 import { requiredEnvVar } from "../../lib/environment.js";
 import { saveErrorDestinations } from "../../lib/saveErrorDestinations.js";
 import { saveTransactionSetDestinations } from "../../lib/saveTransactionSetDestinations.js";
-import {
-  DestinationAck,
-  TransactionSetDestinations,
-} from "../../lib/types/Destination.js";
+import { DestinationAck } from "../../lib/types/Destination.js";
 
 export const createSampleStashRecords = async ({
   partnershipId,
@@ -41,7 +38,7 @@ export const createSampleStashRecords = async ({
           },
         },
       ],
-    } satisfies TransactionSetDestinations
+    }
   );
 
   // inbound 855 from ANOTHERMERCH to THISISME
@@ -59,7 +56,7 @@ export const createSampleStashRecords = async ({
           },
         },
       ],
-    } satisfies TransactionSetDestinations
+    }
   );
 
   // outbound 997s to ANOTHERMERCH
@@ -76,7 +73,7 @@ export const createSampleStashRecords = async ({
         },
       },
     ],
-  } satisfies TransactionSetDestinations);
+  });
 
   await saveErrorDestinations("destinations|errors|file_error", {
     $schema:
@@ -87,7 +84,6 @@ export const createSampleStashRecords = async ({
         destination: {
           type: "webhook",
           url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
-          verb: "POST",
         },
       },
     ],
@@ -102,7 +98,6 @@ export const createSampleStashRecords = async ({
         destination: {
           type: "webhook",
           url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
-          verb: "POST",
         },
       },
     ],

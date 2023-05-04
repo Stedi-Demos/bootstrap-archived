@@ -28,7 +28,7 @@ export const deliverToDestination = async (
   const destinationFilename = generateDestinationFilename(
     input.payloadMetadata,
     input.destination.baseFilename,
-    input.destination.fileExtention
+    input.destination.fileExtension
   );
   const key = `${input.destination.path}/${destinationFilename}`;
   const putCommandArgs: PutObjectCommandInput = {

@@ -101,7 +101,6 @@ export const handler = async (): Promise<undefined | UsageExceededPayload> => {
       format: "json",
     },
   };
-
   await processDeliveries(processDeliveriesInput);
 
   return payload;

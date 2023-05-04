@@ -6,7 +6,6 @@ import destinationFunction from "../schemas/destination-function.json" assert { 
 import destinationSftp from "../schemas/destination-sftp.json" assert { type: "json" };
 import destinationStash from "../schemas/destination-stash.json" assert { type: "json" };
 import destinationWebhook from "../schemas/destination-webhook.json" assert { type: "json" };
-import billingUsagePoller from "../optional-functions/billing/usage-poller/configuration.json" assert { type: "json" };
 import fs from "node:fs";
 import { jsonSchemaToZodDereffed } from "json-schema-to-zod";
 
@@ -19,9 +18,6 @@ await generateZod(destinationFunction, "DestinationFunction");
 await generateZod(destinationSftp, "DestinationSftp");
 await generateZod(destinationStash, "DestinationStash");
 await generateZod(destinationWebhook, "DestinationWebhook");
-// json-schema-to-zod dependency fix resolving child schemas
-process.chdir("../optional-functions/billing/usage-poller");
-await generateZod(billingUsagePoller, "Configuration", "./");
 
 async function generateZod(
   json: unknown,

@@ -10,7 +10,7 @@ export const DestinationBucketSchema = z
       .string()
       .describe("Optional prefix added to output file")
       .optional(),
-    fileExtention: z
+    fileExtension: z
       .string()
       .regex(new RegExp("^(?!\\.).+"))
       .describe(

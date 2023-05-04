@@ -175,7 +175,7 @@ test.serial(
         type: "bucket",
         bucketName,
         path,
-        fileExtention: "DAT",
+        fileExtension: "DAT",
       },
       payload,
       payloadMetadata,

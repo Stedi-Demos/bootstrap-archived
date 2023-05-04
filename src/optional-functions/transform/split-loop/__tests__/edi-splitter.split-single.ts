@@ -54,7 +54,7 @@ test.serial("splits file by transaction set", async (t) => {
         type: "EDI/X12",
       },
       direction: "RECEIVED",
-      errors: [],
+      errors: ["...Runtime exited with error: signal: killed"],
       fileId: "test-file-id",
       version: "2023-02-13",
     },
@@ -122,7 +122,7 @@ test.serial(
           type: "EDI/X12",
         },
         direction: "RECEIVED",
-        errors: [],
+        errors: ["...Runtime exited with error: signal: killed"],
         fileId: "test-file-id",
         version: "2023-02-13",
       },
@@ -136,3 +136,26 @@ test.serial(
     t.assert(result, "0");
   }
 );
+
+test.serial("takes no action for non runtime timeout errors", async (t) => {
+  const result = await handler({
+    detail: {
+      input: {
+        bucketName: "my-bucket",
+        key: "heckinchonk.edi",
+        type: "EDI/X12",
+      },
+      direction: "RECEIVED",
+      errors: ["other error"],
+      fileId: "test-file-id",
+      version: "2023-02-13",
+    },
+  });
+
+  const putObjectCalls = buckets.commandCalls(PutObjectCommand, {
+    bucketName: "test-target-bucket",
+  });
+
+  t.is(putObjectCalls.length, 0);
+  t.assert(result, "0");
+});

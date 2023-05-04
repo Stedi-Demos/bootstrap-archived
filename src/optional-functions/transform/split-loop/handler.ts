@@ -31,6 +31,17 @@ export const handler = async (event: {
     );
   }
 
+  if (
+    !event.detail.errors.find(
+      (e) =>
+        typeof e === "string" &&
+        e.includes("Runtime exited with error: signal: killed")
+    )
+  ) {
+    console.log("skipping, not a runtime timeout", event);
+    return { count: 0 };
+  }
+
   try {
     await recordNewExecution(executionId, event);
 
@@ -69,7 +80,9 @@ export const handler = async (event: {
       });
 
     if (errors.length) {
-      throw new ErrorWithContext("failure to save split EDI files", { errors });
+      throw new ErrorWithContext("failure to save split EDI files", {
+        errors,
+      });
     }
 
     await markExecutionAsSuccessful(executionId);

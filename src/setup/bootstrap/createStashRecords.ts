@@ -87,6 +87,7 @@ export const createSampleStashRecords = async ({
         destination: {
           type: "webhook",
           url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
+          verb: "POST",
         },
       },
     ],
@@ -101,6 +102,7 @@ export const createSampleStashRecords = async ({
         destination: {
           type: "webhook",
           url: requiredEnvVar("DESTINATION_WEBHOOK_URL"),
+          verb: "POST",
         },
       },
     ],

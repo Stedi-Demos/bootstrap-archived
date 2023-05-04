@@ -19,7 +19,8 @@
     "coverage": "DOTENV_CONFIG_PATH=.env.test c8 node -r dotenv/config ./node_modules/.bin/ava",
     "lint": "npx eslint --fix \"src/**/*.ts\"",
     "generate-schema-types": "ts-node-esm ./src/scripts/schema-zod-types.ts",
-    "deploy-transform-split-loop": "ts-node-esm ./src/optional-functions/transform/split-loop/deploy.ts"
+    "deploy-transform-split-loop": "ts-node-esm ./src/optional-functions/transform/split-loop/deploy.ts",
+    "deploy-billing-usage-poller": "ts-node-esm ./src/optional-functions/billing/usage-poller/deploy.ts"
   },
   "author": "",
   "license": "ISC",

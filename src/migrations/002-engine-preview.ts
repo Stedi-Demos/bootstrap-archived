@@ -33,6 +33,7 @@ import {
   isAckTransactionSet,
 } from "../lib/types/Depreacted.js";
 import { DocumentType } from "@aws-sdk/types";
+import { TransactionSetDestinationsSchema } from "../lib/types/Destination.js";
 
 const stash = stashClient();
 const partners = partnersClient();
@@ -254,12 +255,22 @@ export const up = async () => {
         );
       }
 
+      const parseResult = TransactionSetDestinationsSchema.safeParse({
+        $schema:
+          "https://raw.githubusercontent.com/Stedi-Demos/bootstrap/main/src/schemas/transaction-destinations.json",
+        description: transactionSet.description!,
+        destinations: transactionSet.destinations,
+      });
+
+      if (!parseResult.success) {
+        console.dir(transactionSet.destinations, { depth: null });
+        console.dir(parseResult.error, { depth: null });
+        throw Error("Partnership does not match allowed schema");
+      }
+
       await saveTransactionSetDestinations(
         `destinations|${partnershipId}|${rule.transactionSetIdentifier!}`,
-        {
-          description: transactionSet.description!,
-          destinations: transactionSet.destinations,
-        }
+        parseResult.data
       );
     }
 

@@ -56,9 +56,12 @@ export const handler = async (
       RemotePollerConfigMapSchema.safeParse(stashValue);
 
     if (!remotePollerConfigParseResult.success) {
-      throw new ErrorFromStashConfiguration(
-        ftpConfigStashKey,
-        remotePollerConfigParseResult
+      return failedExecution(
+        executionId,
+        new ErrorFromStashConfiguration(
+          ftpConfigStashKey,
+          remotePollerConfigParseResult
+        )
       );
     }
 
@@ -97,7 +100,7 @@ export const handler = async (
     }
 
     // update `lastPollTime` for this ftp config
-    pollerConfig.lastPollTime = new Date();
+    pollerConfig.lastPollTime = results.lastPollTime;
     const value = {
       ...(remotePollerConfigMap as object),
       [configId]: { ...(pollerConfig as object) },
@@ -115,8 +118,7 @@ export const handler = async (
     return results;
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    const failureResponse = await failedExecution(executionId, error);
-    return failureResponse;
+    return await failedExecution(executionId, error);
   }
 };
 
@@ -124,12 +126,15 @@ const pollRemoteServer = async (
   remotePollerConfig: RemotePollerConfig
 ): Promise<RemotePollingResults> => {
   const remotePoller = await getRemotePoller(remotePollerConfig);
+  // initialize poll time to moment before retrieving file details
+  const currentInvocationPollTime = new Date();
   const fileDetails = await remotePoller.getRemoteFileDetails(
     remotePollerConfig.remotePath,
     remotePollerConfig.remoteFiles
   );
 
   const ftpPollingResults: RemotePollingResults = {
+    lastPollTime: currentInvocationPollTime,
     processedFiles: [],
     skippedItems: fileDetails.skippedItems ?? [],
     processingErrors: fileDetails.processingErrors ?? [],
@@ -147,6 +152,12 @@ const pollRemoteServer = async (
         reason: `remote timestamp (${remoteFileTimestamp}) is not newer than last poll timestamp (${lastPollTimestamp})`,
       });
       continue;
+    }
+
+    // if timestamp of file being processed is after the currently tracked time for this invocation,
+    // update the currently tracked time to match (file presumably arrived during processing)
+    if (remoteFileTimestamp > ftpPollingResults.lastPollTime.getTime()) {
+      ftpPollingResults.lastPollTime = new Date(remoteFileTimestamp);
     }
 
     try {

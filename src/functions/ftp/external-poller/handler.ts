@@ -145,7 +145,10 @@ const pollRemoteServer = async (
     // if remote file modifiedAt is not set, use current time
     const lastPollTimestamp = remotePollerConfig.lastPollTime?.getTime() ?? 0;
     const remoteFileTimestamp = file.lastModifiedTime;
-    if (remoteFileTimestamp < lastPollTimestamp) {
+    if (
+      !remotePollerConfig.ignoreFileTimestamps &&
+      remoteFileTimestamp < lastPollTimestamp
+    ) {
       ftpPollingResults.skippedItems.push({
         path: file.path,
         name: file.name,

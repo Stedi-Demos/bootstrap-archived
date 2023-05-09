@@ -3,13 +3,13 @@ import { SetValueCommand } from "@stedi/sdk-client-stash";
 import { stashClient } from "./clients/stash.js";
 import { PARTNERS_KEYSPACE_NAME } from "./constants.js";
 import { DocumentType } from "@aws-sdk/types";
-import { TransactionSetDestinationsSchema } from "./types/Destination.js";
+import { DestinationErrorEventsSchema } from "./types/Destination.js";
 
 const stash = stashClient();
 
-export const saveTransactionSetDestinations = async (
+export const saveErrorDestinations = async (
   id: string,
-  destinations: z.input<typeof TransactionSetDestinationsSchema>
+  destinations: z.input<typeof DestinationErrorEventsSchema>
 ): Promise<void> => {
   await stash.send(
     new SetValueCommand({

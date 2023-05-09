@@ -24,6 +24,7 @@ export interface ProcessingError {
 }
 
 export interface RemotePollingResults {
+  lastPollTime: Date;
   processedFiles: FileDetails[];
   skippedItems: SkippedItem[];
   processingErrors: ProcessingError[];

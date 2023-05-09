@@ -35,6 +35,7 @@ export const RemotePollerConfigSchema = z.strictObject({
   remoteFiles: z.array(z.string()).optional(),
   destination: DestinationBucketSchema,
   deleteAfterProcessing: z.boolean().default(false),
+  ignoreFileTimestamps: z.boolean().default(false),
   lastPollTime: z
     .string()
     .optional()

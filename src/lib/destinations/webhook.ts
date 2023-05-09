@@ -83,6 +83,6 @@ function assertIsWebhookDestination(
   destination: { type: "webhook" };
 } {
   if (input.destination.type !== "webhook") {
-    throw new Error("invalid destination type (must be stash)");
+    throw new Error("invalid destination type (must be webhook)");
   }
 }

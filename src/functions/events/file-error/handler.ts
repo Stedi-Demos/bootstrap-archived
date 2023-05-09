@@ -23,7 +23,7 @@ export const handler = async (event: CoreFileError) => {
     return {};
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    const failureResponse = await failedExecution(executionId, error);
+    const failureResponse = await failedExecution(event, executionId, error);
     return failureResponse;
   }
 };
@@ -33,6 +33,7 @@ const sendErrorToDestination = async (event: CoreFileError) => {
   const errorDestinations = await loadFileErrorDestinations();
 
   const processDeliveriesInput: ProcessDeliveriesInput = {
+    source: undefined,
     destinations: errorDestinations.destinations,
     payload: event,
     payloadMetadata: {

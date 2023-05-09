@@ -161,6 +161,7 @@ export const handler = async (
           const payloadId = `${isaControlNumber}-${gsControlNumber}-${transactionSetIdentifier}`;
 
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
+            source: event,
             destination,
             payload: translation,
             payloadMetadata: {
@@ -173,12 +174,14 @@ export const handler = async (
     );
 
     const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
+      source: event,
       payload: outboundEvent,
       destinations: transactionSetDestinations.destinations,
     });
     const rejectedCount = deliveryResultsByStatus.rejected.length;
     if (rejectedCount > 0) {
       return failedExecution(
+        event,
         executionId,
         new ErrorWithContext(
           `some deliveries were not successful: ${rejectedCount} failed, ${deliveryResultsByStatus.fulfilled.length} succeeded`,
@@ -197,6 +200,7 @@ export const handler = async (
     console.error(e);
     const errorWithContext = ErrorWithContext.fromUnknown(e);
     const failureResponse = await failedExecution(
+      event,
       executionId,
       errorWithContext
     );

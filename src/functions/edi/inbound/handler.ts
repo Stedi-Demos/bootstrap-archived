@@ -1,24 +1,25 @@
 import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@stedi/sdk-client-buckets";
+import { Readable } from "node:stream";
+import consumers from "stream/consumers";
+import { bucketsClient } from "../../../lib/clients/buckets.js";
+import {
+  processDeliveries,
+  ProcessDeliveriesInput,
+} from "../../../lib/deliveryManager.js";
+import { ErrorWithContext } from "../../../lib/errorWithContext.js";
+import {
   failedExecution,
   FailureResponse,
   generateExecutionId,
   markExecutionAsSuccessful,
   recordNewExecution,
 } from "../../../lib/execution.js";
-import { bucketsClient } from "../../../lib/clients/buckets.js";
-import { ErrorWithContext } from "../../../lib/errorWithContext.js";
-import { TransactionEventSchema } from "../../../lib/types/TransactionEvent.js";
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-} from "@stedi/sdk-client-buckets";
-import consumers from "stream/consumers";
-import { Readable } from "node:stream";
+import { getSourceTransactionSet } from "../../../lib/extractEdi.js";
 import { loadTransactionDestinations } from "../../../lib/loadTransactionDestinations.js";
-import {
-  processDeliveries,
-  ProcessDeliveriesInput,
-} from "../../../lib/deliveryManager.js";
+import { TransactionEventSchema } from "../../../lib/types/TransactionEvent.js";
 
 // Buckets client is shared across handler and execution tracking logic
 const buckets = bucketsClient();
@@ -71,7 +72,19 @@ export const handler = async (
       filterDestination(d, { usageIndicatorCode, release })
     );
 
+    let source: object | string = transactionEvent;
+
+    if (
+      filteredDestinations.some(
+        (fd) =>
+          fd.destination.type === "webhook" && fd.destination.includeSource
+      )
+    ) {
+      source = await getSourceTransactionSet(transactionEvent.detail);
+    }
+
     const processDeliveriesInput: ProcessDeliveriesInput = {
+      source,
       destinations: filteredDestinations,
       payload: guideJSON,
       payloadMetadata: {
@@ -94,7 +107,7 @@ export const handler = async (
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
 
-    const failureResponse = await failedExecution(executionId, error);
+    const failureResponse = await failedExecution(event, executionId, error);
     return failureResponse;
   }
 };

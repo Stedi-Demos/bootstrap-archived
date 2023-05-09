@@ -411,6 +411,7 @@ test.serial(
     };
 
     await processSingleDelivery({
+      source: undefined,
       destination: {
         type: "sftp",
         connectionDetails: {
@@ -462,6 +463,7 @@ test.serial("delivery via webhook sends payload to expected url", async (t) => {
     .reply(200, { thank: "you" });
 
   await processSingleDelivery({
+    source: undefined,
     destination: {
       type: "webhook",
       verb: "POST",
@@ -476,3 +478,82 @@ test.serial("delivery via webhook sends payload to expected url", async (t) => {
 
   t.assert(webhookRequest.isDone(), "delivered payload to destination webhook");
 });
+
+test.serial(
+  "delivery via webhook with additional input adds EDI to the payload property",
+  async (t) => {
+    const payload = "file-contents";
+    const baseUrl = "https://webhook.site";
+    const endpoint = "/test-endpoint";
+    const url = `${baseUrl}${endpoint}`;
+
+    const webhookRequest = nock(baseUrl)
+      .post(
+        endpoint,
+        (body) => t.is(body.payload, payload) && t.is(body.additional, "input")
+      )
+      .reply(200, { thank: "you" });
+
+    await processSingleDelivery({
+      source: undefined,
+      destination: {
+        type: "webhook",
+        verb: "POST",
+        url,
+        additionalInput: {
+          additional: "input",
+        },
+      },
+      payload,
+      payloadMetadata: {
+        payloadId: "some-id",
+        format: "json",
+      },
+    });
+
+    t.assert(
+      webhookRequest.isDone(),
+      "delivered payload to destination webhook"
+    );
+  }
+);
+
+test.serial(
+  "delivery via webhook with additional input and guide json creates body with additional input as top-level properties",
+  async (t) => {
+    const payload = { content: "file-contents" };
+    const baseUrl = "https://webhook.site";
+    const endpoint = "/test-endpoint";
+    const url = `${baseUrl}${endpoint}`;
+
+    const webhookRequest = nock(baseUrl)
+      .post(
+        endpoint,
+        (body) =>
+          t.is(body.content, "file-contents") && t.is(body.additional, "input")
+      )
+      .reply(200, { thank: "you" });
+
+    await processSingleDelivery({
+      source: undefined,
+      destination: {
+        type: "webhook",
+        verb: "POST",
+        url,
+        additionalInput: {
+          additional: "input",
+        },
+      },
+      payload,
+      payloadMetadata: {
+        payloadId: "some-id",
+        format: "json",
+      },
+    });
+
+    t.assert(
+      webhookRequest.isDone(),
+      "delivered payload to destination webhook"
+    );
+  }
+);

@@ -23,6 +23,7 @@ export interface DeliveryResult {
 }
 
 export interface ProcessSingleDeliveryInput {
+  source?: unknown;
   destination: Destination;
   payload: object | string;
   mappingId?: string;
@@ -31,12 +32,14 @@ export interface ProcessSingleDeliveryInput {
 }
 
 export interface ProcessDeliveriesInput {
+  source: unknown;
   destinations: TransactionSetDestinations["destinations"];
   payload: object | string;
   payloadMetadata: PayloadMetadata;
 }
 
 export interface DeliverToDestinationInput {
+  source: unknown;
   destination: Destination;
   destinationPayload: string | object;
   payloadMetadata: PayloadMetadata;
@@ -69,6 +72,7 @@ export const processSingleDelivery = async (
       : input.payload;
 
   const deliverToDestinationInput: DeliverToDestinationInput = {
+    source: input.source,
     destination: input.destination,
     destinationPayload,
     payloadMetadata: input.payloadMetadata,
@@ -90,6 +94,7 @@ export const processDeliveries = async (
   const deliveryResults = await Promise.allSettled(
     input.destinations.map(async ({ destination, mappingId }) => {
       const deliverToDestinationInput: ProcessSingleDeliveryInput = {
+        source: input.source,
         destination,
         payload: input.payload,
         mappingId,

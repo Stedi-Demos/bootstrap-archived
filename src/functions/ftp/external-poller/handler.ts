@@ -57,6 +57,7 @@ export const handler = async (
 
     if (!remotePollerConfigParseResult.success) {
       return failedExecution(
+        { configId },
         executionId,
         new ErrorFromStashConfiguration(
           ftpConfigStashKey,
@@ -73,6 +74,7 @@ export const handler = async (
 
     if (!pollerConfig) {
       return failedExecution(
+        { configId },
         executionId,
         new ErrorWithContext("config not found for key", { configId })
       );
@@ -91,6 +93,7 @@ export const handler = async (
 
     if (results.processingErrors.length > 0) {
       return failedExecution(
+        { configId },
         executionId,
         new ErrorWithContext(
           "at least one processing error encountered during polling",
@@ -118,7 +121,7 @@ export const handler = async (
     return results;
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    return await failedExecution(executionId, error);
+    return await failedExecution({ configId }, executionId, error);
   }
 };
 

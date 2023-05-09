@@ -31,7 +31,7 @@ export const handler = async (
     return {};
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    return failedExecution(executionId, error);
+    return failedExecution(event, executionId, error);
   }
 };
 

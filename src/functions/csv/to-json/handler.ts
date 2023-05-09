@@ -36,15 +36,16 @@ export const handler = async (
   try {
     await recordNewExecution(executionId, event);
     const coreFileEvent = parseCoreFileProcessedEvent(event, "csv-to-json");
-    await sendJsonToDestinations(coreFileEvent);
+    await sendJsonToDestinations(event, coreFileEvent);
     await markExecutionAsSuccessful(executionId);
   } catch (e) {
     const error = ErrorWithContext.fromUnknown(e);
-    await failedExecution(executionId, error);
+    await failedExecution(event, executionId, error);
   }
 };
 
 const sendJsonToDestinations = async (
+  event: unknown,
   fileProcessedEvent: CoreFileProcessed
 ) => {
   const { bucketName, key } = fileProcessedEvent.detail.source;
@@ -93,6 +94,7 @@ const sendJsonToDestinations = async (
   );
 
   const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
+    source: event,
     payload: fileProcessedEvent,
     destinations: csvToJsonDestinations,
   });

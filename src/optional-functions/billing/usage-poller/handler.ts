@@ -94,6 +94,7 @@ export const handler = async (): Promise<undefined | UsageExceededPayload> => {
   console.log(payload);
 
   const processDeliveriesInput: ProcessDeliveriesInput = {
+    source: "cron",
     destinations: [largestThresholdTriggered],
     payload,
     payloadMetadata: {

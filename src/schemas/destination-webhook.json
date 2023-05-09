@@ -6,6 +6,15 @@
     "type": {
       "const": "webhook"
     },
+    "additionalInput": {
+      "description": "Additional properties sent to the webhook as top-level properties. When applied to outbound EDI, the EDI string will be in the 'payload' property",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "includeSource": {
+      "description": "When set, transaction sets will also send the 'source' property to the destination, either the inbound EDI file, the triggering event, or the function input",
+      "const": true
+    },
     "url": {
       "type": "string"
     },

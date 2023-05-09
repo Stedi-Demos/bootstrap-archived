@@ -83,6 +83,7 @@ export const markExecutionAsSuccessful = async (executionId: string) => {
 };
 
 export const failedExecution = async (
+  event: unknown,
   executionId: string,
   errorWithContext: ErrorWithContext
 ): Promise<FailureResponse> => {
@@ -99,7 +100,7 @@ export const failedExecution = async (
     error: rawError,
   };
   try {
-    await sendFailureToDestinations(failureResponse, executionId);
+    await sendFailureToDestinations(event, failureResponse, executionId);
   } catch (e) {
     await markExecutionAsFailed(
       executionId,
@@ -143,12 +144,14 @@ export const generateExecutionId = (event: unknown) =>
 
 // Used inside error path, do not throw
 export const sendFailureToDestinations = async (
+  event: unknown,
   failure: FailureResponse,
   executionId: string
 ): Promise<void> => {
   const errorDestinations = await loadExecutionErrorDestinations();
 
   const processDeliveriesInput: ProcessDeliveriesInput = {
+    source: event,
     destinations: errorDestinations.destinations,
     payload: failure,
     payloadMetadata: {

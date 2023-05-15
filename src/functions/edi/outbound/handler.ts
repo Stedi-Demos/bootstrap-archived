@@ -135,6 +135,12 @@ export const handler = async (
       },
     };
 
+    const source = {
+      metadata: event.metadata,
+      transactionSets: [event.payload],
+      envelope,
+    };
+
     // TODO: add `inputMappingId` parameter for outbound workflow (https://github.com/Stedi-Demos/bootstrap/issues/36)
     //  and then refactor to use `deliverToDestinations` function
     const deliveryResults = await Promise.allSettled(
@@ -161,7 +167,7 @@ export const handler = async (
           const payloadId = `${isaControlNumber}-${gsControlNumber}-${transactionSetIdentifier}`;
 
           const deliverToDestinationInput: ProcessSingleDeliveryInput = {
-            source: event,
+            source,
             destination,
             payload: translation,
             payloadMetadata: {
@@ -174,7 +180,7 @@ export const handler = async (
     );
 
     const deliveryResultsByStatus = groupDeliveryResults(deliveryResults, {
-      source: event,
+      source,
       payload: outboundEvent,
       destinations: transactionSetDestinations.destinations,
     });
@@ -195,6 +201,7 @@ export const handler = async (
     return {
       statusCode: 200,
       deliveryResults: deliveryResultsByStatus.fulfilled,
+      envelope,
     };
   } catch (e) {
     console.error(e);

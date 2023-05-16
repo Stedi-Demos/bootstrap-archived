@@ -18,6 +18,7 @@ bootstrap implementation.
 - [Testing the workflows](#testing-the-workflows)
 - [Clean up bootstrap resources](#clean-up-bootstrap-resources)
 - [Customizing the workflows](#customizing-the-workflows)
+- [Troubleshooting](#troubleshooting)
 
 ## Hands-on support
 
@@ -389,7 +390,7 @@ You can invoke the `edi-outbound` function through the UI for testing.
 ## Customizing the workflows
 
 The bootstrap workflow uses sample [Partners](https://stedi.com/app/core/profiles),
-a [Partnership](https://preview.stedi.com/app/core/partnerships) associating the two partners, and configuration values
+a [Partnership](https://stedi.com/app/core/partnerships) associating the two partners, and configuration values
 for destinations configured in Stash to set up and test the read and write EDI workflows. You can customize the
 bootstrap workflow by doing one or all of the following:
 
@@ -460,3 +461,18 @@ value: [JSON Schema](./src/schemas/error-destinations.json)
 key: `functional_acknowledgments|${partnershipId}`
 
 value: [JSON Schema](./src/schemas/acknowledgment.json)
+   
+## Troubleshooting
+
+```
+There was an issue installing the dependencies using your local npm installation, please check your .npmrc and try again.
+```
+
+If you created a `.npmrc` in this repository, please remove it.
+
+If you still see this error, you may have a registry override in your npm config. Run `npm config list` and search for `registry` like below. Comment out that line and try again.
+
+```
+@stedi:registry = "https://npm.pkg.github.com/" 
+```
+

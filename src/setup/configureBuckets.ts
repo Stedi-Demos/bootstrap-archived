@@ -22,7 +22,6 @@ import { maxWaitTime } from "../support/contants.js";
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
-
   const user = await sftp.send(
     new CreateUserCommand({
       description: "Temp user to get bucket name",
@@ -50,6 +49,7 @@ import { maxWaitTime } from "../support/contants.js";
 
   // Use a separate bucket for tracking function executions
   const stediAccountId = user.bucketName.split("-sftp")[0]!;
+  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
   const executionsBucketName = `${stediAccountId}-executions`;
 
   const bucketsList = await buckets.send(new ListBucketsCommand({}));

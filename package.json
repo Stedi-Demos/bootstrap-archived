@@ -26,6 +26,7 @@
   "license": "ISC",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@aws-sdk/middleware-retry": "3.329.0",
     "@aws-sdk/types": "3.272.0",
     "@stedi/sdk-client-as2": "^0.1.51",
     "@stedi/sdk-client-buckets": "^0.1.51",

@@ -1,10 +1,5 @@
 import dotenv from "dotenv";
-import {
-  CreateUserCommand,
-  CreateUserCommandOutput,
-  DeleteUserCommand,
-  SftpClient,
-} from "@stedi/sdk-client-sftp";
+import { CreateUserCommand, DeleteUserCommand } from "@stedi/sdk-client-sftp";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -19,31 +14,6 @@ import { bucketsClient } from "../lib/clients/buckets.js";
 import { sftpClient } from "../lib/clients/sftp.js";
 import { maxWaitTime } from "../support/contants.js";
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function createUser(
-  sftp: SftpClient,
-  remainingAttempts = 5
-): Promise<CreateUserCommandOutput | undefined> {
-  try {
-    return await sftp.send(
-      new CreateUserCommand({
-        description: "Temp user to get bucket name",
-        homeDirectory: "/_stedi/void",
-      })
-    );
-  } catch (e) {
-    console.warn(e);
-    console.log("SFTP bucket is not ready yet. Retrying in 10 seconds...");
-    await sleep(10000);
-    if (remainingAttempts > 0) {
-      return createUser(sftp, remainingAttempts - 1);
-    } else {
-      throw e;
-    }
-  }
-}
-
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   const buckets = bucketsClient();
@@ -52,9 +22,14 @@ async function createUser(
   console.log("Configuring buckets...");
 
   // Creating a new SFTP user pre-provisions the SFTP bucket and necessary permissions
-  const user = await createUser(sftp);
+  const user = await sftp.send(
+    new CreateUserCommand({
+      description: "Temp user to get bucket name",
+      homeDirectory: "/_stedi/void",
+    })
+  );
 
-  if (!user?.bucketName) throw new Error("ftp bucket name not found");
+  if (!user.bucketName) throw new Error("ftp bucket name not found");
 
   // Pre-create trading partner inbound/outbound directories for convenience
   const tradingPartnerPrefix = "trading_partners/ANOTHERMERCH";

@@ -143,6 +143,58 @@ Run the following command in the bootstrap directory:
 npm run bootstrap
 ```
 
+Bootstrap creates resources in your Stedi account. It may take several minutes for Stedi to deploy all required resources. When deployment is finished, your CLI displays a message similar to the following. 
+
+<details><summary>Example CLI output (click to expand):</summary>
+
+  ```
+  stedi-bootstrap@1.0.0 bootstrap
+  npm run configure-storage && npx ts-node-esm ./src/setup/bootstrap.ts && npm run deploy
+
+
+  stedi-bootstrap@1.0.0 configure-storage
+  npm run ensure-keyspaces-exist && npm run configure-buckets
+
+  stedi-bootstrap@1.0.0 ensure-keyspaces-exist
+  ts-node-esm ./src/setup/bootstrap/ensureKeyspacesExist.ts
+
+  Creating keyspaces...
+  Waiting for keyspaces to become active...
+  Waiting for keyspaces to become active...
+
+  stedi-bootstrap@1.0.0 configure-buckets
+  ts-node-esm ./src/setup/configureBuckets.ts
+
+  Configuring buckets...
+  done
+  Guide created: 01GZM3TCTWE94FQZWTHDR1HP8K
+  Guide created: 01GZM3TD8C4233TNVZFBADNS7E
+  Creating X12 Trading Partner Profile in Partners API
+
+  stedi-bootstrap@1.0.0 deploy
+  ts-node-esm ./src/setup/deploy.ts
+
+  Waiting for function deploys to complete
+  Finished deploying function: edi-acknowledgment
+  Finished deploying function: events-file-error
+  Finished deploying function: edi-outbound
+  Finished deploying function: csv-to-json
+  Finished deploying function: ftp-external-poller
+  Finished deploying function: csv-from-json
+  Finished deploying function: edi-inbound
+  Creating event bindings
+  Waiting for event binding deploys to complete
+  Deploy completed at: 5/4/2023, 3:35:21 PM
+  ```
+</details>
+
+### Resources
+
+Bootstrap deploys the following resources to your account:
+- A [Stedi bucket](https://www.stedi.com/app/buckets) with directories for you `_stedi` and trading partners `trading_partners`. In the `trading_partners` directory is a single directory for a fictional trading partner called `ANOTHERMERCH`. Within `ANOTHERMERCH`, are directories for inbound and outbound files. The `inbound` directory is where your partners would drop new files to send to you and the `outbound` directory is where Stedi sends EDI files generated for that trading partner.
+- A [Stash keyspace](https://www.stedi.com/app/stash) called `partners-configuraion`. This keyspace contains configuration for bootstrap, including [destinations](#destinations) for incoming and outgoing files. If you click the `destinations|this-is-me_another-merchant|855` key/value pair, you'll see that bootstrap is configured to send incoming 855 EDI documents to your webhook.
+- Several [Stedi functions](https://www.stedi.com/app/functions), including functions required to read and write EDI and generate functional acknowledgements.
+
 ## Testing the workflows
 
 ### Inbound EDI

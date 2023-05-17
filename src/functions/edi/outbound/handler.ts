@@ -281,7 +281,11 @@ const validateTransactionSetControlNumbers = (guideJson: unknown) => {
 };
 
 const filterDestination = (
-  destination: { usageIndicatorCode?: string; release?: string },
+  destination: {
+    usageIndicatorCode?: string;
+    release?: string;
+    direction?: "inbound" | "outbound";
+  },
   event: { metadata: { usageIndicatorCode: string } },
   transactionSetConfig: { release: string }
 ) => {
@@ -296,6 +300,10 @@ const filterDestination = (
     destination.release &&
     transactionSetConfig.release !== destination.release
   ) {
+    return false;
+  }
+
+  if (destination.direction === "inbound") {
     return false;
   }
 

@@ -128,7 +128,11 @@ export const ensureFileIsDeleted = async (bucketName: string, key: string) => {
 };
 
 const filterDestination = (
-  destination: { usageIndicatorCode?: string; release?: string },
+  destination: {
+    usageIndicatorCode?: string;
+    release?: string;
+    direction?: "inbound" | "outbound";
+  },
   envelopeData: { usageIndicatorCode: string; release: string }
 ) => {
   if (
@@ -139,6 +143,10 @@ const filterDestination = (
   }
 
   if (destination.release && envelopeData.release !== destination.release) {
+    return false;
+  }
+
+  if (destination.direction === "outbound") {
     return false;
   }
 

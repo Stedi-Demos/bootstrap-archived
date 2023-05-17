@@ -41,6 +41,14 @@
             "minLength": 6,
             "maxLength": 12
           },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound"
+            ],
+            "description": "optional, the destination will only be used when the EDI document is in the specified direction. Used in edi-inbound and edi-outbound."
+          },
           "destination": {
             "oneOf": [
               {

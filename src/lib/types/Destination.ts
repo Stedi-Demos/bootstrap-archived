@@ -31,6 +31,12 @@ const DestinationSchema = z.strictObject({
     .describe(
       "configure destination to receive the transaction set only when the envelope release matches the supplied value"
     ),
+  direction: z
+    .enum(["inbound", "outbound"])
+    .optional()
+    .describe(
+      "optional, the destination will only be used when the EDI document is in the specified direction. Used in edi-inbound and edi-outbound."
+    ),
   destination: z.discriminatedUnion("type", [
     DestinationAS2Schema,
     DestinationBucketSchema,

@@ -123,7 +123,9 @@ export const ensureFileIsDeleted = async (bucketName: string, key: string) => {
       error.name === "ResourceNotFoundException"
     )
       return;
-    else throw error;
+    else {
+      console.log("error deleting source object", error);
+    }
   }
 };
 

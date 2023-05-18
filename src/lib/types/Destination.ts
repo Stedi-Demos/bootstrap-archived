@@ -15,6 +15,7 @@ type WebhookVerb = DestinationWebhook["verb"];
 // custom definition in order to use discriminated union with good types, not
 // possible using json-schema-to-zod
 const DestinationSchema = z.strictObject({
+  description: z.string().optional(),
   mappingId: z.string().optional(),
   mappingValidation: z.enum(["strict"]).optional(),
   usageIndicatorCode: z

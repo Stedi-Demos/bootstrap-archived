@@ -13,7 +13,7 @@ export const TransactionEventSchema = z.object({
   "detail-type": z.literal("transaction.processed"),
   time: z.string(),
   region: z.string(),
-  resources: z.array(z.string()),
+  resources: z.array(z.string()).optional(),
   detail: z.object({
     version: z.literal("2023-02-13"),
     direction: z.literal("SENT").or(z.literal("RECEIVED")),
@@ -27,9 +27,11 @@ export const TransactionEventSchema = z.object({
       transactionSetIdentifier: z.string(),
       guideId: z.string().optional(),
     }),
-    metadata: z.object({
-      processedAt: z.string(),
-    }),
+    metadata: z
+      .object({
+        processedAt: z.string().optional(),
+      })
+      .optional(),
     input: z.object({
       type: z.string(),
       bucketName: z.string(),

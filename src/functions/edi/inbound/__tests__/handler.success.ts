@@ -134,6 +134,7 @@ test.serial.only(
             "Purchase Order Acknowledgments received from ANOTHERMERCH",
           destinations: [
             {
+              description: "include source webhook",
               destination: {
                 type: "webhook",
                 url: "https://webhook.site/TESTING",

@@ -87,6 +87,8 @@ export const failedExecution = async (
   executionId: string,
   errorWithContext: ErrorWithContext
 ): Promise<FailureResponse> => {
+  // prefix error message with executionId for context
+  errorWithContext.message = `execution failed [id=${executionId}]: ${errorWithContext.message}`;
   const rawError = serializeError(errorWithContext);
   const failureRecord = await markExecutionAsFailed(executionId, rawError);
 

@@ -210,7 +210,8 @@ test.serial(
 
     await t.throwsAsync(handler(sampleFileProcessedEvent), {
       instanceOf: ErrorWithContext,
-      message: "unable to parse input as JSON",
+      message:
+        "execution failed [id=9de5ed7a5d7343175e7dc528fc0314c0c91ce585]: unable to parse input as JSON",
     });
 
     const bucketGetInputCalls = buckets.commandCalls(GetObjectCommand, {
@@ -264,7 +265,8 @@ test.serial(
       handler(sampleFileProcessedEvent),
       {
         instanceOf: ErrorWithContext,
-        message: "some deliveries were not successful: 1 failed, 0 succeeded",
+        message:
+          "execution failed [id=9de5ed7a5d7343175e7dc528fc0314c0c91ce585]: some deliveries were not successful: 1 failed, 0 succeeded",
       }
     );
 

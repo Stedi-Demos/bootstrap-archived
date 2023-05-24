@@ -213,7 +213,8 @@ test.serial(
       handler(sampleFileProcessedEvent),
       {
         instanceOf: ErrorWithContext,
-        message: "some deliveries were not successful: 1 failed, 0 succeeded",
+        message:
+          "execution failed [id=cd7e25d9eae76341dc8fb281c1d444590bb581c1]: some deliveries were not successful: 1 failed, 0 succeeded",
       }
     );
 

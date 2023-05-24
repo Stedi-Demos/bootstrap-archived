@@ -70,16 +70,25 @@ test("throws runtime error when no configuration is found for transaction set", 
       },
     });
 
+  const expectedErrorMessage =
+    "execution failed [id=7e5ceff7d64033820ab4fed8285328b4272369b7]: no transaction set configured";
   const errorWebhook = nock("https://example.com")
     .post("/error-webhook", (body: any) => {
-      return body.error.message === "no transaction set configured";
+      return body.error.message === expectedErrorMessage;
     })
     .reply(200);
 
-  const response = await handler(sampleTransactionProcessedEvent as any).catch(
-    (e) => e
+  const errorResponse = await t.throwsAsync(
+    handler(sampleTransactionProcessedEvent),
+    {
+      instanceOf: ErrorWithContext,
+      message: expectedErrorMessage,
+    }
   );
 
-  t.assert(response instanceof ErrorWithContext, "not successful");
+  t.deepEqual((errorResponse as any).context, {
+    transactionSetIdentifier: "855",
+    partnershipId: "this-is-me_another-merchant",
+  });
   t.assert(errorWebhook.isDone(), "error webhook is called");
 });

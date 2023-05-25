@@ -56,7 +56,12 @@ test("translate 997 guide json without a guide and delivers to destination", asy
         interchangeId: "THISISME",
         profileId: "this-is-me",
         profileType: "local",
-        defaultApplicationId: "meId",
+        applicationIdentifiers: [
+          {
+            value: "meId",
+            isDefault: true,
+          },
+        ],
       },
       partnerProfileId: "another-merchant",
       partnerProfile: {
@@ -64,7 +69,12 @@ test("translate 997 guide json without a guide and delivers to destination", asy
         interchangeId: "ANOTHERMERCH",
         profileId: "another-merchant",
         profileType: "partner",
-        defaultApplicationId: "merchId",
+        applicationIdentifiers: [
+          {
+            value: "merchId",
+            isDefault: true,
+          },
+        ],
       },
       outboundTransactions: [
         {

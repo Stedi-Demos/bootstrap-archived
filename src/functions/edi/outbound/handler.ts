@@ -94,6 +94,20 @@ export const handler = async (
       })
     )) as { x12ControlNumber: number };
 
+    const applicationSenderCode =
+      transactionSetConfig.localApplicationId ??
+      partnership.localProfile.applicationIdentifiers?.find(
+        (appId) => appId.isDefault
+      )?.value ??
+      partnership.localProfile.interchangeId;
+
+    const applicationReceiverCode =
+      transactionSetConfig.partnerApplicationId ??
+      partnership.partnerProfile.applicationIdentifiers?.find(
+        (appId) => appId.isDefault
+      )?.value ??
+      partnership.partnerProfile.interchangeId;
+
     // Configure envelope data (interchange control header and functional group header) to combine with mapping result
     const envelope: EdiTranslateWriteEnvelope = {
       interchangeHeader: {
@@ -118,12 +132,8 @@ export const handler = async (
       },
       groupHeader: {
         functionalIdentifierCode: functionalIdentifierCode,
-        applicationSenderCode:
-          partnership.localProfile.defaultApplicationId ??
-          partnership.localProfile.interchangeId,
-        applicationReceiverCode:
-          partnership.partnerProfile.defaultApplicationId ??
-          partnership.partnerProfile.interchangeId,
+        applicationSenderCode,
+        applicationReceiverCode,
         date: formatInTimeZone(
           documentDate,
           partnership.timezone,

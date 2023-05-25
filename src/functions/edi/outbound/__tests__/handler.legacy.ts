@@ -64,7 +64,12 @@ test("using legacy function input, it translates guide json to X12 and delivers 
         interchangeId: "THISISME",
         profileId: "this-is-me",
         profileType: "local",
-        defaultApplicationId: "meId",
+        applicationIdentifiers: [
+          {
+            value: "meId",
+            isDefault: true,
+          },
+        ],
       },
       partnerProfileId: "another-merchant",
       partnerProfile: {
@@ -72,7 +77,12 @@ test("using legacy function input, it translates guide json to X12 and delivers 
         interchangeId: "ANOTHERMERCH",
         profileId: "another-merchant",
         profileType: "partner",
-        defaultApplicationId: "merchId",
+        applicationIdentifiers: [
+          {
+            value: "merchId",
+            isDefault: true,
+          },
+        ],
       },
       outboundTransactions: [
         {

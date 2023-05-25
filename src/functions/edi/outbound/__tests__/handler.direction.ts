@@ -108,7 +108,12 @@ test.serial("skips delivery when direction is inbound", async (t) => {
       interchangeId: "THISISME",
       profileId: "this-is-me",
       profileType: "local",
-      defaultApplicationId: "meId",
+      applicationIdentifiers: [
+        {
+          value: "meId",
+          isDefault: true,
+        },
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     } satisfies GetX12ProfileOutput as any)
@@ -120,7 +125,12 @@ test.serial("skips delivery when direction is inbound", async (t) => {
       interchangeId: "ANOTHERMERCH",
       profileId: "another-merchant",
       profileType: "partner",
-      defaultApplicationId: "merchId",
+      applicationIdentifiers: [
+        {
+          value: "merchId",
+          isDefault: true,
+        },
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     } satisfies GetX12ProfileOutput as any);
@@ -239,7 +249,12 @@ test.serial("runs delivery when direction is outbound", async (t) => {
       interchangeId: "THISISME",
       profileId: "this-is-me",
       profileType: "local",
-      defaultApplicationId: "meId",
+      applicationIdentifiers: [
+        {
+          value: "meId",
+          isDefault: true,
+        },
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     } satisfies GetX12ProfileOutput as any)
@@ -251,7 +266,12 @@ test.serial("runs delivery when direction is outbound", async (t) => {
       interchangeId: "ANOTHERMERCH",
       profileId: "another-merchant",
       profileType: "partner",
-      defaultApplicationId: "merchId",
+      applicationIdentifiers: [
+        {
+          value: "merchId",
+          isDefault: true,
+        },
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     } satisfies GetX12ProfileOutput as any);

@@ -33,14 +33,24 @@ export const createProfiles = async ({
     profileType: "local",
     interchangeQualifier: "ZZ",
     interchangeId: "THISISME",
-    defaultApplicationId: "THISISME",
+    applicationIdentifiers: [
+      {
+        value: "THISISME",
+        isDefault: true,
+      },
+    ],
   };
   const remoteProfile: CreateX12ProfileCommandInput = {
     profileId: "another-merchant",
     profileType: "partner",
     interchangeQualifier: "14",
     interchangeId: "ANOTHERMERCH",
-    defaultApplicationId: "ANOTHERMERCH",
+    applicationIdentifiers: [
+      {
+        value: "ANOTHERMERCH",
+        isDefault: true,
+      },
+    ],
   };
 
   console.log("Creating X12 Trading Partner Profile in Partners API");
@@ -176,6 +186,9 @@ const ensureOutboundTransaction = async ({
         release: guide.target!.release,
         transactionSetIdentifier: guide.target!.transactionSet,
         guideId: parseGuideId(guide.id!),
+        outboundX12TransactionSettingsId: `${guide.target!.release}-${
+          guide.target!.transactionSet
+        }`,
       };
     } else {
       transactionSet = "997";
@@ -183,6 +196,7 @@ const ensureOutboundTransaction = async ({
         partnershipId: partnership.partnershipId,
         release: "005010",
         transactionSetIdentifier: "997",
+        outboundX12TransactionSettingsId: "005010-997",
       };
     }
 

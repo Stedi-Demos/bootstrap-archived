@@ -25,6 +25,7 @@ import {
   TranslateJsonToX12Command,
   TranslateJsonToX12Output,
 } from "@stedi/sdk-client-edi-translate";
+import { reset, set } from "mockdate";
 
 const buckets = mockBucketClient();
 const partners = mockPartnersClient();
@@ -36,6 +37,7 @@ const partnershipId = "this-is-me_another-merchant";
 
 test.beforeEach(() => {
   nock.disableNetConnect();
+  set("2022-05-25T01:02:03.451Z");
   mockExecutionTracking(buckets);
 });
 
@@ -44,10 +46,11 @@ test.afterEach.always(() => {
   partners.reset();
   stash.reset();
   translate.reset();
+  reset();
 });
 
 test.serial(
-  "skips delivery when usage indicator code does not match payload",
+  "uses application id overrides from outbound transaction setting when present",
   async (t) => {
     partners
       // load partnership
@@ -62,6 +65,12 @@ test.serial(
           interchangeId: "THISISME",
           profileId: "this-is-me",
           profileType: "local",
+          applicationIdentifiers: [
+            {
+              value: "meId",
+              isDefault: true,
+            },
+          ],
         },
         partnerProfileId: "another-merchant",
         partnerProfile: {
@@ -69,6 +78,12 @@ test.serial(
           interchangeId: "ANOTHERMERCH",
           profileId: "another-merchant",
           profileType: "partner",
+          applicationIdentifiers: [
+            {
+              value: "merchId",
+              isDefault: true,
+            },
+          ],
         },
         outboundTransactions: [
           {
@@ -78,13 +93,15 @@ test.serial(
             release: "008010",
             createdAt: new Date(),
             updatedAt: new Date(),
+            localApplicationId: "override-meId",
+            partnerApplicationId: "override-merchId",
           },
         ],
         inboundTransactions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        interchangeUsageIndicator: "T",
         timezone: Timezone.AMERICA_NEW_YORK,
+        interchangeUsageIndicator: "T",
       } satisfies GetX12PartnershipOutput as any)
       // increment interchange control number
       .on(IncrementX12ControlNumberCommand as any, {
@@ -148,17 +165,10 @@ test.serial(
           description: "850 Outbound",
           destinations: [
             {
-              usageIndicatorCode: "T",
+              direction: "outbound",
               destination: {
                 type: "webhook",
                 url: "https://example.com/webhook",
-              },
-            },
-            {
-              usageIndicatorCode: "P",
-              destination: {
-                type: "webhook",
-                url: "https://example.com/webhook-not-called",
               },
             },
           ],
@@ -175,18 +185,50 @@ test.serial(
       .post("/webhook")
       .reply(200, { ok: true });
 
-    const webhookRequestNotCalled = nock("https://example.com")
-      .post("/webhook-not-called")
-      .reply(200, { ok: true });
-
     const response = await handler(sampleOutboundEvent as any);
 
     t.is(response.statusCode, 200, "completes successfully");
 
     t.assert(webhookRequest.isDone(), "webhook request was made");
-    t.assert(
-      !webhookRequestNotCalled.isDone(),
-      "production webhook is not called for test event"
+
+    const translateArgs = translate.commandCalls(TranslateJsonToX12Command)[0]!
+      .args[0].input;
+    t.is(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      (translateArgs.envelope as any).groupHeader.applicationReceiverCode,
+      "override-merchId",
+      "override applicationId from transaction setting is used for receiver"
+    );
+
+    t.is(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      (translateArgs.envelope as any).groupHeader.applicationSenderCode,
+      "override-meId",
+      "override applicationId from transaction setting is used for sender"
+    );
+
+    t.is(
+      (translateArgs.envelope as any).interchangeHeader.date,
+      "2022-05-24",
+      "date is set in partner configured timezone"
+    );
+
+    t.is(
+      (translateArgs.envelope as any).interchangeHeader.time,
+      "21:02",
+      "time is set in partner configured timezone"
+    );
+
+    t.is(
+      (translateArgs.envelope as any).groupHeader.date,
+      "2022-05-24",
+      "date is set in partner configured timezone"
+    );
+
+    t.is(
+      (translateArgs.envelope as any).groupHeader.time,
+      "21:02:03",
+      "time is set in partner configured timezone"
     );
   }
 );

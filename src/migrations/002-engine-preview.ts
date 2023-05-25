@@ -239,6 +239,7 @@ export const up = async () => {
             release: guideTarget.release,
             transactionSetIdentifier: guideTarget.transactionSet,
             guideId,
+            outboundX12TransactionSettingsId: `${guideTarget.release}-${guideTarget.transactionSet}`,
           })
         );
       } else {

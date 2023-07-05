@@ -1,8 +1,8 @@
-# Stedi EDI Bootstrap
+# [ARCHIVED] Stedi EDI Bootstrap
 
 > **Note**
-> This version of bootstrap utilizes [Stedi Core](https://www.stedi.com/docs/core). The previous version of bootstrap
-> can be found in the [legacy](https://github.com/stedi-demos/bootstrap/tree/legacy) branch.
+> This repository should only be relied on for existing users. New users should not deploy this version of bootstrap, and instead should deploy custom Stedi functions of their own using the [Integrations SDK](https://github.com/Stedi-Demos/integrations-sdk). For any questions, please reach out to team@stedi.com. 
+>
 
 This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
 implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution

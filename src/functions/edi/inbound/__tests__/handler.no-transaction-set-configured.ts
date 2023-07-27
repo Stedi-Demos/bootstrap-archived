@@ -71,7 +71,7 @@ test("throws runtime error when no configuration is found for transaction set", 
     });
 
   const expectedErrorMessage =
-    "execution failed [id=7e5ceff7d64033820ab4fed8285328b4272369b7]: no transaction set configured";
+    "execution failed [id=725f84a020bdfdd61f597aaf4a1a8d5dfaa5b38d]: no transaction set configured";
   const errorWebhook = nock("https://example.com")
     .post("/error-webhook", (body: any) => {
       return body.error.message === expectedErrorMessage;

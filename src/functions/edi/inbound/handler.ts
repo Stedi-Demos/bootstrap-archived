@@ -96,6 +96,7 @@ export const handler = async (
     await processDeliveries(processDeliveriesInput);
 
     // Delete the input file (it is archived by core)
+    // unless the file source is the core artifact bucket
     await ensureFileIsDeleted(
       transactionEvent.detail.input.bucketName,
       transactionEvent.detail.input.key
@@ -113,6 +114,9 @@ export const handler = async (
 };
 
 export const ensureFileIsDeleted = async (bucketName: string, key: string) => {
+  if (bucketName.startsWith("stedi-default-core-artifacts")) {
+    return;
+  }
   try {
     await buckets.send(new DeleteObjectCommand({ bucketName, key }));
   } catch (error) {

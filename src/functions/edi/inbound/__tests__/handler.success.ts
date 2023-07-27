@@ -100,7 +100,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   `delivers to webhook destination with edi when includeSource is set`,
   async (t) => {
     // loading incoming EDI file from S3

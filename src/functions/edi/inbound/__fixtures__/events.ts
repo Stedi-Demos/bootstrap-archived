@@ -45,7 +45,7 @@ export const sampleTransactionProcessedEvent = TransactionEventSchema.parse({
     },
     input: {
       type: "EDI/X12",
-      bucketName: "stedi-default-core-artifacts-217851219840",
+      bucketName: "account_id-sftp",
       key: "1f1b129a-9b86-04ea-3815-2d0f2b271c19/1746-1746-1.edi",
     },
     output: {

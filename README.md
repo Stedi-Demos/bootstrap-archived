@@ -1,8 +1,13 @@
 # [ARCHIVED] Stedi EDI Bootstrap
 
 > **Note**
-> This repository should only be relied on for existing users. New users should not deploy this version of bootstrap, and instead should deploy custom Stedi functions of their own using the [Integrations SDK](https://github.com/Stedi-Demos/integrations-sdk). For any questions, please reach out to team@stedi.com. 
+> This repository should only be relied on for existing users. New users should not deploy this version of bootstrap,
+> and instead should use [Stedi Core](https://www.stedi.com/docs/core) to send and receive EDI files. Please don't
+> hesitate to [contact us](https://www.stedi.com/contact) with any questions!
 >
+
+<details>
+  <summary>Previous README contents</summary>
 
 This repository contains an end-to-end configuration for building an X12 EDI system using Stedi products. This
 implementation demonstrates one way to build an integration for common EDI read and write use cases. Your solution
@@ -143,7 +148,8 @@ Run the following command in the bootstrap directory:
 npm run bootstrap
 ```
 
-Bootstrap creates resources in your Stedi account. It may take several minutes for Stedi to deploy all required resources. When deployment is finished, your CLI displays a message similar to the following. 
+Bootstrap creates resources in your Stedi account. It may take several minutes for Stedi to deploy all required
+resources. When deployment is finished, your CLI displays a message similar to the following.
 
 <details><summary>Example CLI output (click to expand):</summary>
 
@@ -186,14 +192,24 @@ Bootstrap creates resources in your Stedi account. It may take several minutes f
   Waiting for event binding deploys to complete
   Deploy completed at: 5/4/2023, 3:35:21 PM
   ```
+
 </details>
 
 ### Resources
 
 Bootstrap deploys the following resources to your account:
-- A [Stedi bucket](https://www.stedi.com/app/buckets) with directories for you `_stedi` and trading partners `trading_partners`. In the `trading_partners` directory is a single directory for a fictional trading partner called `ANOTHERMERCH`. Within `ANOTHERMERCH`, are directories for inbound and outbound files. The `inbound` directory is where your partners would drop new files to send to you and the `outbound` directory is where Stedi sends EDI files generated for that trading partner.
-- A [Stash keyspace](https://www.stedi.com/app/stash) called `partners-configuraion`. This keyspace contains configuration for bootstrap, including [destinations](#destinations) for incoming and outgoing files. If you click the `destinations|this-is-me_another-merchant|855` key/value pair, you'll see that bootstrap is configured to send incoming 855 EDI documents to your webhook.
-- Several [Stedi functions](https://www.stedi.com/app/functions), including functions required to read and write EDI and generate functional acknowledgements.
+
+- A [Stedi bucket](https://www.stedi.com/app/buckets) with directories for you `_stedi` and trading
+  partners `trading_partners`. In the `trading_partners` directory is a single directory for a fictional trading partner
+  called `ANOTHERMERCH`. Within `ANOTHERMERCH`, are directories for inbound and outbound files. The `inbound` directory
+  is where your partners would drop new files to send to you and the `outbound` directory is where Stedi sends EDI files
+  generated for that trading partner.
+- A [Stash keyspace](https://www.stedi.com/app/stash) called `partners-configuraion`. This keyspace contains
+  configuration for bootstrap, including [destinations](#destinations) for incoming and outgoing files. If you click
+  the `destinations|this-is-me_another-merchant|855` key/value pair, you'll see that bootstrap is configured to send
+  incoming 855 EDI documents to your webhook.
+- Several [Stedi functions](https://www.stedi.com/app/functions), including functions required to read and write EDI and
+  generate functional acknowledgements.
 
 ## Testing the workflows
 
@@ -513,7 +529,7 @@ value: [JSON Schema](./src/schemas/error-destinations.json)
 key: `functional_acknowledgments|${partnershipId}`
 
 value: [JSON Schema](./src/schemas/acknowledgment.json)
-   
+
 ## Troubleshooting
 
 ```
@@ -522,9 +538,11 @@ There was an issue installing the dependencies using your local npm installation
 
 If you created a `.npmrc` in this repository, please remove it.
 
-If you still see this error, you may have a registry override in your npm config. Run `npm config list` and search for `registry` like below. Comment out that line and try again.
+If you still see this error, you may have a registry override in your npm config. Run `npm config list` and search
+for `registry` like below. Comment out that line and try again.
 
 ```
 @stedi:registry = "https://npm.pkg.github.com/" 
 ```
 
+</details>

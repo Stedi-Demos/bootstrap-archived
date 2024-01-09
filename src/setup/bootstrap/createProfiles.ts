@@ -88,6 +88,7 @@ export const createProfiles = async ({
         partnerProfileId: remoteProfile.profileId,
         interchangeUsageIndicator: "T",
         timezone: Timezone.AMERICA_NEW_YORK,
+        timeFormat: undefined,
       })
     );
   } catch (error) {

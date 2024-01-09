@@ -85,6 +85,7 @@ test.serial(
         updatedAt: new Date(),
         interchangeUsageIndicator: "T",
         timezone: Timezone.AMERICA_NEW_YORK,
+        timeFormat: undefined,
       } satisfies GetX12PartnershipOutput as any)
       // increment interchange control number
       .on(IncrementX12ControlNumberCommand as any, {

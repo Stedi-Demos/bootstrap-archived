@@ -28,6 +28,8 @@
     "@ava/typescript": "^4.0.0",
     "@aws-sdk/middleware-retry": "3.329.0",
     "@aws-sdk/types": "3.272.0",
+    "@smithy/types": "1.2.0",
+    "@smithy/util-stream-node": "2.0.19",
     "@stedi/sdk-client-as2": "^0.1.51",
     "@stedi/sdk-client-buckets": "^0.1.51",
     "@stedi/sdk-client-cores": "^0.1.51",
@@ -36,7 +38,7 @@
     "@stedi/sdk-client-functions": "^0.1.51",
     "@stedi/sdk-client-guides": "^0.1.51",
     "@stedi/sdk-client-mappings": "^0.1.51",
-    "@stedi/sdk-client-partners": "^0.2.19",
+    "@stedi/sdk-client-partners": "^0.4.60",
     "@stedi/sdk-client-queues": "^0.1.51",
     "@stedi/sdk-client-sftp": "^0.1.51",
     "@stedi/sdk-client-stash": "^0.1.51",
@@ -76,7 +78,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.0.3",
     "umzug": "^3.2.1",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   },
   "prettier": {
     "useTabs": false

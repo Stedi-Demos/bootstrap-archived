@@ -90,6 +90,7 @@ test("translate 997 guide json without a guide and delivers to destination", asy
       updatedAt: new Date(),
       timezone: Timezone.AMERICA_NEW_YORK,
       interchangeUsageIndicator: "T",
+      timeFormat: undefined,
     } satisfies GetX12PartnershipOutput as any)
     // increment interchange control number
     .on(IncrementX12ControlNumberCommand as any, {

@@ -165,6 +165,7 @@ export const up = async () => {
         partnerProfileId: partnerProfile.profileId,
         timezone: Timezone.AMERICA_NEW_YORK,
         interchangeUsageIndicator: "T",
+        timeFormat: undefined,
       })
     );
 

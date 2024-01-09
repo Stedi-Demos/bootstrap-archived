@@ -99,6 +99,7 @@ test("using legacy function input, it translates guide json to X12 and delivers 
       updatedAt: new Date(),
       timezone: Timezone.AMERICA_NEW_YORK,
       interchangeUsageIndicator: "T",
+      timeFormat: undefined,
     } satisfies GetX12PartnershipOutput as any)
     // increment interchange control number
     .on(IncrementX12ControlNumberCommand as any, {

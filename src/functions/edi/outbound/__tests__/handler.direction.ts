@@ -83,6 +83,7 @@ test.serial("skips delivery when direction is inbound", async (t) => {
       updatedAt: new Date(),
       interchangeUsageIndicator: "T",
       timezone: Timezone.AMERICA_NEW_YORK,
+      timeFormat: undefined,
     } satisfies GetX12PartnershipOutput as any)
     // increment interchange control number
     .on(IncrementX12ControlNumberCommand as any, {
@@ -224,6 +225,7 @@ test.serial("runs delivery when direction is outbound", async (t) => {
       updatedAt: new Date(),
       interchangeUsageIndicator: "T",
       timezone: Timezone.AMERICA_NEW_YORK,
+      timeFormat: undefined,
     } satisfies GetX12PartnershipOutput as any)
     // increment interchange control number
     .on(IncrementX12ControlNumberCommand as any, {
